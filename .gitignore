@@ -42,9 +42,12 @@ $RECYCLE.BIN/
 # These should never be under version control,
 # as it poses a security risk.
 .env
+index.php
 .vagrant
 Vagrantfile
-
+app/Config/Routes.php
+app/Config/App.php
+app/Views/layout/app.php
 #-------------------------
 # Temporary Files
 #-------------------------

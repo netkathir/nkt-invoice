@@ -283,6 +283,302 @@
     // Backward compatible alias (older views)
     BMS.initClients = BMS.initClientMaster;
 
+    BMS.initRoles = function (opts) {
+        opts = opts || {};
+        const $modal = new bootstrap.Modal(document.getElementById('roleModal'));
+        const $saveBtn = $('#btnSaveRole');
+        const $form = $('#roleForm');
+
+        function setFormMode(mode) {
+            const isView = mode === 'view';
+            $form.find('input,select,textarea').prop('disabled', isView);
+            // Keep modal close button usable.
+            $('#roleModal .btn-close').prop('disabled', false);
+            $saveBtn.toggle(!isView);
+        }
+
+        function clearErrors() {
+            $('#roleForm .is-invalid').removeClass('is-invalid');
+            $('#roleForm [data-err]').text('');
+        }
+
+        const table = $('#dtRoles').DataTable($.extend(true, {}, dtDefaults(), {
+            ajax: { url: base('roles/list'), dataSrc: 'data' },
+            order: [[2, 'desc'], [0, 'asc']],
+            columns: [
+                { data: 'name', render: function (d) { return d || '-'; } },
+                { data: 'description', render: function (d) { return d || '-'; } },
+                { data: 'is_super', render: function (d) {
+                    const v = parseInt(d || 0, 10) === 1;
+                    return v ? '<span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle">Super</span>' : '<span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle">Role</span>';
+                }},
+                { data: 'admins_count', render: function (d) { return d || 0; } },
+                { data: 'permissions_count', render: function (d) { return d || 0; } },
+                { data: 'created_at', render: formatUiDate },
+                { data: null, orderable: false, render: function (row) {
+                    const btns = [];
+                    btns.push('<button class="btn btn-sm btn-outline-secondary me-1 btn-view" type="button">View</button>');
+                    if (opts.canEdit) btns.push('<button class="btn btn-sm btn-outline-primary me-1 btn-edit" type="button">Edit</button>');
+                    if (opts.canAssignPerms) btns.push('<a class="btn btn-sm btn-outline-success me-1" href="' + base('roles/' + row.id + '/permissions') + '">Permissions</a>');
+                    if (opts.canDelete) btns.push('<button class="btn btn-sm btn-outline-danger btn-del" type="button">Delete</button>');
+                    return btns.join('');
+                }},
+            ],
+        }));
+
+        if (opts.canCreate) {
+            $('#btnAddRole').on('click', function () {
+                clearErrors();
+                $('#roleModalTitle').text('Add Role');
+                $('#roleForm')[0].reset();
+                $('#roleForm').removeClass('was-validated');
+                $('#role_id').val('');
+                setFormMode('edit');
+                $modal.show();
+            });
+        }
+
+        $('#dtRoles tbody').on('click', 'button.btn-view', function () {
+            clearErrors();
+            const row = table.row($(this).closest('tr')).data();
+            $('#roleModalTitle').text('View Role');
+            $('#roleForm').removeClass('was-validated');
+            $('#role_id').val(row.id);
+            $('#role_name').val(row.name || '');
+            $('#role_description').val(row.description || '');
+            const $isSuper = $('#role_is_super');
+            if ($isSuper.length) $isSuper.prop('checked', parseInt(row.is_super || 0, 10) === 1);
+            setFormMode('view');
+            $modal.show();
+        });
+
+        $('#dtRoles tbody').on('click', 'button.btn-edit', function () {
+            clearErrors();
+            const row = table.row($(this).closest('tr')).data();
+            $('#roleModalTitle').text('Edit Role');
+            $('#roleForm').removeClass('was-validated');
+            $('#role_id').val(row.id);
+            $('#role_name').val(row.name || '');
+            $('#role_description').val(row.description || '');
+            const $isSuper = $('#role_is_super');
+            if ($isSuper.length) $isSuper.prop('checked', parseInt(row.is_super || 0, 10) === 1);
+            setFormMode('edit');
+            $modal.show();
+        });
+
+        $('#dtRoles tbody').on('click', 'button.btn-del', function () {
+            const row = table.row($(this).closest('tr')).data();
+            if (!row || !row.id) return;
+            if (!confirm('Delete this role?')) return;
+            postJson('roles/delete', { id: row.id })
+                .done(function (res) { notify(res.message || 'Deleted.', 'success'); table.ajax.reload(null, false); })
+                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger'); });
+        });
+
+        $('#btnSaveRole').on('click', function () {
+            clearErrors();
+            const form = document.getElementById('roleForm');
+            form.classList.add('was-validated');
+            if (!form.checkValidity()) {
+                notify('Please fill the required fields.', 'danger');
+                return;
+            }
+
+            postJson('roles/save', $('#roleForm').serialize())
+                .done(function (res) {
+                    notify(res.message || 'Saved.', 'success');
+                    $modal.hide();
+                    table.ajax.reload(null, false);
+                })
+                .fail(function (xhr) {
+                    const res = xhr.responseJSON || {};
+                    notify(res.message || 'Save failed.', 'danger');
+                    if (res.errors) {
+                        Object.keys(res.errors).forEach(function (k) {
+                            const $field = $('#roleForm [name="' + k + '"]');
+                            $field.addClass('is-invalid');
+                            $('#roleForm [data-err="' + k + '"]').text(res.errors[k]);
+                        });
+                    }
+                });
+        });
+    };
+
+    BMS.initRolePermissions = function (opts) {
+        opts = opts || {};
+        if (opts.locked) return;
+
+        function updateModuleHeader(module) {
+            const $items = $('.perm-checkbox[data-module="' + module.replace(/"/g, '\\"') + '"]');
+            const checkedCount = $items.filter(':checked').length;
+            const total = $items.length;
+            const $header = $('.module-select-all[data-module="' + module.replace(/"/g, '\\"') + '"]');
+            if (!$header.length) return;
+            if (checkedCount === 0) {
+                $header.prop('checked', false);
+                $header.prop('indeterminate', false);
+            } else if (checkedCount === total) {
+                $header.prop('checked', true);
+                $header.prop('indeterminate', false);
+            } else {
+                $header.prop('checked', false);
+                $header.prop('indeterminate', true);
+            }
+        }
+
+        $('.module-select-all').on('change', function () {
+            const mod = $(this).data('module');
+            const on = $(this).is(':checked');
+            $('.perm-checkbox[data-module="' + String(mod).replace(/"/g, '\\"') + '"]').prop('checked', on);
+            updateModuleHeader(mod);
+        });
+
+        $('.perm-checkbox').on('change', function () {
+            const mod = $(this).data('module');
+            updateModuleHeader(mod);
+        });
+
+        // init
+        $('.module-select-all').each(function () {
+            updateModuleHeader($(this).data('module'));
+        });
+
+        $('#btnSaveRolePerms').on('click', function () {
+            const roleId = parseInt(opts.roleId || 0, 10);
+            if (!roleId) return;
+            postJson('roles/' + roleId + '/permissions', $('#rolePermsForm').serialize())
+                .done(function (res) { notify(res.message || 'Saved.', 'success'); })
+                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger'); });
+        });
+    };
+
+    BMS.initPermissions = function (opts) {
+        opts = opts || {};
+        const $modal = new bootstrap.Modal(document.getElementById('permModal'));
+        const $saveBtn = $('#btnSavePerm');
+        const $form = $('#permForm');
+
+        function setFormMode(mode) {
+            const isView = mode === 'view';
+            $form.find('input,select,textarea').prop('disabled', isView);
+            $('#permModal .btn-close').prop('disabled', false);
+            $saveBtn.toggle(!isView);
+        }
+
+        function clearErrors() {
+            $('#permForm .is-invalid').removeClass('is-invalid');
+            $('#permForm [data-err]').text('');
+        }
+
+        const table = $('#dtPermissions').DataTable($.extend(true, {}, dtDefaults(), {
+            ajax: { url: base('permissions/list'), dataSrc: 'data' },
+            order: [[2, 'asc'], [0, 'asc']],
+            columns: [
+                { data: 'key', render: function (d) { return d || '-'; } },
+                { data: 'label', render: function (d) { return d || '-'; } },
+                { data: 'module', render: function (d) { return d || '-'; } },
+                { data: 'roles_count', render: function (d) { return d || 0; } },
+                { data: 'created_at', render: formatUiDate },
+                { data: null, orderable: false, render: function () {
+                    const btns = [];
+                    btns.push('<button class="btn btn-sm btn-outline-secondary me-1 btn-view" type="button">View</button>');
+                    if (opts.canEdit) btns.push('<button class="btn btn-sm btn-outline-primary me-1 btn-edit" type="button">Edit</button>');
+                    if (opts.canDelete) btns.push('<button class="btn btn-sm btn-outline-danger btn-del" type="button">Delete</button>');
+                    return btns.join('');
+                }},
+            ],
+        }));
+
+        if (opts.canCreate) {
+            $('#btnAddPermission').on('click', function () {
+                clearErrors();
+                $('#permModalTitle').text('Add Permission');
+                $('#permForm')[0].reset();
+                $('#permForm').removeClass('was-validated');
+                $('#perm_id').val('');
+                setFormMode('edit');
+                $modal.show();
+            });
+        }
+
+        $('#dtPermissions tbody').on('click', 'button.btn-view', function () {
+            clearErrors();
+            const row = table.row($(this).closest('tr')).data();
+            $('#permModalTitle').text('View Permission');
+            $('#permForm').removeClass('was-validated');
+            $('#perm_id').val(row.id);
+            $('#perm_key').val(row.key || '');
+            $('#perm_label').val(row.label || '');
+            $('#perm_module').val(row.module || '');
+            $('#perm_description').val(row.description || '');
+            setFormMode('view');
+            $modal.show();
+        });
+
+        $('#dtPermissions tbody').on('click', 'button.btn-edit', function () {
+            clearErrors();
+            const row = table.row($(this).closest('tr')).data();
+            $('#permModalTitle').text('Edit Permission');
+            $('#permForm').removeClass('was-validated');
+            $('#perm_id').val(row.id);
+            $('#perm_key').val(row.key || '');
+            $('#perm_label').val(row.label || '');
+            $('#perm_module').val(row.module || '');
+            $('#perm_description').val(row.description || '');
+            setFormMode('edit');
+            $modal.show();
+        });
+
+        $('#dtPermissions tbody').on('click', 'button.btn-del', function () {
+            const row = table.row($(this).closest('tr')).data();
+            if (!row || !row.id) return;
+            if (!confirm('Delete this permission?')) return;
+            postJson('permissions/delete', { id: row.id })
+                .done(function (res) { notify(res.message || 'Deleted.', 'success'); table.ajax.reload(null, false); })
+                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger'); });
+        });
+
+        $('#btnSavePerm').on('click', function () {
+            clearErrors();
+            const form = document.getElementById('permForm');
+            form.classList.add('was-validated');
+            if (!form.checkValidity()) {
+                notify('Please fill the required fields.', 'danger');
+                return;
+            }
+
+            postJson('permissions/save', $('#permForm').serialize())
+                .done(function (res) {
+                    notify(res.message || 'Saved.', 'success');
+                    $modal.hide();
+                    table.ajax.reload(null, false);
+                })
+                .fail(function (xhr) {
+                    const res = xhr.responseJSON || {};
+                    notify(res.message || 'Save failed.', 'danger');
+                    if (res.errors) {
+                        Object.keys(res.errors).forEach(function (k) {
+                            const $field = $('#permForm [name="' + k + '"]');
+                            $field.addClass('is-invalid');
+                            $('#permForm [data-err="' + k + '"]').text(res.errors[k]);
+                        });
+                    }
+                });
+        });
+    };
+
+    BMS.initAdminRolesEdit = function (opts) {
+        opts = opts || {};
+        const adminId = parseInt(opts.adminId || 0, 10);
+        if (!adminId) return;
+
+        $('#btnSaveAdminRoles').on('click', function () {
+            postJson('admin-roles/' + adminId, $('#adminRolesForm').serialize())
+                .done(function (res) { notify(res.message || 'Saved.', 'success'); })
+                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger'); });
+        });
+    };
+
     BMS.initBillableItems = function () {
         const $modal = new bootstrap.Modal(document.getElementById('billableModal'));
         const hasTiny = typeof window.tinymce !== 'undefined' && document.getElementById('bi_description');

@@ -22,6 +22,29 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
         $routes->get('recent-billable-items', 'DashboardController::recentBillableItems');
     });
 
+    // Access Control (Roles & Permissions)
+    $routes->group('roles', static function (RouteCollection $routes): void {
+        $routes->get('/', 'RolesController::index', ['filter' => 'perm:roles.view']);
+        $routes->get('list', 'RolesController::list', ['filter' => 'perm:roles.view']);
+        $routes->post('save', 'RolesController::save');
+        $routes->post('delete', 'RolesController::delete');
+        $routes->get('(:num)/permissions', 'RolesController::permissions/$1', ['filter' => 'perm:roles.assign_perms']);
+        $routes->post('(:num)/permissions', 'RolesController::savePermissions/$1', ['filter' => 'perm:roles.assign_perms']);
+    });
+
+    $routes->group('permissions', static function (RouteCollection $routes): void {
+        $routes->get('/', 'PermissionsController::index', ['filter' => 'perm:permissions.view']);
+        $routes->get('list', 'PermissionsController::list', ['filter' => 'perm:permissions.view']);
+        $routes->post('save', 'PermissionsController::save');
+        $routes->post('delete', 'PermissionsController::delete');
+    });
+
+    $routes->group('admin-roles', static function (RouteCollection $routes): void {
+        $routes->get('/', 'AdminRolesController::index', ['filter' => 'perm:admins.assign_roles']);
+        $routes->get('(:num)', 'AdminRolesController::edit/$1', ['filter' => 'perm:admins.assign_roles']);
+        $routes->post('(:num)', 'AdminRolesController::update/$1', ['filter' => 'perm:admins.assign_roles']);
+    });
+
     $routes->group('masters', static function (RouteCollection $routes): void {
         $routes->group('client-master', static function (RouteCollection $routes): void {
             $routes->get('/', 'ClientMasterController::index');

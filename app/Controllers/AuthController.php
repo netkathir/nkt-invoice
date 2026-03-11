@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Models\AdminModel;
+use App\Models\RoleModel;
 use Throwable;
 
 class AuthController extends BaseController
@@ -10,6 +11,70 @@ class AuthController extends BaseController
     private function adminExists(): bool
     {
         return (new AdminModel())->countAllResults() > 0;
+    }
+
+    private function bootstrapSuperAdminIfNeeded(int $adminId): void
+    {
+        if ($adminId <= 0) {
+            return;
+        }
+
+        try {
+            $db = db_connect();
+
+            if (
+                ! $db->tableExists('admins') ||
+                ! $db->tableExists('roles') ||
+                ! $db->tableExists('admin_roles')
+            ) {
+                return;
+            }
+
+            // Ensure a Super Admin role exists.
+            $roleModel = new RoleModel();
+            $superRole = $roleModel->where('is_super', 1)->orderBy('id', 'ASC')->first();
+            if (! $superRole) {
+                $roleId = (int) $roleModel->insert([
+                    'name'        => 'Super Admin',
+                    'description' => 'Full access to the system',
+                    'is_super'    => 1,
+                ]);
+                $superRole = ['id' => $roleId];
+            }
+
+            $superRoleId = (int) ($superRole['id'] ?? 0);
+            if ($superRoleId <= 0) {
+                return;
+            }
+
+            // If no Super Admin is assigned yet, or this is the first admin, grant Super Admin to this admin.
+            $hasAnySuper = (bool) $db->table('admin_roles ar')
+                ->select('ar.admin_id')
+                ->join('roles r', 'r.id = ar.role_id', 'inner')
+                ->where('r.is_super', 1)
+                ->limit(1)
+                ->get()
+                ->getRowArray();
+
+            $minAdminRow = $db->table('admins')->selectMin('id')->get()->getRowArray();
+            $minAdminId = (int) ($minAdminRow['id'] ?? 0);
+
+            if (! $hasAnySuper || ($minAdminId > 0 && $adminId === $minAdminId)) {
+                $exists = (bool) $db->table('admin_roles')
+                    ->select('admin_id')
+                    ->where('admin_id', $adminId)
+                    ->where('role_id', $superRoleId)
+                    ->limit(1)
+                    ->get()
+                    ->getRowArray();
+
+                if (! $exists) {
+                    $db->table('admin_roles')->insert(['admin_id' => $adminId, 'role_id' => $superRoleId]);
+                }
+            }
+        } catch (Throwable $e) {
+            // no-op (preserve existing behavior if RBAC isn't ready)
+        }
     }
 
     private function ensureDefaultAdminExists(): void
@@ -23,12 +88,14 @@ class AuthController extends BaseController
         // Email: admin@gmail.com
         // Password: Admin@123
         $adminModel = new AdminModel();
-        $adminModel->insert([
+        $adminId = (int) $adminModel->insert([
             'name'     => 'Admin',
             'email'    => 'admin@gmail.com',
             'username' => 'admin',
             'password' => password_hash('Admin@123', PASSWORD_DEFAULT),
         ]);
+
+        $this->bootstrapSuperAdminIfNeeded($adminId);
     }
 
     public function login()
@@ -93,6 +160,8 @@ class AuthController extends BaseController
             'admin_name'     => (string) $admin['name'],
             'admin_username' => (string) $admin['username'],
         ]);
+
+        $this->bootstrapSuperAdminIfNeeded((int) $admin['id']);
 
         return redirect()->to(base_url('dashboard'));
     }

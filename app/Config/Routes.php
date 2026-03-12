@@ -22,6 +22,7 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
         $routes->get('metrics', 'DashboardController::metrics');
         $routes->get('pending-list', 'DashboardController::pendingList');
         $routes->get('recent-billed-list', 'DashboardController::recentBilledList');
+        $routes->get('client-billing-summary', 'DashboardController::clientBillingSummary');
     });
 
     // Access Control (Roles & Permissions)

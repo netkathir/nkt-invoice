@@ -25,13 +25,14 @@ body{
 }
 
 .app-frame{
-    border-radius: var(--radius-xl);
-    background: rgba(255,255,255,.30);
-    border: 1px solid rgba(255,255,255,.35);
-    box-shadow: var(--glass-shadow);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    overflow: hidden;
+    /* Remove outer "boxed" glass container look */
+    border-radius: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    overflow: visible;
 }
 
 .app-sidebar{
@@ -219,17 +220,52 @@ table.dataTable td{
     vertical-align: middle;
 }
 
-/* Center all table column headers across the application */
+/* Left-align all table column headers across the application */
 table thead th,
 table thead td{
-    text-align: center !important;
+    text-align: left !important;
     vertical-align: middle;
 }
 
-/* Center all table body cell contents across the application */
+/* Left-align all table body cell contents across the application */
 table tbody td{
-    text-align: center !important;
+    text-align: left !important;
     vertical-align: middle;
+}
+
+/* DataTables (v2 + Bootstrap) header alignment: left-align label + sort icon */
+.dataTables_wrapper table.dataTable > thead > tr > th,
+.dataTables_wrapper table.dataTable > thead > tr > td{
+    text-align: left !important;
+}
+.dataTables_wrapper table.dataTable thead th .dt-column-header,
+.dataTables_wrapper table.dataTable thead td .dt-column-header{
+    display: flex !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    gap: .35rem;
+}
+.dataTables_wrapper table.dataTable thead th .dt-column-order,
+.dataTables_wrapper table.dataTable thead td .dt-column-order{
+    float: none !important;
+    position: static !important;
+    inset: auto !important;
+    margin: 0 !important;
+}
+
+/* If any column is marked .text-end, force left alignment throughout */
+.dataTables_wrapper table.dataTable thead th.text-end,
+.dataTables_wrapper table.dataTable tbody td.text-end{
+    text-align: left !important;
+}
+
+/* DataTables alignment helper classes (v1/v2) */
+.dataTables_wrapper table.dataTable thead th.dt-head-right,
+.dataTables_wrapper table.dataTable tbody td.dt-body-right,
+.dataTables_wrapper table.dataTable thead th.dt-right,
+.dataTables_wrapper table.dataTable tbody td.dt-right{
+    text-align: left !important;
 }
 
 .table td ul,

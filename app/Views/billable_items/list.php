@@ -34,6 +34,7 @@
                 <th>Date</th>
                 <th>Client</th>
                 <th>Description</th>
+                <th>Billing Month</th>
                 <th>Amount</th>
                 <th>Status</th>
                 <th>Actions</th>

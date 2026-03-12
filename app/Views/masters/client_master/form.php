@@ -31,41 +31,68 @@
                             <div class="invalid-feedback" data-err="phone">Phone must be 50 characters or less.</div>
                         </div>
 
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Address</label>
-                            <textarea class="form-control" name="address" id="client_address" rows="3" placeholder="Optional"></textarea>
-                            <div class="invalid-feedback" data-err="address"></div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Billing Address</label>
-                            <textarea class="form-control" name="billing_address" id="client_billing_address" rows="3" placeholder="Optional"></textarea>
-                            <div class="form-check mt-2">
-                                <input class="form-check-input" type="checkbox" id="client_same_as_address">
-                                <label class="form-check-label" for="client_same_as_address">Same as Address</label>
+                        <div class="col-12">
+                            <div class="border rounded-3 p-3 bg-body-tertiary bg-opacity-50">
+                                <div class="fw-semibold text-primary mb-2">Address Information</div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Address Line 1</label>
+                                        <input class="form-control" id="client_address_line1" placeholder="Optional">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Address Line 2</label>
+                                        <input class="form-control" id="client_address_line2" placeholder="Optional">
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">City</label>
+                                        <input class="form-control" name="city" id="client_city" placeholder="Optional">
+                                        <div class="invalid-feedback" data-err="city"></div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">State</label>
+                                        <input class="form-control" name="state" id="client_state" placeholder="Optional">
+                                        <div class="invalid-feedback" data-err="state"></div>
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Postal Code</label>
+                                        <input class="form-control" name="postal_code" id="client_postal_code" placeholder="Optional">
+                                        <div class="invalid-feedback" data-err="postal_code"></div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Country</label>
+                                        <input class="form-control" name="country" id="client_country" placeholder="Optional">
+                                        <div class="invalid-feedback" data-err="country"></div>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <hr class="my-2">
+                                        <div class="fw-semibold text-primary mb-2">Billing Address</div>
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Address Line 1</label>
+                                        <input class="form-control" id="client_billing_line1" placeholder="Optional">
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Address Line 2</label>
+                                        <input class="form-control" id="client_billing_line2" placeholder="Optional">
+                                    </div>
+
+                                    <div class="col-12">
+                                        <div class="form-check mt-1">
+                                            <input class="form-check-input" type="checkbox" id="client_same_as_address">
+                                            <label class="form-check-label" for="client_same_as_address">Same as Address</label>
+                                        </div>
+                                        <div class="invalid-feedback d-block" data-err="billing_address"></div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="invalid-feedback d-block" data-err="billing_address"></div>
-                        </div>
 
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">City</label>
-                            <input class="form-control" name="city" id="client_city" placeholder="Optional">
-                            <div class="invalid-feedback" data-err="city"></div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">State</label>
-                            <input class="form-control" name="state" id="client_state" placeholder="Optional">
-                            <div class="invalid-feedback" data-err="state"></div>
-                        </div>
-
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Country</label>
-                            <input class="form-control" name="country" id="client_country" placeholder="Optional">
-                            <div class="invalid-feedback" data-err="country"></div>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <label class="form-label">Postal Code</label>
-                            <input class="form-control" name="postal_code" id="client_postal_code" placeholder="Optional">
-                            <div class="invalid-feedback" data-err="postal_code"></div>
+                            <!-- Hidden fields (DB mapping) -->
+                            <textarea class="d-none" name="address" id="client_address"></textarea>
+                            <textarea class="d-none" name="billing_address" id="client_billing_address"></textarea>
                         </div>
                     </div>
                 </form>

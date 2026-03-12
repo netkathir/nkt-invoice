@@ -70,41 +70,21 @@
     </div>
 </div>
 
-<div class="card mb-3">
-    <div class="card-header bg-white">
-        <div class="fw-semibold">Pending Billable Items</div>
-    </div>
-    <div class="card-body">
-        <table id="dtPendingBillables" class="table table-striped table-bordered nowrap w-100">
-            <thead>
-            <tr>
-                <th>Entry No</th>
-                <th>Date</th>
-                <th>Client</th>
-                <th>Description</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Amount</th>
-                <th class="text-end">Action</th>
-            </tr>
-            </thead>
-        </table>
-    </div>
-</div>
-
 <div class="card">
     <div class="card-header bg-white">
-        <div class="fw-semibold">Recently Billed Items</div>
+        <div class="fw-semibold">Client Billing Summary</div>
     </div>
     <div class="card-body">
-        <table id="dtRecentBilled" class="table table-striped table-bordered nowrap w-100">
+        <table id="dtClientBillingSummary" class="table table-striped table-bordered nowrap w-100">
             <thead>
             <tr>
-                <th>Entry No</th>
-                <th>Date</th>
                 <th>Client</th>
-                <th>Amount</th>
-                <th>Billed Date</th>
+                <th>Pending Items</th>
+                <th>Pending Amount</th>
+                <th>Billed Items</th>
+                <th>Billed Amount</th>
+                <th>Total Amount</th>
+                <th>Action</th>
             </tr>
             </thead>
         </table>

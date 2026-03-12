@@ -9,12 +9,7 @@
                 <form id="billableForm" class="needs-validation" novalidate>
                     <input type="hidden" name="id" id="bi_id">
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Entry Date <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" name="entry_date" id="bi_entry_date" required>
-                            <div class="invalid-feedback" data-err="entry_date">Entry Date is required.</div>
-                        </div>
-                        <div class="col-md-8">
+                        <div class="col-12">
                             <label class="form-label">Client <span class="text-danger">*</span></label>
                             <select class="form-select" name="client_id" id="bi_client_id" required></select>
                             <div class="invalid-feedback" data-err="client_id">Client is required.</div>

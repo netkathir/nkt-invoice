@@ -128,4 +128,38 @@ class DashboardController extends BaseController
 
         return $this->response->setJSON(['data' => $rows]);
     }
+
+    public function clientBillingSummary()
+    {
+        $m = $this->normalizeMonth((string) $this->request->getGet('month'));
+        $yyyymm = $m['month'];
+        $monYear = $m['label'];
+
+        $b = db_connect()
+            ->table('billable_items')
+            ->select('clients.id AS client_id, clients.name AS client_name', false)
+            ->select("SUM(CASE WHEN billable_items.status = '" . BillableItemModel::STATUS_PENDING . "' THEN 1 ELSE 0 END) AS pending_items", false)
+            ->select("SUM(CASE WHEN billable_items.status = '" . BillableItemModel::STATUS_PENDING . "' THEN billable_items.amount ELSE 0 END) AS pending_amount", false)
+            ->select("SUM(CASE WHEN billable_items.status = '" . BillableItemModel::STATUS_BILLED . "' THEN 1 ELSE 0 END) AS billed_items", false)
+            ->select("SUM(CASE WHEN billable_items.status = '" . BillableItemModel::STATUS_BILLED . "' THEN billable_items.amount ELSE 0 END) AS billed_amount", false)
+            ->select("SUM(billable_items.amount) AS total_amount", false)
+            ->join('clients', 'clients.id = billable_items.client_id', 'inner')
+            ->groupBy('clients.id')
+            ->orderBy('clients.name', 'ASC');
+
+        $this->applyMonthFilter($b, $yyyymm, $monYear);
+        $rows = $b->get()->getResultArray();
+
+        // Normalize numeric types for JSON consumers.
+        foreach ($rows as &$r) {
+            $r['pending_items'] = (int) ($r['pending_items'] ?? 0);
+            $r['billed_items'] = (int) ($r['billed_items'] ?? 0);
+            $r['pending_amount'] = (float) ($r['pending_amount'] ?? 0);
+            $r['billed_amount'] = (float) ($r['billed_amount'] ?? 0);
+            $r['total_amount'] = (float) ($r['total_amount'] ?? 0);
+        }
+        unset($r);
+
+        return $this->response->setJSON(['data' => $rows]);
+    }
 }

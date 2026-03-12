@@ -170,85 +170,36 @@
                 });
         }
 
-        const pendingTable = $('#dtPendingBillables').DataTable($.extend(true, {}, dtDefaults(), {
+        const summaryTable = $('#dtClientBillingSummary').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: {
-                url: base('dashboard/pending-list'),
+                url: base('dashboard/client-billing-summary'),
                 data: function (d) { d.month = currentMonth; },
                 dataSrc: 'data'
             },
-            order: [[1, 'desc']],
+            order: [[0, 'asc']],
             columns: [
-                { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
-                { data: 'entry_date', render: formatUiDate },
                 { data: 'client_name', render: function (d) { return d || '-'; } },
-                { data: 'description', orderable: false, render: renderBulletText },
-                { data: 'quantity', className: 'text-end' },
-                { data: 'unit_price', className: 'text-end' },
-                { data: 'amount', className: 'text-end' },
-                { data: null, orderable: false, className: 'text-end', render: function (row) {
-                    return '' +
-                        '<button class="btn btn-sm btn-success me-1 btn-bill" type="button">Mark as Billed</button>' +
-                        '<a class="btn btn-sm btn-outline-primary me-1" href="' + base('billable-items?edit=' + row.id) + '">Edit</a>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-del" type="button">Delete</button>';
+                { data: 'pending_items', className: 'text-center', render: function (d) { return parseInt(d || 0, 10) || 0; } },
+                { data: 'pending_amount', className: 'text-end', render: function (d) { return fmtMoney(d); } },
+                { data: 'billed_items', className: 'text-center', render: function (d) { return parseInt(d || 0, 10) || 0; } },
+                { data: 'billed_amount', className: 'text-end', render: function (d) { return fmtMoney(d); } },
+                { data: 'total_amount', className: 'text-end', render: function (d) { return fmtMoney(d); } },
+                { data: null, orderable: false, className: 'text-center', render: function (row) {
+                    if (!row || !row.client_id) return '';
+                    const href = base('billable-items?client_id=' + row.client_id + '&month=' + encodeURIComponent(currentMonth) + '&status=all');
+                    return '<a class="btn btn-sm btn-outline-primary" href="' + href + '">View Items</a>';
                 }},
             ],
         }));
 
-        const billedTable = $('#dtRecentBilled').DataTable($.extend(true, {}, dtDefaults(), {
-            ajax: {
-                url: base('dashboard/recent-billed-list'),
-                data: function (d) { d.month = currentMonth; },
-                dataSrc: 'data'
-            },
-            order: [[4, 'desc']],
-            columns: [
-                { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
-                { data: 'entry_date', render: formatUiDate },
-                { data: 'client_name', render: function (d) { return d || '-'; } },
-                { data: 'amount', className: 'text-end', render: function (d) { return fmtMoney(d); } },
-                { data: 'billed_at', render: formatUiDate },
-            ],
-        }));
-
-        pendingTable.on('xhr.dt', function (e, settings, json) {
+        summaryTable.on('xhr.dt', function (e, settings, json) {
             if (json && json.success === false && json.message) notify(json.message, 'danger');
-        });
-        billedTable.on('xhr.dt', function (e, settings, json) {
-            if (json && json.success === false && json.message) notify(json.message, 'danger');
-        });
-
-        $('#dtPendingBillables tbody').on('click', 'button.btn-del', function () {
-            const row = pendingTable.row($(this).closest('tr')).data();
-            if (!row || !row.id) return;
-            if (!confirm('Delete this billable item?')) return;
-            postJson('billable-items/delete', { id: row.id })
-                .done(function (res) {
-                    notify(res.message || 'Deleted.', 'success');
-                    pendingTable.ajax.reload(null, false);
-                    billedTable.ajax.reload(null, false);
-                    loadMetrics();
-                })
-                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger'); });
-        });
-
-        $('#dtPendingBillables tbody').on('click', 'button.btn-bill', function () {
-            const row = pendingTable.row($(this).closest('tr')).data();
-            if (!row || !row.id) return;
-            postJson('billable-items/mark-billed', { id: row.id })
-                .done(function (res) {
-                    notify(res.message || 'Updated.', 'success');
-                    pendingTable.ajax.reload(null, false);
-                    billedTable.ajax.reload(null, false);
-                    loadMetrics();
-                })
-                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Update failed.', 'danger'); });
         });
 
         $month.on('change', function () {
             currentMonth = String($month.val() || '').trim();
             loadMetrics();
-            pendingTable.ajax.reload();
-            billedTable.ajax.reload();
+            summaryTable.ajax.reload();
         });
 
         loadMetrics();
@@ -259,6 +210,46 @@
         const $saveBtn = $('#btnSaveClient');
         const $form = $('#clientForm');
         let lastManualBilling = '';
+        let lastManualBillingLines = { line1: '', line2: '' };
+
+        function normalizeLine(v) {
+            return String(v || '').replace(/\s+/g, ' ').trim();
+        }
+
+        function joinLines(line1, line2) {
+            const a = normalizeLine(line1);
+            const b = normalizeLine(line2);
+            if (a && b) return a + "\n" + b;
+            return a || b || '';
+        }
+
+        function splitLines(value) {
+            const raw = String(value || '').trim();
+            if (!raw) return { line1: '', line2: '' };
+
+            const parts = raw.split(/\r?\n/).map(function (p) { return normalizeLine(p); }).filter(Boolean);
+            if (parts.length >= 2) {
+                return { line1: parts[0] || '', line2: parts.slice(1).join(' ') || '' };
+            }
+
+            // Fallback: try to split on first comma.
+            const idx = raw.indexOf(',');
+            if (idx > -1) {
+                const p1 = normalizeLine(raw.slice(0, idx));
+                const p2 = normalizeLine(raw.slice(idx + 1));
+                return { line1: p1, line2: p2 };
+            }
+
+            return { line1: normalizeLine(raw), line2: '' };
+        }
+
+        function syncHiddenAddress() {
+            $('#client_address').val(joinLines($('#client_address_line1').val(), $('#client_address_line2').val()));
+        }
+
+        function syncHiddenBilling() {
+            $('#client_billing_address').val(joinLines($('#client_billing_line1').val(), $('#client_billing_line2').val()));
+        }
 
         function setFormMode(mode) {
             const isView = mode === 'view';
@@ -273,18 +264,31 @@
         }
 
         function setSameAs(on) {
-            const $bill = $('#client_billing_address');
-            const $addr = $('#client_address');
+            const $bill1 = $('#client_billing_line1');
+            const $bill2 = $('#client_billing_line2');
+            const $addr1 = $('#client_address_line1');
+            const $addr2 = $('#client_address_line2');
             if (on) {
-                if (! $bill.prop('disabled')) {
-                    lastManualBilling = $bill.val() || '';
+                if (! $bill1.prop('disabled')) {
+                    lastManualBillingLines = {
+                        line1: String($bill1.val() || ''),
+                        line2: String($bill2.val() || ''),
+                    };
                 }
-                $bill.val($addr.val() || '');
-                $bill.prop('disabled', true);
+                $bill1.val($addr1.val() || '');
+                $bill2.val($addr2.val() || '');
+                $bill1.prop('disabled', true);
+                $bill2.prop('disabled', true);
+                syncHiddenBilling();
             } else {
-                $bill.prop('disabled', false);
-                if (String($bill.val() || '') === String($addr.val() || '')) {
-                    $bill.val(lastManualBilling || '');
+                $bill1.prop('disabled', false);
+                $bill2.prop('disabled', false);
+                const current = joinLines($bill1.val(), $bill2.val());
+                const addr = joinLines($addr1.val(), $addr2.val());
+                if (String(current || '') === String(addr || '')) {
+                    $bill1.val(lastManualBillingLines.line1 || '');
+                    $bill2.val(lastManualBillingLines.line2 || '');
+                    syncHiddenBilling();
                 }
             }
         }
@@ -292,12 +296,16 @@
         function syncSameAsState() {
             const isView = $form.find('input,select,textarea').first().prop('disabled');
             const $chk = $('#client_same_as_address');
-            const $bill = $('#client_billing_address');
+            const $bill1 = $('#client_billing_line1');
+            const $bill2 = $('#client_billing_line2');
             $chk.prop('disabled', isView);
 
             if ($chk.is(':checked')) {
-                $bill.prop('disabled', true);
-                $bill.val($('#client_address').val() || '');
+                $bill1.prop('disabled', true);
+                $bill2.prop('disabled', true);
+                $bill1.val($('#client_address_line1').val() || '');
+                $bill2.val($('#client_address_line2').val() || '');
+                syncHiddenBilling();
             }
         }
 
@@ -344,7 +352,9 @@
             $('#client_id').val('');
             lastManualBilling = '';
             $('#client_same_as_address').prop('checked', false);
-            $('#client_billing_address').prop('disabled', false);
+            $('#client_billing_line1,#client_billing_line2').prop('disabled', false);
+            $('#client_address_line1,#client_address_line2,#client_billing_line1,#client_billing_line2').val('');
+            $('#client_address,#client_billing_address').val('');
             setFormMode('edit');
             $modal.show();
         });
@@ -359,13 +369,23 @@
             $('#client_contact_person').val(row.contact_person || '');
             $('#client_email').val(row.email || '');
             $('#client_phone').val(row.phone || '');
-            $('#client_address').val(row.address || '');
-            $('#client_billing_address').val(row.billing_address || '');
+            (function () {
+                const a = splitLines(row.address || '');
+                $('#client_address_line1').val(a.line1);
+                $('#client_address_line2').val(a.line2);
+                syncHiddenAddress();
+            })();
+            (function () {
+                const b = splitLines(row.billing_address || '');
+                $('#client_billing_line1').val(b.line1);
+                $('#client_billing_line2').val(b.line2);
+                syncHiddenBilling();
+            })();
             $('#client_city').val(row.city || '');
             $('#client_state').val(row.state || '');
             $('#client_country').val(row.country || '');
             $('#client_postal_code').val(row.postal_code || '');
-            lastManualBilling = row.billing_address || '';
+            lastManualBillingLines = splitLines(row.billing_address || '');
             $('#client_same_as_address').prop('checked', false);
             setFormMode('view');
             $modal.show();
@@ -381,13 +401,23 @@
             $('#client_contact_person').val(row.contact_person || '');
             $('#client_email').val(row.email || '');
             $('#client_phone').val(row.phone || '');
-            $('#client_address').val(row.address || '');
-            $('#client_billing_address').val(row.billing_address || '');
+            (function () {
+                const a = splitLines(row.address || '');
+                $('#client_address_line1').val(a.line1);
+                $('#client_address_line2').val(a.line2);
+                syncHiddenAddress();
+            })();
+            (function () {
+                const b = splitLines(row.billing_address || '');
+                $('#client_billing_line1').val(b.line1);
+                $('#client_billing_line2').val(b.line2);
+                syncHiddenBilling();
+            })();
             $('#client_city').val(row.city || '');
             $('#client_state').val(row.state || '');
             $('#client_country').val(row.country || '');
             $('#client_postal_code').val(row.postal_code || '');
-            lastManualBilling = row.billing_address || '';
+            lastManualBillingLines = splitLines(row.billing_address || '');
             $('#client_same_as_address').prop('checked', false);
             setFormMode('edit');
             $modal.show();
@@ -397,10 +427,17 @@
             setSameAs($(this).is(':checked'));
         });
 
-        $('#client_address').on('input', function () {
+        $('#client_address_line1,#client_address_line2').on('input', function () {
+            syncHiddenAddress();
             if ($('#client_same_as_address').is(':checked')) {
-                $('#client_billing_address').val($(this).val() || '');
+                $('#client_billing_line1').val($('#client_address_line1').val() || '');
+                $('#client_billing_line2').val($('#client_address_line2').val() || '');
+                syncHiddenBilling();
             }
+        });
+
+        $('#client_billing_line1,#client_billing_line2').on('input', function () {
+            syncHiddenBilling();
         });
 
         $('#dtClients tbody').on('click', 'button.btn-del', function () {
@@ -814,6 +851,24 @@
         const $saveBtn = $('#btnSaveUser');
         const $form = $('#userForm');
 
+        function syncPasswordToggles() {
+            $('#userForm .toggle-password').each(function () {
+                const $btn = $(this);
+                const sel = String($btn.data('target') || '').trim();
+                const $inp = sel ? $(sel) : $();
+                const disabled = !($inp.length) || $inp.prop('disabled');
+                $btn.prop('disabled', disabled);
+
+                if ($inp.length) {
+                    const isText = $inp.attr('type') === 'text';
+                    $btn.attr('aria-pressed', isText ? 'true' : 'false');
+                    $btn.attr('aria-label', isText ? 'Hide password' : 'Show password');
+                    $btn.find('.pw-icon-eye').toggleClass('d-none', isText);
+                    $btn.find('.pw-icon-eye-off').toggleClass('d-none', !isText);
+                }
+            });
+        }
+
         function setFormMode(mode) {
             const isView = mode === 'view';
             $form.find('input,select,textarea').prop('disabled', isView);
@@ -831,6 +886,11 @@
                 $('#user_password').val('');
                 $('#user_confirm_password').val('');
             }
+
+            // Always reset visibility back to password type on mode change.
+            $('#user_password').attr('type', 'password');
+            $('#user_confirm_password').attr('type', 'password');
+            syncPasswordToggles();
         }
 
         function clearErrors() {
@@ -848,6 +908,9 @@
             $('#user_role_id').val(String(data.role_id || ''));
             $('#user_password').val('');
             $('#user_confirm_password').val('');
+            $('#user_password').attr('type', 'password');
+            $('#user_confirm_password').attr('type', 'password');
+            syncPasswordToggles();
         }
 
         function roleBadge(roleName, isSuper) {
@@ -918,6 +981,19 @@
                 $modal.show();
             });
         }
+
+        $('#userForm').on('click', '.toggle-password', function () {
+            const $btn = $(this);
+            const sel = String($btn.data('target') || '').trim();
+            if (!sel) return;
+            const $inp = $(sel);
+            if (!$inp.length || $inp.prop('disabled')) return;
+
+            const isText = $inp.attr('type') === 'text';
+            $inp.attr('type', isText ? 'password' : 'text');
+            syncPasswordToggles();
+            try { $inp.trigger('focus'); } catch (e) {}
+        });
 
         function loadAndOpen(id, mode) {
             clearErrors();
@@ -1007,7 +1083,14 @@
         const editorId = 'bi_description';
         let pendingDescriptionHtml = null;
         let isEnforcingBullets = false;
-        const urlEditId = parseInt((new URLSearchParams(window.location.search)).get('edit') || '0', 10) || 0;
+        let showDescError = false;
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlEditId = parseInt(urlParams.get('edit') || '0', 10) || 0;
+        const urlClientId = parseInt(urlParams.get('client_id') || '0', 10) || 0;
+        const urlMonth = String(urlParams.get('month') || '').trim();
+        const urlStatusRaw = String(urlParams.get('status') || '').trim().toLowerCase();
+        const urlForceAll = urlStatusRaw === 'all';
+        const urlForceBilled = urlStatusRaw === 'billed';
         let urlEditOpened = false;
 
         function getTinyEditor() {
@@ -1094,13 +1177,13 @@
             const $fb = $('#bi_description_feedback');
             if ($fb.length) {
                 if (msg) $fb.text(msg);
-                $fb.toggle(!valid);
+                $fb.toggle(!valid && showDescError);
             }
 
             if (ed && typeof ed.getContainer === 'function') {
-                $(ed.getContainer()).toggleClass('is-invalid', !valid);
+                $(ed.getContainer()).toggleClass('is-invalid', !valid && showDescError);
             } else {
-                $('#bi_description').toggleClass('is-invalid', !valid);
+                $('#bi_description').toggleClass('is-invalid', !valid && showDescError);
             }
         }
 
@@ -1245,7 +1328,7 @@
 
         // (Rich text validation handled via TinyMCE helpers above)
 
-        function fillClients($select, clients, includeAllOption) {
+        function fillClients($select, clients, includeAllOption, labelFn) {
             $select.empty();
             if (includeAllOption) {
                 $select.append('<option value=\"\">All Clients</option>');
@@ -1253,7 +1336,8 @@
                 $select.append('<option value=\"\">Select Client</option>');
             }
             clients.forEach(function (c) {
-                const label = c.name || c.contact_person || c.email || c.phone || ('Client #' + c.id);
+                const custom = typeof labelFn === 'function' ? String(labelFn(c) || '').trim() : '';
+                const label = custom || c.name || c.contact_person || c.email || c.phone || ('Client #' + c.id);
                 $select.append('<option value=\"' + c.id + '\">' + label + '</option>');
             });
         }
@@ -1262,7 +1346,12 @@
             return getJson('masters/client-master/list').then(function (res) {
                 const clients = (res && res.data) ? res.data : [];
                 fillClients($('#filterClient'), clients, true);
-                fillClients($('#bi_client_id'), clients, false);
+                fillClients($('#bi_client_id'), clients, false, function (c) {
+                    const company = String((c && c.name) || '').trim();
+                    const person = String((c && c.contact_person) || '').trim();
+                    if (company && person) return company + ' - ' + person;
+                    return company || person || '';
+                });
                 return clients;
             });
         }
@@ -1277,7 +1366,11 @@
 
         // Default to showing Pending items.
         // Must be set before DataTable's initial AJAX call.
-        if (!$('#filterStatus').val()) {
+        if (urlForceAll) {
+            $('#filterStatus').val('');
+        } else if (urlForceBilled) {
+            $('#filterStatus').val('Billed');
+        } else if (!$('#filterStatus').val()) {
             $('#filterStatus').val('Pending');
         }
 
@@ -1286,8 +1379,9 @@
                 url: base('billable-items/list'),
                 dataSrc: 'data',
                 data: function (d) {
-                    d.client_id = $('#filterClient').val();
+                    d.client_id = $('#filterClient').val() || (urlClientId > 0 ? urlClientId : '');
                     d.status = $('#filterStatus').val();
+                    d.month = urlMonth;
                 }
             },
             order: [[1, 'desc']],
@@ -1296,6 +1390,7 @@
                 { data: 'entry_date', render: formatUiDate },
                 { data: 'client_name' },
                 { data: 'description', orderable: false, render: renderBulletText },
+                { data: 'billing_month', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: 'amount', className: 'text-end' },
                 { data: 'status', orderable: false, render: function (d, t, row) {
                     return billableStatusBadge(d);
@@ -1315,11 +1410,11 @@
         });
 
         function openAdd() {
+            showDescError = false;
             $('#billableModalTitle').text('Add Billable Item');
             $('#billableForm')[0].reset();
             $('#billableForm').removeClass('was-validated');
             $('#bi_id').val('');
-            $('#bi_entry_date').val(new Date().toISOString().slice(0, 10));
             $('#bi_quantity').val('1');
             $('#bi_unit_price').val('0');
             (function () {
@@ -1337,10 +1432,10 @@
         }
 
         function openEdit(row) {
+            showDescError = false;
             $('#billableModalTitle').text('Edit Billable Item');
             $('#billableForm').removeClass('was-validated');
             $('#bi_id').val(row.id);
-            $('#bi_entry_date').val(row.entry_date || '');
             $('#bi_client_id').val(row.client_id || '');
             setDescriptionHtml(bulletHtmlFromText(row.description || ''));
             setDescriptionValidity(true);
@@ -1357,6 +1452,7 @@
 
         $('#btnSaveBillable').on('click', function () {
             clearBillableErrors();
+            showDescError = true;
             const form = document.getElementById('billableForm');
             const edNow = getTinyEditor();
             if (edNow && typeof edNow.save === 'function') {
@@ -1387,6 +1483,7 @@
                 .done(function (res) {
                     notify(res.message || 'Saved.', 'success');
                     $('#billableForm').removeClass('was-validated');
+                    showDescError = false;
                     setDescriptionValidity(true);
                     $modal.hide();
                     table.ajax.reload(null, false);
@@ -1440,7 +1537,10 @@
         loadClients().always(function () {
             // ensure default client filter exists
             if (!$('#filterClient').val()) $('#filterClient').val('');
-            if (!$('#bi_entry_date').val()) $('#bi_entry_date').val(new Date().toISOString().slice(0, 10));
+            if (urlClientId > 0) {
+                $('#filterClient').val(String(urlClientId));
+                table.ajax.reload();
+            }
             updateAmountPreview();
         });
 

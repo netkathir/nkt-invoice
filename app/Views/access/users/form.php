@@ -54,14 +54,50 @@
 
                         <div class="col-12 col-md-6">
                             <label class="form-label">Password <span class="text-danger user-pw-required">*</span></label>
-                            <input type="password" class="form-control" name="password" id="user_password" autocomplete="new-password">
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="password" id="user_password" autocomplete="new-password">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#user_password" aria-label="Show password" aria-pressed="false">
+                                    <span class="pw-icon pw-icon-eye" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M1.5 12s3.5-7.5 10.5-7.5S22.5 12 22.5 12 19 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    <span class="pw-icon pw-icon-eye-off d-none" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M6.5 6.7C3.7 8.8 2 12 2 12s3.5 7.5 10 7.5c1.6 0 3.1-.3 4.4-.9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9.9 4.8C10.6 4.6 11.3 4.5 12 4.5 19 4.5 22 12 22 12s-1.1 2.8-3.4 4.9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
                             <div class="invalid-feedback" data-err="password"></div>
                             <div class="form-text user-pw-hint">Leave blank to keep the existing password.</div>
                         </div>
 
                         <div class="col-12 col-md-6">
                             <label class="form-label">Confirm Password <span class="text-danger user-pw-required">*</span></label>
-                            <input type="password" class="form-control" name="confirm_password" id="user_confirm_password" autocomplete="new-password">
+                            <div class="input-group">
+                                <input type="password" class="form-control" name="confirm_password" id="user_confirm_password" autocomplete="new-password">
+                                <button class="btn btn-outline-secondary toggle-password" type="button" data-target="#user_confirm_password" aria-label="Show confirm password" aria-pressed="false">
+                                    <span class="pw-icon pw-icon-eye" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M1.5 12s3.5-7.5 10.5-7.5S22.5 12 22.5 12 19 19.5 12 19.5 1.5 12 1.5 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                    <span class="pw-icon pw-icon-eye-off d-none" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M3 3l18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                            <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M6.5 6.7C3.7 8.8 2 12 2 12s3.5 7.5 10 7.5c1.6 0 3.1-.3 4.4-.9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9.9 4.8C10.6 4.6 11.3 4.5 12 4.5 19 4.5 22 12 22 12s-1.1 2.8-3.4 4.9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
+                                </button>
+                            </div>
                             <div class="invalid-feedback" data-err="confirm_password"></div>
                         </div>
                     </div>
@@ -74,4 +110,3 @@
         </div>
     </div>
 </div>
-

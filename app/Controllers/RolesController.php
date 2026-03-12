@@ -179,6 +179,8 @@ class RolesController extends BaseController
 
         $isSuperRole = (int) ($role['is_super'] ?? 0) === 1 || strtolower((string) ($role['name'] ?? '')) === 'super admin';
 
+        $rolesList = $roleModel->orderBy('is_super', 'DESC')->orderBy('name', 'ASC')->findAll();
+
         $permModel = new PermissionModel();
         $perms = $permModel->orderBy('module', 'ASC')->orderBy('label', 'ASC')->findAll();
 
@@ -188,20 +190,50 @@ class RolesController extends BaseController
             $selected[(int) ($r['permission_id'] ?? 0)] = true;
         }
 
-        $byModule = [];
+        // Only show modules that exist in this project (no placeholders).
+        $registry = config('ModuleRegistry');
+        $spec = is_object($registry) && property_exists($registry, 'permissionMatrix')
+            ? (array) $registry->permissionMatrix
+            : [];
+
+        $idByKey = [];
         foreach ($perms as $p) {
-            $module = trim((string) ($p['module'] ?? ''));
-            if ($module === '') $module = 'General';
-            $byModule[$module][] = $p;
+            $k = trim((string) ($p['key'] ?? ''));
+            $pid = (int) ($p['id'] ?? 0);
+            if ($k !== '' && $pid > 0) {
+                $idByKey[$k] = $pid;
+            }
         }
-        ksort($byModule);
+
+        /** @var array<string, array<string, array{page:string,label:string,read:list<int>,write:list<int>,delete:list<int>}>> $byModulePages */
+        $byModulePages = [];
+        foreach ($spec as $module => $pages) {
+            foreach ($pages as $label => $levels) {
+                $readIds = [];
+                foreach (($levels['read'] ?? []) as $k) if (isset($idByKey[$k])) $readIds[] = (int) $idByKey[$k];
+                $writeIds = [];
+                foreach (($levels['write'] ?? []) as $k) if (isset($idByKey[$k])) $writeIds[] = (int) $idByKey[$k];
+                $deleteIds = [];
+                foreach (($levels['delete'] ?? []) as $k) if (isset($idByKey[$k])) $deleteIds[] = (int) $idByKey[$k];
+
+                $pageKey = strtolower(preg_replace('/\\s+/', '_', (string) $label));
+                $byModulePages[$module][$pageKey] = [
+                    'page'   => $pageKey,
+                    'label'  => $label,
+                    'read'   => array_values(array_unique(array_filter($readIds))),
+                    'write'  => array_values(array_unique(array_filter($writeIds))),
+                    'delete' => array_values(array_unique(array_filter($deleteIds))),
+                ];
+            }
+        }
 
         return view('access/roles/permissions', [
             'title'      => 'Assign Permissions',
-            'active'     => 'roles',
+            'active'     => 'role_permissions',
             'role'       => $role,
             'isSuperRole'=> $isSuperRole,
-            'byModule'   => $byModule,
+            'rolesList'  => $rolesList,
+            'byModulePages' => $byModulePages,
             'selected'   => $selected,
         ]);
     }
@@ -246,4 +278,3 @@ class RolesController extends BaseController
         return $this->response->setJSON(['success' => true, 'message' => 'Permissions updated.']);
     }
 }
-

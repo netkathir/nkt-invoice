@@ -31,6 +31,44 @@ class PermissionsController extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Forbidden']);
         }
 
+        // Auto-seed "Forms" (module names) into permissions table if missing.
+        // These are non-dot keys and are the only ones shown on this page.
+        $registry = config('ModuleRegistry');
+        $forms = is_object($registry) && property_exists($registry, 'forms') ? (array) $registry->forms : [];
+        if ($forms !== []) {
+            $db = db_connect();
+            $now = date('Y-m-d H:i:s');
+            foreach ($forms as $f) {
+                $key = trim((string) ($f['key'] ?? ''));
+                $name = trim((string) ($f['name'] ?? ''));
+                if ($key === '' || $name === '' || str_contains($key, '.')) {
+                    continue;
+                }
+
+                $existing = $db->table('permissions')->select('id,module,label')->where('key', $key)->get()->getRowArray();
+                if (! $existing) {
+                    $db->table('permissions')->insert([
+                        'key'         => $key,
+                        'label'       => $name,
+                        'module'      => $name,
+                        'description' => null,
+                        'created_at'  => $now,
+                        'updated_at'  => $now,
+                    ]);
+                    continue;
+                }
+
+                // Keep display name up to date if it was blank or different.
+                if (trim((string) ($existing['module'] ?? '')) !== $name || trim((string) ($existing['label'] ?? '')) !== $name) {
+                    $db->table('permissions')->where('id', (int) $existing['id'])->update([
+                        'label'      => $name,
+                        'module'     => $name,
+                        'updated_at' => $now,
+                    ]);
+                }
+            }
+        }
+
         $authz = $this->authz();
         $adminId = $authz->currentAdminId();
 

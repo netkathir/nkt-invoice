@@ -31,7 +31,9 @@ class RolePermissionsController extends BaseController
 
         $rows = db_connect()
             ->table('roles r')
-            ->select('r.id, r.name, r.description, r.is_super, r.created_at')
+            ->select('r.id, r.name, r.description, r.is_super, r.created_at, COUNT(rp.permission_id) AS permissions_count')
+            ->join('role_permissions rp', 'rp.role_id = r.id', 'left')
+            ->groupBy('r.id')
             ->orderBy('r.is_super', 'DESC')
             ->orderBy('r.name', 'ASC')
             ->get()
@@ -40,4 +42,3 @@ class RolePermissionsController extends BaseController
         return $this->response->setJSON(['data' => $rows]);
     }
 }
-

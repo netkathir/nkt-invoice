@@ -128,59 +128,143 @@
             '</select>';
     }
 
-    BMS.initDashboard = function () {
-        const table = $('#dtRecentBillables').DataTable($.extend(true, {}, dtDefaults(), {
-            ajax: { url: base('dashboard/recent-billable-items'), dataSrc: 'data' },
+    BMS.initDashboard = function (opts) {
+        opts = opts || {};
+        const $month = $('#dashMonth');
+        if (!$month.length) return;
+
+        let currentMonth = String($month.val() || opts.defaultMonth || '').trim();
+        if (!currentMonth) {
+            const now = new Date();
+            currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+            $month.val(currentMonth);
+        }
+
+        function fmtMoney(v) {
+            const n = parseFloat(v || 0) || 0;
+            try {
+                return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            } catch (e) {
+                return n.toFixed(2);
+            }
+        }
+
+        function setMetric(id, value, isMoney) {
+            const $el = $(id);
+            if (!$el.length) return;
+            $el.text(isMoney ? fmtMoney(value) : String(value || 0));
+        }
+
+        function loadMetrics() {
+            getJson('dashboard/metrics', { month: currentMonth })
+                .done(function (res) {
+                    const d = (res && res.data) ? res.data : {};
+                    setMetric('#mTotalItems', d.total_items, false);
+                    setMetric('#mPendingItems', d.pending_items, false);
+                    setMetric('#mBilledItems', d.billed_items, false);
+                    setMetric('#mPendingAmount', d.pending_amount, true);
+                    setMetric('#mBilledAmount', d.billed_amount, true);
+                })
+                .fail(function (xhr) {
+                    notify((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to load dashboard metrics.', 'danger');
+                });
+        }
+
+        const pendingTable = $('#dtPendingBillables').DataTable($.extend(true, {}, dtDefaults(), {
+            ajax: {
+                url: base('dashboard/pending-list'),
+                data: function (d) { d.month = currentMonth; },
+                dataSrc: 'data'
+            },
             order: [[1, 'desc']],
             columns: [
                 { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
                 { data: 'entry_date', render: formatUiDate },
-                { data: 'client_name' },
+                { data: 'client_name', render: function (d) { return d || '-'; } },
                 { data: 'description', orderable: false, render: renderBulletText },
                 { data: 'quantity', className: 'text-end' },
                 { data: 'unit_price', className: 'text-end' },
                 { data: 'amount', className: 'text-end' },
-                { data: 'status', orderable: false, render: function (d, t, row) {
-                    return billableStatusBadge(d);
-                }},
-                { data: null, orderable: false, render: function (row) {
-                    const billedDisabled = row.status !== 'Pending' ? 'disabled' : '';
+                { data: null, orderable: false, className: 'text-end', render: function (row) {
                     return '' +
+                        '<button class="btn btn-sm btn-success me-1 btn-bill" type="button">Mark as Billed</button>' +
                         '<a class="btn btn-sm btn-outline-primary me-1" href="' + base('billable-items?edit=' + row.id) + '">Edit</a>' +
-                        '<button class="btn btn-sm btn-outline-success me-1 btn-bill-dash" type="button" ' + billedDisabled + '>Mark Billed</button>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-del-dash" type="button">Delete</button>';
+                        '<button class="btn btn-sm btn-outline-danger btn-del" type="button">Delete</button>';
                 }},
             ],
         }));
 
-        $('#dtRecentBillables tbody').on('click', 'button.btn-del-dash', function () {
-            const row = table.row($(this).closest('tr')).data();
+        const billedTable = $('#dtRecentBilled').DataTable($.extend(true, {}, dtDefaults(), {
+            ajax: {
+                url: base('dashboard/recent-billed-list'),
+                data: function (d) { d.month = currentMonth; },
+                dataSrc: 'data'
+            },
+            order: [[4, 'desc']],
+            columns: [
+                { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
+                { data: 'entry_date', render: formatUiDate },
+                { data: 'client_name', render: function (d) { return d || '-'; } },
+                { data: 'amount', className: 'text-end', render: function (d) { return fmtMoney(d); } },
+                { data: 'billed_at', render: formatUiDate },
+            ],
+        }));
+
+        pendingTable.on('xhr.dt', function (e, settings, json) {
+            if (json && json.success === false && json.message) notify(json.message, 'danger');
+        });
+        billedTable.on('xhr.dt', function (e, settings, json) {
+            if (json && json.success === false && json.message) notify(json.message, 'danger');
+        });
+
+        $('#dtPendingBillables tbody').on('click', 'button.btn-del', function () {
+            const row = pendingTable.row($(this).closest('tr')).data();
             if (!row || !row.id) return;
             if (!confirm('Delete this billable item?')) return;
             postJson('billable-items/delete', { id: row.id })
-                .done(function (res) { notify(res.message || 'Deleted.', 'success'); table.ajax.reload(null, false); })
+                .done(function (res) {
+                    notify(res.message || 'Deleted.', 'success');
+                    pendingTable.ajax.reload(null, false);
+                    billedTable.ajax.reload(null, false);
+                    loadMetrics();
+                })
                 .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger'); });
         });
 
-        $('#dtRecentBillables tbody').on('click', 'button.btn-bill-dash', function () {
-            const row = table.row($(this).closest('tr')).data();
+        $('#dtPendingBillables tbody').on('click', 'button.btn-bill', function () {
+            const row = pendingTable.row($(this).closest('tr')).data();
             if (!row || !row.id) return;
-            if (row.status !== 'Pending') return;
             postJson('billable-items/mark-billed', { id: row.id })
-                .done(function (res) { notify(res.message || 'Updated.', 'success'); table.ajax.reload(null, false); })
+                .done(function (res) {
+                    notify(res.message || 'Updated.', 'success');
+                    pendingTable.ajax.reload(null, false);
+                    billedTable.ajax.reload(null, false);
+                    loadMetrics();
+                })
                 .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Update failed.', 'danger'); });
         });
+
+        $month.on('change', function () {
+            currentMonth = String($month.val() || '').trim();
+            loadMetrics();
+            pendingTable.ajax.reload();
+            billedTable.ajax.reload();
+        });
+
+        loadMetrics();
     };
 
     BMS.initClientMaster = function () {
         const $modal = new bootstrap.Modal(document.getElementById('clientModal'));
         const $saveBtn = $('#btnSaveClient');
         const $form = $('#clientForm');
+        let lastManualBilling = '';
 
         function setFormMode(mode) {
             const isView = mode === 'view';
             $form.find('input,select,textarea').prop('disabled', isView);
             $saveBtn.toggle(!isView);
+            syncSameAsState();
         }
 
         function clearErrors() {
@@ -188,15 +272,61 @@
             $('#clientForm [data-err]').text('');
         }
 
+        function setSameAs(on) {
+            const $bill = $('#client_billing_address');
+            const $addr = $('#client_address');
+            if (on) {
+                if (! $bill.prop('disabled')) {
+                    lastManualBilling = $bill.val() || '';
+                }
+                $bill.val($addr.val() || '');
+                $bill.prop('disabled', true);
+            } else {
+                $bill.prop('disabled', false);
+                if (String($bill.val() || '') === String($addr.val() || '')) {
+                    $bill.val(lastManualBilling || '');
+                }
+            }
+        }
+
+        function syncSameAsState() {
+            const isView = $form.find('input,select,textarea').first().prop('disabled');
+            const $chk = $('#client_same_as_address');
+            const $bill = $('#client_billing_address');
+            $chk.prop('disabled', isView);
+
+            if ($chk.is(':checked')) {
+                $bill.prop('disabled', true);
+                $bill.val($('#client_address').val() || '');
+            }
+        }
+
         const table = $('#dtClients').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: { url: base('masters/client-master/list'), dataSrc: 'data' },
-            order: [[4, 'desc']],
+            order: [[0, 'asc']],
             columns: [
-                { data: 'name', render: function (d, t, row) { return d || row.contact_person || row.email || row.phone || ('Client #' + row.id); } },
-                { data: 'contact_person', render: function (d) { return d || '-'; } },
-                { data: 'email', render: function (d) { return d || '-'; } },
-                { data: 'phone', render: function (d) { return d || '-'; } },
-                { data: 'created_at', render: formatUiDate },
+                { data: 'name', render: function (d, type, row) {
+                    const v = String(d || '').trim();
+                    if (type === 'sort' || type === 'type') return v || String(row.contact_person || '').trim();
+                    return v || '-';
+                }},
+                { data: 'email', render: function (d) { return (String(d || '').trim() || '-'); } },
+                { data: 'address', orderable: false, render: function (d) {
+                    const raw = String(d || '').replace(/\s+/g, ' ').trim();
+                    if (!raw) return '-';
+                    const short = raw.length > 60 ? (raw.slice(0, 60) + '…') : raw;
+                    const esc = function (s) {
+                        return String(s)
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;')
+                            .replace(/\"/g, '&quot;')
+                            .replace(/'/g, '&#39;');
+                    };
+                    return '<span title="' + esc(raw) + '">' + esc(short) + '</span>';
+                }},
+                { data: 'city', render: function (d) { return (String(d || '').trim() || '-'); } },
+                { data: 'country', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: null, orderable: false, render: function (row) {
                     return '' +
                         '<button class="btn btn-sm btn-outline-secondary me-1 btn-view" type="button">View</button>' +
@@ -212,6 +342,9 @@
             $('#clientForm')[0].reset();
             $('#clientForm').removeClass('was-validated');
             $('#client_id').val('');
+            lastManualBilling = '';
+            $('#client_same_as_address').prop('checked', false);
+            $('#client_billing_address').prop('disabled', false);
             setFormMode('edit');
             $modal.show();
         });
@@ -226,6 +359,14 @@
             $('#client_contact_person').val(row.contact_person || '');
             $('#client_email').val(row.email || '');
             $('#client_phone').val(row.phone || '');
+            $('#client_address').val(row.address || '');
+            $('#client_billing_address').val(row.billing_address || '');
+            $('#client_city').val(row.city || '');
+            $('#client_state').val(row.state || '');
+            $('#client_country').val(row.country || '');
+            $('#client_postal_code').val(row.postal_code || '');
+            lastManualBilling = row.billing_address || '';
+            $('#client_same_as_address').prop('checked', false);
             setFormMode('view');
             $modal.show();
         });
@@ -240,8 +381,26 @@
             $('#client_contact_person').val(row.contact_person || '');
             $('#client_email').val(row.email || '');
             $('#client_phone').val(row.phone || '');
+            $('#client_address').val(row.address || '');
+            $('#client_billing_address').val(row.billing_address || '');
+            $('#client_city').val(row.city || '');
+            $('#client_state').val(row.state || '');
+            $('#client_country').val(row.country || '');
+            $('#client_postal_code').val(row.postal_code || '');
+            lastManualBilling = row.billing_address || '';
+            $('#client_same_as_address').prop('checked', false);
             setFormMode('edit');
             $modal.show();
+        });
+
+        $('#client_same_as_address').on('change', function () {
+            setSameAs($(this).is(':checked'));
+        });
+
+        $('#client_address').on('input', function () {
+            if ($('#client_same_as_address').is(':checked')) {
+                $('#client_billing_address').val($(this).val() || '');
+            }
         });
 
         $('#dtClients tbody').on('click', 'button.btn-del', function () {
@@ -388,40 +547,120 @@
         opts = opts || {};
         if (opts.locked) return;
 
-        function updateModuleHeader(module) {
-            const $items = $('.perm-checkbox[data-module="' + module.replace(/"/g, '\\"') + '"]');
-            const checkedCount = $items.filter(':checked').length;
-            const total = $items.length;
-            const $header = $('.module-select-all[data-module="' + module.replace(/"/g, '\\"') + '"]');
-            if (!$header.length) return;
-            if (checkedCount === 0) {
-                $header.prop('checked', false);
-                $header.prop('indeterminate', false);
-            } else if (checkedCount === total) {
-                $header.prop('checked', true);
-                $header.prop('indeterminate', false);
-            } else {
-                $header.prop('checked', false);
-                $header.prop('indeterminate', true);
+        const $form = $('#rolePermsForm');
+        const $matrix = $form.find('.perm-level');
+
+        function idsFrom($el) {
+            const raw = String($el.data('ids') || '').trim();
+            if (!raw) return [];
+            return raw.split(',')
+                .map(function (x) { return parseInt(String(x).trim(), 10); })
+                .filter(function (n) { return n > 0; });
+        }
+
+        function setHidden(ids, on) {
+            ids.forEach(function (id) {
+                $form.find('.perm-id[value="' + id + '"]').prop('checked', !!on);
+            });
+        }
+
+        function anySelected(ids) {
+            for (let i = 0; i < ids.length; i++) {
+                if ($form.find('.perm-id[value="' + ids[i] + '"]').is(':checked')) return true;
+            }
+            return false;
+        }
+
+        function normalizeRow($row) {
+            const $r = $row.find('.perm-level[data-level="read"]').first();
+            const $w = $row.find('.perm-level[data-level="write"]').first();
+            const $d = $row.find('.perm-level[data-level="delete"]').first();
+
+            const readIds = idsFrom($r);
+            const writeIds = idsFrom($w);
+            const deleteIds = idsFrom($d);
+
+            const hasDelete = anySelected(deleteIds);
+            const hasWrite = anySelected(writeIds);
+            const hasRead = anySelected(readIds);
+
+            if (hasDelete) {
+                setHidden(readIds, true);
+                setHidden(writeIds, true);
+                setHidden(deleteIds, true);
+            } else if (hasWrite) {
+                setHidden(readIds, true);
+                setHidden(writeIds, true);
+            } else if (!hasRead) {
+                setHidden(writeIds, false);
+                setHidden(deleteIds, false);
             }
         }
 
-        $('.module-select-all').on('change', function () {
-            const mod = $(this).data('module');
-            const on = $(this).is(':checked');
-            $('.perm-checkbox[data-module="' + String(mod).replace(/"/g, '\\"') + '"]').prop('checked', on);
-            updateModuleHeader(mod);
-        });
+        function syncRow($row) {
+            const $r = $row.find('.perm-level[data-level="read"]').first();
+            const $w = $row.find('.perm-level[data-level="write"]').first();
+            const $d = $row.find('.perm-level[data-level="delete"]').first();
 
-        $('.perm-checkbox').on('change', function () {
-            const mod = $(this).data('module');
-            updateModuleHeader(mod);
-        });
+            const readIds = idsFrom($r);
+            const writeIds = idsFrom($w);
+            const deleteIds = idsFrom($d);
 
-        // init
-        $('.module-select-all').each(function () {
-            updateModuleHeader($(this).data('module'));
-        });
+            const hasDelete = anySelected(deleteIds);
+            const hasWrite = anySelected(writeIds) || hasDelete;
+            const hasRead = anySelected(readIds) || hasWrite;
+
+            if ($r.length) $r.prop('checked', hasRead);
+            if ($w.length) $w.prop('checked', hasWrite);
+            if ($d.length) $d.prop('checked', hasDelete);
+        }
+
+        if ($matrix.length) {
+            $form.find('tr[data-page]').each(function () {
+                const $row = $(this);
+                normalizeRow($row);
+                syncRow($row);
+            });
+
+            $form.on('change', '.perm-level', function () {
+                const $cb = $(this);
+                const level = String($cb.data('level') || '').trim();
+                const $row = $cb.closest('tr[data-page]');
+                if (! $row.length) return;
+
+                const readIds = idsFrom($row.find('.perm-level[data-level="read"]').first());
+                const writeIds = idsFrom($row.find('.perm-level[data-level="write"]').first());
+                const deleteIds = idsFrom($row.find('.perm-level[data-level="delete"]').first());
+
+                const checked = $cb.is(':checked');
+
+                if (level === 'read') {
+                    setHidden(readIds, checked);
+                    if (!checked) {
+                        setHidden(writeIds, false);
+                        setHidden(deleteIds, false);
+                    }
+                } else if (level === 'write') {
+                    if (checked) {
+                        setHidden(readIds, true);
+                        setHidden(writeIds, true);
+                    } else {
+                        setHidden(writeIds, false);
+                        setHidden(deleteIds, false);
+                    }
+                } else if (level === 'delete') {
+                    if (checked) {
+                        setHidden(readIds, true);
+                        setHidden(writeIds, true);
+                        setHidden(deleteIds, true);
+                    } else {
+                        setHidden(deleteIds, false);
+                    }
+                }
+
+                syncRow($row);
+            });
+        }
 
         $('#btnSaveRolePerms').on('click', function () {
             const roleId = parseInt(opts.roleId || 0, 10);
@@ -437,14 +676,18 @@
             ajax: { url: base('role-permissions/list'), dataSrc: 'data' },
             order: [[1, 'asc']],
             columns: [
-                { data: null, orderable: false, render: function (d, t, r, meta) {
+                { data: null, orderable: false, className: 'text-center', render: function (d, t, r, meta) {
                     return (meta.row + meta.settings._iDisplayStart + 1);
                 }},
-                { data: 'name', render: function (d) { return d || '-'; } },
-                { data: 'description', render: function (d) { return d || '-'; } },
-                { data: null, orderable: false, className: 'text-end', render: function (row) {
+                { data: 'name', className: 'text-center', render: function (d) { return d || '-'; } },
+                { data: 'description', className: 'text-center', render: function (d) { return d || '-'; } },
+                { data: 'permissions_count', className: 'text-center', render: function (d) {
+                    const n = parseInt(d || 0, 10) || 0;
+                    return '<span class="badge text-bg-secondary">' + n + '</span>';
+                }},
+                { data: null, orderable: false, className: 'text-center', render: function (row) {
                     if (!row || !row.id) return '';
-                    return '<a class="btn btn-sm btn-success" href="' + base('roles/' + row.id + '/permissions') + '">Permissions</a>';
+                    return '<a class="btn btn-sm btn-warning" href="' + base('roles/' + row.id + '/permissions') + '">Edit</a>';
                 }},
             ],
         }));
@@ -1031,6 +1274,12 @@
         }
 
         $('#bi_quantity,#bi_unit_price').on('input', updateAmountPreview);
+
+        // Default to showing Pending items.
+        // Must be set before DataTable's initial AJAX call.
+        if (!$('#filterStatus').val()) {
+            $('#filterStatus').val('Pending');
+        }
 
         const table = $('#dtBillableItems').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: {

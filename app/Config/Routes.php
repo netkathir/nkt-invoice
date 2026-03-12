@@ -19,7 +19,9 @@ $routes->get('admin/logout', 'AuthController::logout');
 $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $routes): void {
     $routes->group('dashboard', static function (RouteCollection $routes): void {
         $routes->get('/', 'DashboardController::index');
-        $routes->get('recent-billable-items', 'DashboardController::recentBillableItems');
+        $routes->get('metrics', 'DashboardController::metrics');
+        $routes->get('pending-list', 'DashboardController::pendingList');
+        $routes->get('recent-billed-list', 'DashboardController::recentBilledList');
     });
 
     // Access Control (Roles & Permissions)
@@ -45,12 +47,6 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
         $routes->get('list', 'PermissionsController::list', ['filter' => 'perm:permissions.view']);
         $routes->post('save', 'PermissionsController::save');
         $routes->post('delete', 'PermissionsController::delete');
-    });
-
-    $routes->group('admin-roles', ['filter' => 'rbac'], static function (RouteCollection $routes): void {
-        $routes->get('/', 'AdminRolesController::index', ['filter' => 'perm:admins.assign_roles']);
-        $routes->get('(:num)', 'AdminRolesController::edit/$1', ['filter' => 'perm:admins.assign_roles']);
-        $routes->post('(:num)', 'AdminRolesController::update/$1', ['filter' => 'perm:admins.assign_roles']);
     });
 
     $routes->group('role-permissions', ['filter' => 'rbac'], static function (RouteCollection $routes): void {

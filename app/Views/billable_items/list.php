@@ -16,9 +16,9 @@
             <div class="col-12 col-md-3">
                 <label class="form-label">Status</label>
                 <select class="form-select" id="filterStatus">
-                    <option value="">All</option>
-                    <option value="Pending">Pending</option>
+                    <option value="Pending" selected>Pending</option>
                     <option value="Billed">Billed</option>
+                    <option value="">All</option>
                 </select>
             </div>
         </div>

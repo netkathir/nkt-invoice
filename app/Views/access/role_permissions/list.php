@@ -10,10 +10,11 @@
         <table id="dtRolePermissions" class="table table-striped table-bordered nowrap w-100">
             <thead>
             <tr>
-                <th>S.No</th>
-                <th>Role Name</th>
-                <th>Description</th>
-                <th class="text-end">Actions</th>
+                <th class="text-center">S.No</th>
+                <th class="text-center">Role Name</th>
+                <th class="text-center">Description</th>
+                <th class="text-center">Permissions</th>
+                <th class="text-center">Actions</th>
             </tr>
             </thead>
         </table>
@@ -27,4 +28,3 @@
     });
 </script>
 <?= $this->endSection() ?>
-

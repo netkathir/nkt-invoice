@@ -2,8 +2,8 @@
     $active = $active ?? '';
     $isActive = static fn (string $key): string => $active === $key ? 'active' : '';
     $mastersOpen = in_array($active, ['client_master'], true);
-    $accessOpen = in_array($active, ['users', 'roles', 'permissions', 'role_permissions', 'admin_roles'], true);
-    $hasAccessMenu = can('users.view') || can('roles.view') || can('permissions.view') || can('roles.assign_perms') || can('admins.assign_roles');
+    $accessOpen = in_array($active, ['users', 'roles', 'permissions', 'role_permissions'], true);
+    $hasAccessMenu = can('users.view') || can('roles.view') || can('permissions.view') || can('roles.assign_perms');
 ?>
 <aside class="app-sidebar">
     <div class="app-panel app-panel--sidebar">
@@ -30,7 +30,7 @@
                 </a>
 
                 <?php if ($hasAccessMenu): ?>
-                    <a class="nav-link nav-parent <?= $accessOpen ? 'active' : '' ?>" data-bs-toggle="collapse" href="#navAccess" role="button" aria-expanded="<?= $accessOpen ? 'true' : 'false' ?>" aria-controls="navAccess" data-bms-title="Access">
+                    <a class="nav-link nav-parent <?= $accessOpen ? 'active' : '' ?>" data-bs-toggle="collapse" href="#navAccess" role="button" aria-expanded="<?= $accessOpen ? 'true' : 'false' ?>" aria-controls="navAccess" data-bms-title="System Admin">
                         <span class="nav-ico" aria-hidden="true">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                 <path d="M12 1l8 4v6c0 5-3.4 9.7-8 11-4.6-1.3-8-6-8-11V5l8-4Z" fill="currentColor" opacity=".25"/>
@@ -38,7 +38,7 @@
                             </svg>
                         </span>
                         <span class="nav-txt d-flex align-items-center justify-content-between w-100">
-                            <span>Access</span>
+                            <span>System Admin</span>
                             <span class="nav-caret" aria-hidden="true">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                                     <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -88,16 +88,6 @@
                                         </svg>
                                     </span>
                                     <span class="nav-txt">Role Permissions</span>
-                                </a>
-                            <?php endif; ?>
-                            <?php if (can('admins.assign_roles')): ?>
-                                <a class="nav-link <?= $isActive('admin_roles') ?>" href="<?= base_url('admin-roles') ?>">
-                                    <span class="nav-ico" aria-hidden="true">
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                                            <path d="M16 11c1.7 0 3-1.3 3-3s-1.3-3-3-3-3 1.3-3 3 1.3 3 3 3Zm-8 0c1.7 0 3-1.3 3-3S9.7 5 8 5 5 6.3 5 8s1.3 3 3 3Zm0 2c-2.7 0-8 1.3-8 4v2h10v-2c0-1.2.5-2.2 1.3-3.1C10.2 13.4 9 13 8 13Zm8 0c-2.2 0-6 1.1-6 3.3V21h12v-4.7C22 14.1 18.2 13 16 13Z" fill="currentColor" opacity=".85"/>
-                                        </svg>
-                                    </span>
-                                    <span class="nav-txt">Admin Roles</span>
                                 </a>
                             <?php endif; ?>
                         </div>

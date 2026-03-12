@@ -31,6 +31,12 @@ class ClientMasterController extends BaseController
             'contact_person' => trim((string) $this->request->getPost('contact_person')),
             'email'          => trim((string) $this->request->getPost('email')),
             'phone'          => trim((string) $this->request->getPost('phone')),
+            'address'        => trim((string) $this->request->getPost('address')),
+            'billing_address'=> trim((string) $this->request->getPost('billing_address')),
+            'city'           => trim((string) $this->request->getPost('city')),
+            'state'          => trim((string) $this->request->getPost('state')),
+            'country'        => trim((string) $this->request->getPost('country')),
+            'postal_code'    => trim((string) $this->request->getPost('postal_code')),
         ];
 
         if ($id > 0) {

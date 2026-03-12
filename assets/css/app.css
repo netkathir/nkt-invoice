@@ -219,6 +219,19 @@ table.dataTable td{
     vertical-align: middle;
 }
 
+/* Center all table column headers across the application */
+table thead th,
+table thead td{
+    text-align: center !important;
+    vertical-align: middle;
+}
+
+/* Center all table body cell contents across the application */
+table tbody td{
+    text-align: center !important;
+    vertical-align: middle;
+}
+
 .table td ul,
 .table td ol{
     margin-bottom: 0;

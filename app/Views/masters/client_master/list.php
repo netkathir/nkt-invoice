@@ -12,10 +12,10 @@
             <thead>
             <tr>
                 <th>Company Name</th>
-                <th>Contact Person</th>
                 <th>Email</th>
-                <th>Phone</th>
-                <th>Created Date</th>
+                <th>Address</th>
+                <th>City</th>
+                <th>Country</th>
                 <th>Actions</th>
             </tr>
             </thead>

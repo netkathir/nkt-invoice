@@ -48,6 +48,7 @@ Vagrantfile
 app/Config/Routes.php
 app/Config/App.php
 app/Views/layout/app.php
+.cpanel.yml
 #-------------------------
 # Temporary Files
 #-------------------------

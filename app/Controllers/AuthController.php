@@ -154,6 +154,14 @@ class AuthController extends BaseController
             ]);
         }
 
+        if (array_key_exists('status', $admin) && (int) ($admin['status'] ?? 1) !== 1) {
+            return view('auth/login', [
+                'title' => 'Admin Login',
+                'error' => 'Your account is inactive. Please contact the Super Admin.',
+                'old'   => ['identifier' => $identifier],
+            ]);
+        }
+
         session()->regenerate(true);
         session()->set([
             'admin_id'       => (int) $admin['id'],

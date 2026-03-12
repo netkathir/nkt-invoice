@@ -2,8 +2,8 @@
     $active = $active ?? '';
     $isActive = static fn (string $key): string => $active === $key ? 'active' : '';
     $mastersOpen = in_array($active, ['client_master'], true);
-    $accessOpen = in_array($active, ['roles', 'permissions', 'admin_roles'], true);
-    $hasAccessMenu = can('roles.view') || can('permissions.view') || can('admins.assign_roles');
+    $accessOpen = in_array($active, ['users', 'roles', 'permissions', 'role_permissions', 'admin_roles'], true);
+    $hasAccessMenu = can('users.view') || can('roles.view') || can('permissions.view') || can('roles.assign_perms') || can('admins.assign_roles');
 ?>
 <aside class="app-sidebar">
     <div class="app-panel app-panel--sidebar">
@@ -48,6 +48,16 @@
                     </a>
                     <div class="collapse <?= $accessOpen ? 'show' : '' ?>" id="navAccess">
                         <div class="nav flex-column nav-pills nav-sub">
+                            <?php if (can('users.view')): ?>
+                                <a class="nav-link <?= $isActive('users') ?>" href="<?= base_url('users') ?>">
+                                    <span class="nav-ico" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" fill="currentColor" opacity=".85"/>
+                                        </svg>
+                                    </span>
+                                    <span class="nav-txt">Users</span>
+                                </a>
+                            <?php endif; ?>
                             <?php if (can('roles.view')): ?>
                                 <a class="nav-link <?= $isActive('roles') ?>" href="<?= base_url('roles') ?>">
                                     <span class="nav-ico" aria-hidden="true">
@@ -67,6 +77,17 @@
                                         </svg>
                                     </span>
                                     <span class="nav-txt">Permissions</span>
+                                </a>
+                            <?php endif; ?>
+                            <?php if (can('roles.assign_perms')): ?>
+                                <a class="nav-link <?= $isActive('role_permissions') ?>" href="<?= base_url('role-permissions') ?>">
+                                    <span class="nav-ico" aria-hidden="true">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                            <path d="M12 1l8 4v6c0 5-3.4 9.7-8 11-4.6-1.3-8-6-8-11V5l8-4Z" fill="currentColor" opacity=".25"/>
+                                            <path d="M10.8 13.5 8.6 11.3l-1.4 1.4 3.6 3.6 6.6-6.6-1.4-1.4-5.2 5.2Z" fill="currentColor" opacity=".85"/>
+                                        </svg>
+                                    </span>
+                                    <span class="nav-txt">Role Permissions</span>
                                 </a>
                             <?php endif; ?>
                             <?php if (can('admins.assign_roles')): ?>

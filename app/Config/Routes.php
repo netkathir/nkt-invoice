@@ -23,7 +23,7 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
     });
 
     // Access Control (Roles & Permissions)
-    $routes->group('roles', static function (RouteCollection $routes): void {
+    $routes->group('roles', ['filter' => 'rbac'], static function (RouteCollection $routes): void {
         $routes->get('/', 'RolesController::index', ['filter' => 'perm:roles.view']);
         $routes->get('list', 'RolesController::list', ['filter' => 'perm:roles.view']);
         $routes->post('save', 'RolesController::save');
@@ -32,17 +32,30 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
         $routes->post('(:num)/permissions', 'RolesController::savePermissions/$1', ['filter' => 'perm:roles.assign_perms']);
     });
 
-    $routes->group('permissions', static function (RouteCollection $routes): void {
+    $routes->group('users', ['filter' => 'rbac'], static function (RouteCollection $routes): void {
+        $routes->get('/', 'UsersController::index', ['filter' => 'perm:users.view']);
+        $routes->get('list', 'UsersController::list', ['filter' => 'perm:users.view']);
+        $routes->get('(:num)', 'UsersController::get/$1', ['filter' => 'perm:users.view']);
+        $routes->post('save', 'UsersController::save');
+        $routes->post('delete', 'UsersController::delete', ['filter' => 'perm:users.delete']);
+    });
+
+    $routes->group('permissions', ['filter' => 'rbac'], static function (RouteCollection $routes): void {
         $routes->get('/', 'PermissionsController::index', ['filter' => 'perm:permissions.view']);
         $routes->get('list', 'PermissionsController::list', ['filter' => 'perm:permissions.view']);
         $routes->post('save', 'PermissionsController::save');
         $routes->post('delete', 'PermissionsController::delete');
     });
 
-    $routes->group('admin-roles', static function (RouteCollection $routes): void {
+    $routes->group('admin-roles', ['filter' => 'rbac'], static function (RouteCollection $routes): void {
         $routes->get('/', 'AdminRolesController::index', ['filter' => 'perm:admins.assign_roles']);
         $routes->get('(:num)', 'AdminRolesController::edit/$1', ['filter' => 'perm:admins.assign_roles']);
         $routes->post('(:num)', 'AdminRolesController::update/$1', ['filter' => 'perm:admins.assign_roles']);
+    });
+
+    $routes->group('role-permissions', ['filter' => 'rbac'], static function (RouteCollection $routes): void {
+        $routes->get('/', 'RolePermissionsController::index', ['filter' => 'perm:roles.assign_perms']);
+        $routes->get('list', 'RolePermissionsController::list', ['filter' => 'perm:roles.assign_perms']);
     });
 
     $routes->group('masters', static function (RouteCollection $routes): void {

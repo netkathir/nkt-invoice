@@ -2,22 +2,26 @@
 
 <?= $this->section('content') ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h4 class="mb-0">Permissions (Forms)</h4>
-    <?php if (can('permissions.create')): ?>
-        <button class="btn btn-primary" id="btnAddPermission" type="button">
+    <h4 class="mb-0">Users</h4>
+    <?php if (! empty($canCreate)): ?>
+        <button class="btn btn-primary" id="btnAddUser" type="button">
             <span class="me-1" aria-hidden="true">+</span>
-            Add Form
+            Add New User
         </button>
     <?php endif; ?>
 </div>
 
 <div class="card">
     <div class="card-body">
-        <table id="dtPermissions" class="table table-striped table-bordered nowrap w-100">
+        <table id="dtUsers" class="table table-striped table-bordered nowrap w-100">
             <thead>
             <tr>
                 <th>S.No</th>
-                <th>Form Name</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Mobile</th>
+                <th>Role</th>
+                <th>Status</th>
                 <th class="text-end">Actions</th>
             </tr>
             </thead>
@@ -28,16 +32,16 @@
 <script>
     window.addEventListener('DOMContentLoaded', function () {
         window.BMS = window.BMS || {};
-        window.BMS.initPermissions && window.BMS.initPermissions({
-            canCreate: <?= can('permissions.create') ? 'true' : 'false' ?>,
-            canEdit: <?= can('permissions.edit') ? 'true' : 'false' ?>,
-            canDelete: <?= can('permissions.delete') ? 'true' : 'false' ?>,
+        window.BMS.initUsers && window.BMS.initUsers({
+            canCreate: <?= ! empty($canCreate) ? 'true' : 'false' ?>,
+            canEdit: <?= ! empty($canEdit) ? 'true' : 'false' ?>,
+            canDelete: <?= ! empty($canDelete) ? 'true' : 'false' ?>,
         });
     });
 </script>
 <?= $this->endSection() ?>
 
 <?= $this->section('modals') ?>
-<?= $this->include('access/permissions/form') ?>
+<?= $this->include('access/users/form') ?>
 <?= $this->endSection() ?>
 

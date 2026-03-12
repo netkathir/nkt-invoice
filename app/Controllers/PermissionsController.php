@@ -31,10 +31,28 @@ class PermissionsController extends BaseController
             return $this->response->setStatusCode(403)->setJSON(['success' => false, 'message' => 'Forbidden']);
         }
 
-        $rows = db_connect()
+        $authz = $this->authz();
+        $adminId = $authz->currentAdminId();
+
+        $b = db_connect()
             ->table('permissions p')
-            ->select('p.id, p.key, p.label, p.module, p.description, p.created_at')
-            ->select('(SELECT COUNT(*) FROM role_permissions rp WHERE rp.permission_id = p.id) AS roles_count', false)
+            ->select('p.id, p.key, p.label, p.module, p.description, p.created_at');
+
+        // "Forms" listing: show only actual app modules/forms (exclude Access/RBAC items and blank modules).
+        // Expected rows are created with a meaningful `module` like "Client Master", "Billable Items", etc.
+        $b->where("p.key NOT LIKE '%.%'", null, false);
+        $b->where("p.module IS NOT NULL", null, false);
+        $b->where("TRIM(p.module) <> ''", null, false);
+        $b->where("p.module <> 'Access'", null, false);
+
+        if (! $authz->isSuperAdmin($adminId) && $adminId > 0) {
+            $b->join('role_permissions rp', 'rp.permission_id = p.id', 'inner')
+                ->join('admin_roles ar', 'ar.role_id = rp.role_id', 'inner')
+                ->where('ar.admin_id', $adminId)
+                ->groupBy('p.id');
+        }
+
+        $rows = $b
             ->orderBy('p.module', 'ASC')
             ->orderBy('p.key', 'ASC')
             ->get()
@@ -138,4 +156,3 @@ class PermissionsController extends BaseController
         }
     }
 }
-

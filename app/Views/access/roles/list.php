@@ -14,19 +14,13 @@
         <table id="dtRoles" class="table table-striped table-bordered nowrap w-100">
             <thead>
             <tr>
+                <th>S.No</th>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Type</th>
-                <th>Admins</th>
-                <th>Permissions</th>
-                <th>Created</th>
-                <th>Actions</th>
+                <th class="text-end">Actions</th>
             </tr>
             </thead>
         </table>
-        <div class="small text-muted mt-2">
-            Super Admin always has full access. Other admins get access via assigned roles/permissions.
-        </div>
     </div>
 </div>
 

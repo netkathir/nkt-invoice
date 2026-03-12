@@ -14,6 +14,131 @@ class RolesController extends BaseController
         return new Authz(db_connect(), service('session'));
     }
 
+    /**
+     * Ensure all permission keys referenced by ModuleRegistry::$permissionMatrix
+     * exist in the database (idempotent). This prevents "Not seeded" rows on
+     * Role Permissions page when migrations haven't been run on a target server.
+     *
+     * @param array<string, array<string, array{read?:list<string>,write?:list<string>,delete?:list<string>}>> $spec
+     */
+    private function ensurePermissionMatrixSeeded(array $spec): void
+    {
+        $db = db_connect();
+        if (! $db->tableExists('permissions')) {
+            return;
+        }
+
+        $metaByKey = [];
+        foreach ($spec as $module => $pages) {
+            foreach ($pages as $label => $levels) {
+                foreach (['read', 'write', 'delete'] as $lvl) {
+                    foreach ((array) ($levels[$lvl] ?? []) as $k) {
+                        $k = trim((string) $k);
+                        if ($k === '' || ! str_contains($k, '.')) {
+                            continue;
+                        }
+                        if (! isset($metaByKey[$k])) {
+                            $metaByKey[$k] = [
+                                'key'    => $k,
+                                'label'  => (string) $label,
+                                'module' => (string) $module,
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        if ($metaByKey === []) {
+            return;
+        }
+
+        try {
+            $keys = array_keys($metaByKey);
+            $existingRows = $db->table('permissions')
+                ->select(['id', 'key'])
+                ->whereIn('key', $keys)
+                ->get()
+                ->getResultArray();
+
+            $existingKeys = [];
+            foreach ($existingRows as $r) {
+                $ek = (string) ($r['key'] ?? '');
+                if ($ek !== '') {
+                    $existingKeys[$ek] = true;
+                }
+            }
+
+            $now = date('Y-m-d H:i:s');
+            $toInsert = [];
+            foreach ($metaByKey as $k => $meta) {
+                if (isset($existingKeys[$k])) {
+                    continue;
+                }
+                $toInsert[] = [
+                    'key'         => $meta['key'],
+                    'label'       => $meta['label'],
+                    'module'      => $meta['module'],
+                    'description' => null,
+                    'created_at'  => $now,
+                    'updated_at'  => $now,
+                ];
+            }
+
+            if ($toInsert !== []) {
+                $db->table('permissions')->insertBatch($toInsert);
+            }
+
+            // Best-effort: ensure Super Admin has all matrix permissions.
+            if ($db->tableExists('roles') && $db->tableExists('role_permissions')) {
+                $super = $db->table('roles')->select('id')->where('name', 'Super Admin')->get()->getRowArray();
+                $superRoleId = (int) ($super['id'] ?? 0);
+                if ($superRoleId > 0) {
+                    $permRows = $db->table('permissions')
+                        ->select('id')
+                        ->whereIn('key', $keys)
+                        ->get()
+                        ->getResultArray();
+                    $permIds = array_values(array_unique(array_filter(array_map(
+                        static fn ($row) => (int) ($row['id'] ?? 0),
+                        $permRows
+                    ))));
+
+                    if ($permIds !== []) {
+                        $assignedRows = $db->table('role_permissions')
+                            ->select('permission_id')
+                            ->where('role_id', $superRoleId)
+                            ->whereIn('permission_id', $permIds)
+                            ->get()
+                            ->getResultArray();
+
+                        $assigned = [];
+                        foreach ($assignedRows as $ar) {
+                            $pid = (int) ($ar['permission_id'] ?? 0);
+                            if ($pid > 0) {
+                                $assigned[$pid] = true;
+                            }
+                        }
+
+                        $rpInsert = [];
+                        foreach ($permIds as $pid) {
+                            if (isset($assigned[$pid])) {
+                                continue;
+                            }
+                            $rpInsert[] = ['role_id' => $superRoleId, 'permission_id' => $pid];
+                        }
+                        if ($rpInsert !== []) {
+                            $db->table('role_permissions')->insertBatch($rpInsert);
+                        }
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            // Ignore and let the UI show "Not seeded" warning if the DB can't be written.
+            return;
+        }
+    }
+
     public function index()
     {
         if ($resp = $this->authz()->require('roles.view')) {
@@ -181,9 +306,6 @@ class RolesController extends BaseController
 
         $rolesList = $roleModel->orderBy('is_super', 'DESC')->orderBy('name', 'ASC')->findAll();
 
-        $permModel = new PermissionModel();
-        $perms = $permModel->orderBy('module', 'ASC')->orderBy('label', 'ASC')->findAll();
-
         $selected = [];
         $rows = db_connect()->table('role_permissions')->select('permission_id')->where('role_id', $roleId)->get()->getResultArray();
         foreach ($rows as $r) {
@@ -195,6 +317,15 @@ class RolesController extends BaseController
         $spec = is_object($registry) && property_exists($registry, 'permissionMatrix')
             ? (array) $registry->permissionMatrix
             : [];
+
+        // Prevent "Not seeded" warnings when new permission keys were deployed
+        // but migrations were not re-run on the server.
+        if ($spec !== []) {
+            $this->ensurePermissionMatrixSeeded($spec);
+        }
+
+        $permModel = new PermissionModel();
+        $perms = $permModel->orderBy('module', 'ASC')->orderBy('label', 'ASC')->findAll();
 
         $idByKey = [];
         foreach ($perms as $p) {

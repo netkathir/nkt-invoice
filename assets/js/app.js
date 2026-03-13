@@ -73,6 +73,73 @@
         return dd + ' ' + mon + ' ' + yyyy;
     }
 
+    function descriptionPlainText(value) {
+        const raw = String(value || '');
+        if (!raw) return '';
+
+        // If it looks like HTML with list items, extract li text.
+        if (raw.indexOf('<') !== -1 && /<li[\s>]/i.test(raw)) {
+            try {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = raw;
+                const lis = tmp.querySelectorAll('li');
+                if (lis && lis.length) {
+                    const parts = [];
+                    lis.forEach(function (li) {
+                        const t = String(li.innerText || li.textContent || '').trim();
+                        if (t) parts.push(t);
+                    });
+                    return parts.join(' ');
+                }
+            } catch (e) {}
+        }
+
+        return raw
+            .replace(/<[^>]*>/g, ' ')
+            .replace(/\u00A0/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function renderTruncatedDescription(value, type, maxChars) {
+        const full = descriptionPlainText(value);
+        if (type === 'sort' || type === 'type' || type === 'filter') return full;
+        if (!full) return '-';
+
+        const limit = parseInt(maxChars || 20, 10) || 20;
+        const shown = full.length > limit ? (full.slice(0, limit) + '...') : full;
+        const safe = function (s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        // Use native browser tooltip via `title` (works without extra JS init).
+        return '<span title="' + safe(full) + '">' + safe(shown) + '</span>';
+    }
+
+    function renderTruncatedDescriptionBullets(value, type, maxChars) {
+        const full = descriptionPlainText(value);
+        if (type === 'sort' || type === 'type' || type === 'filter') return full;
+        if (!full) return '-';
+
+        const limit = parseInt(maxChars || 20, 10) || 20;
+        const shown = full.length > limit ? (full.slice(0, limit) + '...') : full;
+        const safe = function (s) {
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        };
+
+        return '<ul class="mb-0"><li><span title="' + safe(full) + '">' + safe(shown) + '</span></li></ul>';
+    }
+
     function renderBulletText(value, type) {
         const raw = String(value || '');
         if (type === 'sort' || type === 'type') return raw;
@@ -1389,7 +1456,7 @@
                 { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
                 { data: 'entry_date', render: formatUiDate },
                 { data: 'client_name' },
-                { data: 'description', orderable: false, render: renderBulletText },
+                { data: 'description', orderable: false, render: function (d, t) { return renderTruncatedDescriptionBullets(d, t, 20); } },
                 { data: 'billing_month', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: 'amount', className: 'text-end' },
                 { data: 'status', orderable: false, render: function (d, t, row) {

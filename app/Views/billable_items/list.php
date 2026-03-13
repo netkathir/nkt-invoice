@@ -55,4 +55,5 @@
 
 <?= $this->section('modals') ?>
 <?= $this->include('billable_items/form') ?>
+<?= $this->include('billable_items/view_modal') ?>
 <?= $this->endSection() ?>

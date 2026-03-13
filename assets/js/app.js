@@ -73,6 +73,34 @@
         return dd + ' ' + mon + ' ' + yyyy;
     }
 
+    function iconSvg(name) {
+        const n = String(name || '');
+        if (n === 'view') {
+            return '' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>';
+        }
+        if (n === 'edit') {
+            return '' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                '<path d="M12 20h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>';
+        }
+        if (n === 'delete') {
+            return '' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                '<path d="M3 6h18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M8 6V4h8v2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M19 6l-1 14H6L5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>';
+        }
+        return '';
+    }
+
     function descriptionPlainText(value) {
         const raw = String(value || '');
         if (!raw) return '';
@@ -122,12 +150,14 @@
     }
 
     function renderTruncatedDescriptionBullets(value, type, maxChars) {
-        const full = descriptionPlainText(value);
-        if (type === 'sort' || type === 'type' || type === 'filter') return full;
-        if (!full) return '-';
+        const raw = String(value || '');
+        const limit = parseInt(maxChars || 30, 10) || 30;
 
-        const limit = parseInt(maxChars || 20, 10) || 20;
-        const shown = full.length > limit ? (full.slice(0, limit) + '...') : full;
+        // For DataTables search/sort, return full plain text.
+        if (type === 'sort' || type === 'type' || type === 'filter') {
+            return descriptionPlainText(raw);
+        }
+
         const safe = function (s) {
             return String(s)
                 .replace(/&/g, '&amp;')
@@ -137,7 +167,44 @@
                 .replace(/'/g, '&#39;');
         };
 
-        return '<ul class="mb-0"><li><span title="' + safe(full) + '">' + safe(shown) + '</span></li></ul>';
+        // Split into bullet lines.
+        let lines = [];
+        if (raw.indexOf('<') !== -1 && /<li[\s>]/i.test(raw)) {
+            try {
+                const tmp = document.createElement('div');
+                tmp.innerHTML = raw;
+                const lis = tmp.querySelectorAll('li');
+                if (lis && lis.length) {
+                    lis.forEach(function (li) {
+                        const t = String(li.innerText || li.textContent || '').trim();
+                        if (t) lines.push(t);
+                    });
+                }
+            } catch (e) {}
+        }
+        if (!lines.length) {
+            lines = raw.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l !== ''; });
+        }
+        if (!lines.length) return '-';
+
+        const full = lines.join('\n');
+        const hasMore = lines.length > 2;
+        const shownLines = lines.slice(0, 2).map(function (l) {
+            let out = l;
+            if (out.length > limit) {
+                out = out.slice(0, limit) + '...';
+            }
+            if (hasMore && !out.endsWith('...')) {
+                out = out + '...';
+            }
+            return out;
+        });
+
+        const lisHtml = shownLines.map(function (l) {
+            return '<li>' + safe(l) + '</li>';
+        }).join('');
+
+        return '<ul class="mb-0" title="' + safe(full) + '">' + lisHtml + '</ul>';
     }
 
     function renderBulletText(value, type) {
@@ -1146,6 +1213,8 @@
 
     BMS.initBillableItems = function () {
         const $modal = new bootstrap.Modal(document.getElementById('billableModal'));
+        const viewModalEl = document.getElementById('billableViewModal');
+        const $viewModal = viewModalEl ? new bootstrap.Modal(viewModalEl) : null;
         const hasTiny = typeof window.tinymce !== 'undefined' && document.getElementById('bi_description');
         const editorId = 'bi_description';
         let pendingDescriptionHtml = null;
@@ -1199,7 +1268,7 @@
                 .filter(function (l) { return l !== ''; });
 
             if (lines.length === 0) {
-                return '<ul><li></li></ul>';
+                return '<ul><li><br></li></ul>';
             }
 
             return '<ul>' + lines.map(function (l) { return '<li>' + escapeHtml(l) + '</li>'; }).join('') + '</ul>';
@@ -1219,7 +1288,7 @@
                 }
 
                 if (!text) {
-                    editor.setContent('<ul><li></li></ul>');
+                    editor.setContent('<ul><li><br></li></ul>');
                     const li = editor.getBody().querySelector('li');
                     if (li) {
                         editor.selection.select(li, true);
@@ -1456,7 +1525,7 @@
                 { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
                 { data: 'entry_date', render: formatUiDate },
                 { data: 'client_name' },
-                { data: 'description', orderable: false, render: function (d, t) { return renderTruncatedDescriptionBullets(d, t, 20); } },
+                { data: 'description', orderable: false, render: function (d, t) { return renderTruncatedDescriptionBullets(d, t, 30); } },
                 { data: 'billing_month', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: 'amount', className: 'text-end' },
                 { data: 'status', orderable: false, render: function (d, t, row) {
@@ -1465,9 +1534,13 @@
                 { data: null, orderable: false, render: function (row) {
                     const billedDisabled = row.status !== 'Pending' ? 'disabled' : '';
                     return '' +
-                        '<button class=\"btn btn-sm btn-outline-primary me-1 btn-edit\" type=\"button\">Edit</button>' +
-                        '<button class=\"btn btn-sm btn-outline-danger me-1 btn-del\" type=\"button\">Delete</button>' +
-                        '<button class=\"btn btn-sm btn-outline-success btn-billed\" type=\"button\" ' + billedDisabled + '>Mark as Billed</button>';
+                        '<div class="d-flex align-items-center gap-1 flex-wrap">' +
+                            '<div class="btn-group" role="group" aria-label="Actions">' +
+                                '<button class="btn btn-sm btn-outline-primary btn-edit" type="button" title="Edit" aria-label="Edit">' + iconSvg('edit') + '</button>' +
+                                '<button class="btn btn-sm btn-outline-danger btn-del" type="button" title="Delete" aria-label="Delete">' + iconSvg('delete') + '</button>' +
+                            '</div>' +
+                            '<button class="btn btn-sm btn-outline-success btn-billed" type="button" ' + billedDisabled + '>Mark as Billed</button>' +
+                        '</div>';
                 }},
             ],
         }));
@@ -1491,7 +1564,7 @@
                 $('#bi_billing_month').val(v);
             })();
             $('#bi_status').val('Pending');
-            setDescriptionHtml('<ul><li></li></ul>');
+            setDescriptionHtml('<ul><li><br></li></ul>');
             setDescriptionValidity(true);
             clearBillableErrors();
             updateAmountPreview();
@@ -1513,6 +1586,32 @@
             clearBillableErrors();
             updateAmountPreview();
             $modal.show();
+        }
+
+        function openView(row) {
+            if (! $viewModal) return;
+            row = row || {};
+
+            const entryNo = row.entry_no || ('BI-' + String(row.id || '').padStart(5, '0'));
+            $('#bi_view_entry_no').text(entryNo || '-');
+            $('#bi_view_date').text(formatUiDate(row.entry_date, 'display'));
+            $('#bi_view_client').text(String(row.client_name || '').trim() || '-');
+            $('#bi_view_month').text(String(row.billing_month || '').trim() || '-');
+            $('#bi_view_amount').text(String(row.amount || '').trim() || '-');
+            $('#bi_view_status').text(String(row.status || '').trim() || '-');
+
+            const desc = String(row.description || '').trim();
+            if (!desc) {
+                $('#bi_view_description').html('<div class="text-muted">-</div>');
+            } else {
+                const lines = desc.split(/\r?\n/)
+                    .map(function (l) { return String(l || '').trim(); })
+                    .filter(function (l) { return l !== ''; });
+                const html = '<ul class="mb-0">' + lines.map(function (l) { return '<li>' + escapeHtml(l) + '</li>'; }).join('') + '</ul>';
+                $('#bi_view_description').html(html);
+            }
+
+            $viewModal.show();
         }
 
         $('#btnAddBillable').on('click', openAdd);
@@ -1538,7 +1637,7 @@
             const payloadArr = $('#billableForm').serializeArray();
             const ed = getTinyEditor();
             if (ed) enforceBulletOnly(ed);
-            const descHtml = getDescriptionHtml() || '<ul><li></li></ul>';
+            const descHtml = getDescriptionHtml() || '<ul><li><br></li></ul>';
             for (let i = payloadArr.length - 1; i >= 0; i--) {
                 if (payloadArr[i] && payloadArr[i].name === 'description') {
                     payloadArr.splice(i, 1);
@@ -1583,6 +1682,18 @@
         $('#dtBillableItems tbody').on('click', 'button.btn-edit', function () {
             const row = table.row($(this).closest('tr')).data();
             openEdit(row);
+        });
+
+        // Row click -> View
+        $('#dtBillableItems tbody').on('click', 'tr', function (e) {
+            if ($(e.target).closest('button,a,input,select,textarea,label').length) return;
+            let $tr = $(this);
+            if ($tr.hasClass('child')) {
+                $tr = $tr.prev('.parent');
+            }
+            const row = table.row($tr).data();
+            if (!row) return;
+            openView(row);
         });
 
         $('#dtBillableItems tbody').on('click', 'button.btn-del', function () {

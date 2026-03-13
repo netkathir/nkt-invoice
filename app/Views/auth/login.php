@@ -55,9 +55,6 @@
                     <div class="text-center mt-3">
                         <a class="text-decoration-none" href="<?= base_url('admin/forgot-password') ?>">Forgot Password?</a>
                     </div>
-                    <div class="text-center mt-3">
-                        <a class="text-decoration-none" href="<?= base_url('/') ?>">Back to Home</a>
-                    </div>
                 </form>
             </div>
         </div>

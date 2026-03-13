@@ -59,7 +59,7 @@ CREATE TABLE `billable_items` (
   `quantity` decimal(10,2) NOT NULL DEFAULT '1.00',
   `unit_price` decimal(12,2) NOT NULL DEFAULT '0.00',
   `amount` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `billing_month` char(7) DEFAULT NULL,
+  `billing_month` varchar(8) DEFAULT NULL,
   `proforma_id` int(10) unsigned DEFAULT NULL,
   `invoice_id` int(10) unsigned DEFAULT NULL,
   `status` varchar(30) NOT NULL DEFAULT 'Pending',
@@ -112,6 +112,8 @@ CREATE TABLE `admins` (
   `email` varchar(191) NOT NULL,
   `username` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL,
+  `mobile` varchar(20) DEFAULT NULL,
+  `status` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -160,4 +162,21 @@ CREATE TABLE `admin_roles` (
   KEY `admin_roles_role_id` (`role_id`),
   CONSTRAINT `fk_admin_roles_admin` FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT `fk_admin_roles_role` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Password reset tokens (staff/users; excludes Super Admin)
+CREATE TABLE `password_reset_tokens` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `admin_id` int(10) unsigned NOT NULL,
+  `token_hash` varchar(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `request_ip` varchar(45) DEFAULT NULL,
+  `user_agent` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `password_reset_tokens_token_hash_unique` (`token_hash`),
+  KEY `password_reset_tokens_admin_id` (`admin_id`),
+  KEY `password_reset_tokens_expires_at` (`expires_at`),
+  CONSTRAINT `fk_password_reset_tokens_admin` FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -73,6 +73,89 @@
         return dd + ' ' + mon + ' ' + yyyy;
     }
 
+    // Date helpers (ISO <-> DD/MM/YYYY)
+    function isoToDmy(iso) {
+        const raw = String(iso || '').trim().slice(0, 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+        if (!m) return '';
+        return m[3] + '/' + m[2] + '/' + m[1];
+    }
+
+    function dmyToIso(dmy) {
+        const raw = String(dmy || '').trim();
+        if (!raw) return '';
+        const m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/.exec(raw);
+        if (!m) return '';
+        const dd = String(m[1]).padStart(2, '0');
+        const mm = String(m[2]).padStart(2, '0');
+        const yyyy = m[3];
+        const d = parseInt(dd, 10), mo = parseInt(mm, 10);
+        if (mo < 1 || mo > 12 || d < 1 || d > 31) return '';
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
+    function formatUiDateDmy(value, type) {
+        const raw = String(value || '').trim();
+        if (!raw) return type === 'display' ? '-' : '';
+        if (type === 'display') return isoToDmy(raw) || raw;
+        return raw;
+    }
+
+    // Attach native calendar to a text input (DD/MM/YYYY) using a hidden <input type="date">
+    function attachNativeCalendar(textEl, nativeEl, onIsoChange) {
+        const $txt = $(textEl);
+        const $nat = $(nativeEl);
+        if (!$txt.length || !$nat.length) return;
+
+        function openPicker() {
+            const el = $nat.get(0);
+            if (!el) return;
+            try {
+                if (typeof el.showPicker === 'function') {
+                    el.showPicker();
+                } else {
+                    el.focus();
+                    el.click();
+                }
+            } catch (e) {
+                try { el.focus(); } catch (_e) {}
+            }
+        }
+
+        function applyIso(iso) {
+            const v = String(iso || '').trim().slice(0, 10);
+            $nat.val(v);
+            $txt.val(v ? isoToDmy(v) : '');
+            onIsoChange && onIsoChange(v);
+        }
+
+        const $btn = $txt.closest('.bms-date-wrap').find('.bms-date-btn');
+        if ($btn.length) {
+            $btn.off('click.bmsDate').on('click.bmsDate', function (e) {
+                e.preventDefault();
+                openPicker();
+            });
+        }
+
+        $nat.off('change.bmsDate').on('change.bmsDate', function () {
+            applyIso($nat.val());
+        });
+
+        $txt.off('input.bmsDate blur.bmsDate').on('input.bmsDate blur.bmsDate', function () {
+            const iso = dmyToIso($txt.val());
+            if (iso) {
+                $nat.val(iso);
+                onIsoChange && onIsoChange(iso);
+            } else {
+                onIsoChange && onIsoChange('');
+            }
+        });
+
+        if ($nat.val()) {
+            $txt.val(isoToDmy($nat.val()));
+        }
+    }
+
     function iconSvg(name) {
         const n = String(name || '');
         if (n === 'view') {
@@ -347,7 +430,7 @@
                 { data: null, orderable: false, className: 'text-center', render: function (row) {
                     if (!row || !row.client_id) return '';
                     const href = base('billable-items?client_id=' + row.client_id + '&month=' + encodeURIComponent(currentMonth) + '&status=all');
-                    return '<a class="btn btn-sm btn-outline-primary" href="' + href + '">View Items</a>';
+                    return '<a class="btn btn-sm btn-outline-primary" href="' + href + '">View</a>';
                 }},
             ],
         }));
@@ -1766,57 +1849,240 @@
     };
 
     BMS.initProformas = function () {
-        const table = $('#dtProformas').DataTable($.extend(true, {}, dtDefaults(), {
+        const $tableEl = $('#dtProformas');
+        if (! $tableEl.length) return;
+
+        const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
             ajax: { url: base('proforma/list'), dataSrc: 'data' },
-            order: [[0, 'desc']],
+            order: [[4, 'desc']],
             columns: [
+                { data: null, orderable: false, className: 'text-center', render: function (row) {
+                    return '<input class="form-check-input pf-row-check" type="checkbox" value="' + (row && row.id ? row.id : '') + '">';
+                }},
+                { data: null, orderable: false, render: function (_d, _t, _r, meta) {
+                    return (meta.row + meta.settings._iDisplayStart + 1);
+                }},
                 { data: 'proforma_number' },
-                { data: 'proforma_date', render: formatUiDate },
-                { data: 'client_name' },
-                { data: 'total_amount', className: 'text-end' },
-                { data: 'status', orderable: false, render: function (d, t, row) {
-                    return statusSelectHtml('proforma_invoices', row.id, d || 'Draft', ['Draft', 'Posted']);
-                }},
-                { data: null, orderable: false, render: function (row) {
-                    return actionGroup(
-                        actionLink('view', 'btn-outline-secondary', 'View', base('proforma/show/' + row.id)) +
-                        actionLink('edit', 'btn-outline-primary', 'Edit', base('proforma/edit/' + row.id)) +
-                        '<button class="btn btn-sm btn-outline-danger bms-action-btn btn-pf-del" type="button" title="Delete" aria-label="Delete">' + iconSvg('delete') + '</button>'
-                    );
-                }},
+                { data: 'invoice_type', orderable: false, render: function (d) { return d || 'GST Invoice'; } },
+                { data: 'proforma_date', render: formatUiDateDmy },
+                { data: 'billing_to', render: formatUiDateDmy },
+                { data: null, render: function (_d, _t, row) { return (row && (row.customer_name || row.contact_person || row.client_name)) ? (row.customer_name || row.contact_person || row.client_name) : '-'; } },
+                { data: null, render: function (_d, _t, row) { return (row && (row.company_name || row.client_name)) ? (row.company_name || row.client_name) : '-'; } },
+                { data: null, className: 'text-end', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
+            ],
+            columnDefs: [
+                { targets: [0, 1], searchable: false },
             ],
         }));
 
-        $('#dtProformas tbody').on('click', 'button.btn-pf-del', function () {
-            const row = table.row($(this).closest('tr')).data();
-            if (!row || !row.id) return;
-            if (!confirm('Delete this proforma invoice?')) return;
-            postJson('proforma/delete', { id: row.id })
-                .done(function (res) { notify(res.message || 'Deleted.', 'success'); table.ajax.reload(null, false); })
-                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger'); });
+        function selectedId() {
+            const $checked = $tableEl.find('tbody input.pf-row-check:checked').first();
+            return parseInt($checked.val() || '0', 10) || 0;
+        }
+
+        function setToolbarState() {
+            const id = selectedId();
+            $('#pfBtnEdit').prop('disabled', !id);
+            $('#pfBtnDelete').prop('disabled', !id);
+            $('#pfBtnView').prop('disabled', !id);
+            $('#pfBtnPdf').prop('disabled', !id);
+        }
+
+        function clearFilters() {
+            $tableEl.find('thead input.pf-col-filter').val('');
+            $('#pf_issue_native').val('');
+            $('#pf_due_native').val('');
+            table.search('');
+            table.columns().search('');
+            table.draw();
+        }
+
+        // Column filters (second header row)
+        $tableEl.find('thead').on('input change', 'input.pf-col-filter', function () {
+            const col = parseInt($(this).data('col') || '0', 10) || 0;
+            const raw = String($(this).val() || '');
+            const iso = $(this).hasClass('pf-col-filter-dmy') ? dmyToIso(raw) : '';
+            table.column(col).search(iso || raw).draw();
         });
+
+        // Native calendar for issue/due filters
+        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"4\"]'), '#pf_issue_native', function (iso) {
+            table.column(4).search(iso || '').draw();
+        });
+        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"5\"]'), '#pf_due_native', function (iso) {
+            table.column(5).search(iso || '').draw();
+        });
+
+        // Single-select checkboxes
+        $tableEl.on('change', 'tbody input.pf-row-check', function () {
+            if (this.checked) {
+                $tableEl.find('tbody input.pf-row-check').not(this).prop('checked', false);
+            }
+            setToolbarState();
+        });
+
+        // Row click toggles selection (ignore input/select/a/button)
+        $tableEl.on('click', 'tbody tr', function (e) {
+            if ($(e.target).closest('button,a,input,select,textarea,label').length) return;
+            let $tr = $(this);
+            if ($tr.hasClass('child')) {
+                $tr = $tr.prev('.parent');
+            }
+            const $chk = $tr.find('input.pf-row-check');
+            if (! $chk.length) return;
+            $chk.prop('checked', true).trigger('change');
+        });
+
+        // Clear button resets filters + selection
+        $('#pfBtnClear').on('click', function () {
+            $tableEl.find('tbody input.pf-row-check').prop('checked', false);
+            clearFilters();
+            setToolbarState();
+        });
+
+        // Toolbar actions
+        $('#pfBtnSearch').on('click', function () {
+            const $global = $('.dataTables_wrapper .dataTables_filter input').first();
+            if ($global.length) {
+                $global.trigger('focus');
+            }
+        });
+
+        $('#pfBtnPrint').on('click', function () {
+            window.print();
+        });
+
+        $('#pfBtnView').on('click', function () {
+            const id = selectedId();
+            if (!id) return;
+            window.location.href = base('proforma/show/' + id);
+        });
+
+        $('#pfBtnEdit').on('click', function () {
+            const id = selectedId();
+            if (!id) return;
+            window.location.href = base('proforma/edit/' + id);
+        });
+
+        $('#pfBtnPdf').on('click', function () {
+            const id = selectedId();
+            if (!id) return;
+            // Simple default behavior: open View page; user can Print -> Save as PDF.
+            window.open(base('proforma/show/' + id), '_blank');
+        });
+
+        $('#pfBtnDelete').on('click', function () {
+            const id = selectedId();
+            if (!id) return;
+            if (!confirm('Delete this invoice?')) return;
+            postJson('proforma/delete', { id: id })
+                .done(function (res) {
+                notify(res.message || 'Deleted.', 'success');
+                table.ajax.reload(null, false);
+                $tableEl.find('tbody input.pf-row-check').prop('checked', false);
+                setToolbarState();
+            })
+            .fail(function (xhr) {
+                notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger');
+            });
+        });
+
+        // Reset selection state on reload
+        table.on('draw', function () {
+            $tableEl.find('tbody input.pf-row-check').prop('checked', false);
+            setToolbarState();
+        });
+
+        setToolbarState();
     };
 
     BMS.initProformaCreate = function () {
         let table = null;
+        const selected = new Map(); // billable_item_id -> amount
+
+        function parseMoney(v) {
+            const n = parseFloat(String(v || '').replace(/,/g, ''));
+            return isFinite(n) ? n : 0;
+        }
+
+        function setMoney($el, value) {
+            if (!($el && $el.length)) return;
+            $el.val((parseFloat(value) || 0).toFixed(2));
+        }
+
+        function gstEnabled() {
+            return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
+        }
+
+        function recalcGst() {
+            const total = parseMoney($('#pf_total').text());
+            const enabled = gstEnabled();
+            const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
+            const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+
+            if (!enabled) {
+                $('#pf_gst_box').addClass('d-none');
+                setMoney($('#pf_total_gst'), 0);
+                setMoney($('#pf_net_amount'), total);
+                setMoney($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
+                setMoney($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
+                setMoney($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
+                return;
+            }
+
+            $('#pf_gst_box').removeClass('d-none');
+
+            const tax = (total * percent) / 100.0;
+            let cgst = 0, sgst = 0, igst = 0;
+            if (mode === 'IGST') {
+                igst = tax;
+            } else {
+                cgst = tax / 2.0;
+                sgst = tax / 2.0;
+            }
+            const totalGst = cgst + sgst + igst;
+            const net = total + totalGst;
+
+            // left small box = percent amount, right box = value (kept same)
+            setMoney($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+            setMoney($('#pf_cgst_val'), cgst);
+            setMoney($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+            setMoney($('#pf_sgst_val'), sgst);
+            setMoney($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
+            setMoney($('#pf_igst_val'), igst);
+            setMoney($('#pf_total_gst'), totalGst);
+            setMoney($('#pf_net_amount'), net);
+        }
+
+        function setTotal(total) {
+            const value = (parseFloat(total) || 0).toFixed(2);
+            const $span = $('#pf_total');
+            if ($span.length) $span.text(value);
+            const $input = $('#pf_total_input');
+            if ($input.length) $input.val(value);
+            $('#btnSaveProforma').prop('disabled', (selected.size === 0));
+            recalcGst();
+        }
 
         function recalcTotal() {
             let total = 0;
-            $('#dtProformaItems input.pf-chk:checked').each(function () {
-                const amt = parseFloat($(this).data('amount')) || 0;
-                total += amt;
-            });
-            $('#pf_total').text(total.toFixed(2));
-            $('#btnSaveProforma').prop('disabled', ($('#dtProformaItems input.pf-chk:checked').length === 0));
+            selected.forEach(function (amt) { total += (parseFloat(amt) || 0); });
+            setTotal(total);
         }
 
         function initTable() {
             if (table) {
                 table.destroy();
                 $('#dtProformaItems').empty().append(
-                    '<thead><tr>' +
-                    '<th><input class="form-check-input" type="checkbox" id="pf_chkAll"></th>' +
-                    '<th>Entry No</th><th>Date</th><th>Description</th><th>Qty</th><th>Unit Price</th><th>Amount</th><th>Billing Month</th>' +
+                    '<thead class="table-light"><tr>' +
+                    '<th class="text-center" style="width:60px;"></th>' +
+                    '<th style="width:170px;">Item</th>' +
+                    '<th>Item Description</th>' +
+                    '<th class="text-end" style="width:120px;">Quantity</th>' +
+                    '<th style="width:110px;">UOM</th>' +
+                    '<th class="text-end" style="width:140px;">Price</th>' +
+                    '<th class="text-end" style="width:140px;">Value</th>' +
+                    '<th class="text-center" style="width:60px;"></th>' +
                     '</tr></thead>'
                 );
             }
@@ -1832,53 +2098,146 @@
                         .done(function (res) { callback(res); })
                         .fail(function () { callback({ data: [] }); });
                 },
-                order: [[2, 'desc']],
+                order: [[1, 'asc']],
                 columns: [
-                    { data: null, orderable: false, render: function (row) {
-                        return '<input class="form-check-input pf-chk" type="checkbox" value="' + row.id + '" data-amount="' + row.amount + '">';
-                    }},
+                    {
+                        data: null,
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center',
+                        render: function (row) {
+                            const isSelected = selected.has(row.id);
+                            const disabled = isSelected ? '' : 'disabled';
+                            return '<button type="button" class="btn btn-danger btn-sm bms-pf-icon-btn pf-remove" data-id="' + row.id + '" ' + disabled + '>-</button>';
+                        }
+                    },
                     { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
-                    { data: 'entry_date', render: formatUiDate },
                     { data: 'description', orderable: false, render: renderBulletText },
                     { data: 'quantity', className: 'text-end' },
+                    { data: null, orderable: false, searchable: false, render: function () { return 'Nos'; } },
                     { data: 'unit_price', className: 'text-end' },
                     { data: 'amount', className: 'text-end' },
-                    { data: 'billing_month', render: function (d) { return d || '-'; } },
+                    {
+                        data: null,
+                        orderable: false,
+                        searchable: false,
+                        className: 'text-center',
+                        render: function (row) {
+                            const isSelected = selected.has(row.id);
+                            const disabled = isSelected ? 'disabled' : '';
+                            return '<button type="button" class="btn btn-primary btn-sm bms-pf-icon-btn pf-add" data-id="' + row.id + '" data-amount="' + row.amount + '" ' + disabled + '>+</button>';
+                        }
+                    },
                 ],
+                rowCallback: function (row, data) {
+                    if (selected.has(data.id)) {
+                        $(row).addClass('table-success');
+                    } else {
+                        $(row).removeClass('table-success');
+                    }
+                },
             }));
 
-            $('#pf_chkAll').off('change').on('change', function () {
-                const checked = $(this).is(':checked');
-                $('#dtProformaItems input.pf-chk').prop('checked', checked);
-                recalcTotal();
-            });
-
-            $('#dtProformaItems').off('change', 'input.pf-chk').on('change', 'input.pf-chk', recalcTotal);
-
             table.on('xhr', function () {
-                $('#pf_chkAll').prop('checked', false);
-                $('#pf_total').text('0.00');
-                $('#btnSaveProforma').prop('disabled', true);
+                selected.clear();
+                setTotal(0);
             });
         }
 
         $('#pf_client_id').on('change', function () {
+            const $opt = $('#pf_client_id option:selected');
+            const company = ($opt.data('company') || '').toString().trim();
+            const gst = ($opt.data('gst') || '').toString().trim();
+            const addr1 = ($opt.data('addr1') || '').toString().trim();
+            const addr2 = ($opt.data('addr2') || '').toString().trim();
+            const city = ($opt.data('city') || '').toString().trim();
+            const state = ($opt.data('state') || '').toString().trim();
+            const pincode = ($opt.data('pincode') || '').toString().trim();
+
+            $('#pf_company').val(company);
+            $('#pf_gst').val(gst);
+            $('#pf_addr1').val(addr1);
+            $('#pf_addr2').val(addr2);
+            $('#pf_city').val(city);
+            $('#pf_state').val(state);
+            $('#pf_pincode').val(pincode);
+
+            selected.clear();
+            setTotal(0);
             initTable();
         });
 
         initTable();
+        setTotal(0);
+        (function initCompanyField() {
+            const $opt = $('#pf_client_id option:selected');
+            $('#pf_company').val(($opt.data('company') || '').toString().trim());
+            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
+            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
+            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
+            $('#pf_city').val(($opt.data('city') || '').toString().trim());
+            $('#pf_state').val(($opt.data('state') || '').toString().trim());
+            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
+        })();
+
+        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
+        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+
+        $('#pf_invoice_type').on('change', recalcGst);
+        $('#pf_gst_percent').on('input', recalcGst);
+        $(document).on('change', 'input[name="pf_gst_mode"]', recalcGst);
+        recalcGst();
+
+        $('#dtProformaItems')
+            .off('click', 'button.pf-add')
+            .on('click', 'button.pf-add', function (e) {
+                e.preventDefault();
+                const id = parseInt($(this).data('id'), 10) || 0;
+                if (!id) return;
+                const amt = parseFloat($(this).data('amount')) || 0;
+                selected.set(id, amt);
+                recalcTotal();
+                table && table.rows().invalidate('data').draw(false);
+            });
+
+        $('#dtProformaItems')
+            .off('click', 'button.pf-remove')
+            .on('click', 'button.pf-remove', function (e) {
+                e.preventDefault();
+                const id = parseInt($(this).data('id'), 10) || 0;
+                if (!id) return;
+                selected.delete(id);
+                recalcTotal();
+                table && table.rows().invalidate('data').draw(false);
+            });
 
         $('#btnSaveProforma').on('click', function () {
             const clientId = $('#pf_client_id').val();
-            const pfDate = ($('#pf_date').val() || '').trim();
-            const ids = [];
-            $('#dtProformaItems input.pf-chk:checked').each(function () { ids.push(parseInt($(this).val(), 10)); });
+            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+            const currency = ($('#pf_currency').val() || '').trim();
+            const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
+            const invoiceType = ($('#pf_invoice_type').val() || '').trim();
+            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
+            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
+            const ids = Array.from(selected.keys());
             if (!clientId) {
                 notify('Client is required.', 'danger');
                 return;
             }
             if (!pfDate) {
-                notify('Proforma Date is required.', 'danger');
+                notify('Date Of Issue is required.', 'danger');
+                return;
+            }
+            if (!invoiceType) {
+                notify('Invoice Type is required.', 'danger');
+                return;
+            }
+            if (!currency) {
+                notify('Currency is required.', 'danger');
+                return;
+            }
+            if (!dueDate) {
+                notify('Due Date is required.', 'danger');
                 return;
             }
             if (ids.length === 0) {
@@ -1890,11 +2249,15 @@
                 client_id: clientId,
                 item_ids: ids,
                 proforma_date: pfDate,
+                invoice_type: invoiceType,
                 billing_from: $('#pf_from').val(),
-                billing_to: $('#pf_to').val(),
+                billing_to: dueDate,
+                currency: currency,
+                gst_percent: gstEnabled() ? gstPercent : '',
+                gst_mode: gstEnabled() ? gstMode : '',
             })
                 .done(function (res) {
-                    notify(res.message || 'Proforma created.', 'success');
+                    notify(res.message || 'Invoice created.', 'success');
                     if (res.proforma && res.proforma.id) {
                         window.location.href = base('proforma/show/' + res.proforma.id);
                     } else {
@@ -1919,6 +2282,10 @@
 
         const proformaId = parseInt($('#pf_id').val(), 10) || 0;
         const clientId = $('#pf_client_id').val();
+
+        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
+        attachNativeCalendar('#pf_from', '#pf_from_native', function () {});
+        attachNativeCalendar('#pf_to', '#pf_to_native', function () {});
 
         table = $('#dtProformaItems').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: function (_data, callback) {
@@ -1964,9 +2331,9 @@
             const ids = [];
             $('#dtProformaItems input.pf-chk:checked').each(function () { ids.push(parseInt($(this).val(), 10)); });
             if (ids.length === 0) return;
-            const pfDate = ($('#pf_date').val() || '').trim();
+            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
             if (!pfDate) {
-                notify('Proforma Date is required.', 'danger');
+                notify('Date Of Issue is required.', 'danger');
                 return;
             }
             const pfStatus = ($('#pf_status').val() || '').trim();
@@ -1979,8 +2346,8 @@
                 proforma_id: proformaId,
                 item_ids: ids,
                 proforma_date: pfDate,
-                billing_from: $('#pf_from').val(),
-                billing_to: $('#pf_to').val(),
+                billing_from: dmyToIso(($('#pf_from').val() || '').trim()),
+                billing_to: dmyToIso(($('#pf_to').val() || '').trim()),
                 status: pfStatus,
             })
                 .done(function (res) {

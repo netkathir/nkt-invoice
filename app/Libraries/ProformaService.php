@@ -21,7 +21,7 @@ class ProformaService
 
     /**
      * @param list<int> $billableItemIds
-     * @param array{proforma_date?:string,billing_from?:string|null,billing_to?:string|null,status?:string} $meta
+     * @param array{proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string} $meta
      * @return array{id:int,proforma_number:string,total_amount:string}
      */
     public function create(int $clientId, array $billableItemIds, array $meta = []): array
@@ -39,8 +39,16 @@ class ProformaService
             ? (string) $meta['status']
             : ProformaModel::STATUS_DRAFT;
 
+        $invoiceType = isset($meta['invoice_type']) && $meta['invoice_type'] !== ''
+            ? (string) $meta['invoice_type']
+            : ProformaModel::TYPE_GST;
+
         $billingFrom = $meta['billing_from'] ?? null;
         $billingTo = $meta['billing_to'] ?? null;
+        $currency = isset($meta['currency']) && $meta['currency'] !== '' ? (string) $meta['currency'] : 'INR';
+
+        $gstPercent = isset($meta['gst_percent']) && $meta['gst_percent'] !== '' ? (float) $meta['gst_percent'] : 0.0;
+        $gstMode = isset($meta['gst_mode']) && $meta['gst_mode'] !== '' ? (string) $meta['gst_mode'] : ProformaModel::GST_MODE_CGST_SGST;
 
         $this->db->transBegin();
 
@@ -69,6 +77,24 @@ class ProformaService
                 $total += (float) ($item['amount'] ?? 0);
             }
 
+            $cgst = 0.0;
+            $sgst = 0.0;
+            $igst = 0.0;
+            $totalGst = 0.0;
+            $netAmount = $total;
+
+            if ($invoiceType === ProformaModel::TYPE_GST && $gstPercent > 0) {
+                $tax = ($total * $gstPercent) / 100.0;
+                if ($gstMode === ProformaModel::GST_MODE_IGST) {
+                    $igst = $tax;
+                } else {
+                    $cgst = $tax / 2.0;
+                    $sgst = $tax / 2.0;
+                }
+                $totalGst = $cgst + $sgst + $igst;
+                $netAmount = $total + $totalGst;
+            }
+
             $proformaId = null;
             $proformaNumber = null;
 
@@ -79,8 +105,17 @@ class ProformaService
                     'proforma_number' => $proformaNumber,
                     'client_id'       => $clientId,
                     'proforma_date'   => $proformaDate,
+                    'invoice_type'    => $invoiceType,
                     'billing_from'    => $billingFrom ?: null,
                     'billing_to'      => $billingTo ?: null,
+                    'currency'        => $currency,
+                    'gst_percent'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($gstPercent, 2, '.', '') : null,
+                    'gst_mode'        => $invoiceType === ProformaModel::TYPE_GST ? $gstMode : null,
+                    'cgst_amount'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($cgst, 2, '.', '') : null,
+                    'sgst_amount'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($sgst, 2, '.', '') : null,
+                    'igst_amount'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($igst, 2, '.', '') : null,
+                    'total_gst'       => $invoiceType === ProformaModel::TYPE_GST ? number_format($totalGst, 2, '.', '') : null,
+                    'net_amount'      => number_format($netAmount, 2, '.', ''),
                     'total_amount'    => number_format($total, 2, '.', ''),
                     'status'          => $status,
                 ], true);
@@ -122,6 +157,7 @@ class ProformaService
                 'id'             => (int) $proformaId,
                 'proforma_number'=> (string) $proformaNumber,
                 'total_amount'   => number_format($total, 2, '.', ''),
+                'net_amount'     => number_format($netAmount, 2, '.', ''),
             ];
         } catch (Throwable $e) {
             $this->db->transRollback();
@@ -131,7 +167,7 @@ class ProformaService
 
     /**
      * @param list<int> $billableItemIds
-     * @param array{proforma_date?:string,billing_from?:string|null,billing_to?:string|null,status?:string} $meta
+     * @param array{proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string} $meta
      * @return array{id:int,proforma_number:string,total_amount:string}
      */
     public function update(int $proformaId, array $billableItemIds, array $meta = []): array
@@ -159,8 +195,18 @@ class ProformaService
             ? (string) $meta['status']
             : (string) ($proforma['status'] ?? ProformaModel::STATUS_DRAFT);
 
+        $invoiceType = isset($meta['invoice_type']) && $meta['invoice_type'] !== ''
+            ? (string) $meta['invoice_type']
+            : (string) ($proforma['invoice_type'] ?? ProformaModel::TYPE_GST);
+
         $billingFrom = $meta['billing_from'] ?? ($proforma['billing_from'] ?? null);
         $billingTo = $meta['billing_to'] ?? ($proforma['billing_to'] ?? null);
+        $currency = isset($meta['currency']) && $meta['currency'] !== ''
+            ? (string) $meta['currency']
+            : (string) ($proforma['currency'] ?? 'INR');
+
+        $gstPercent = isset($meta['gst_percent']) && $meta['gst_percent'] !== '' ? (float) $meta['gst_percent'] : (float) ($proforma['gst_percent'] ?? 0);
+        $gstMode = isset($meta['gst_mode']) && $meta['gst_mode'] !== '' ? (string) $meta['gst_mode'] : (string) ($proforma['gst_mode'] ?? ProformaModel::GST_MODE_CGST_SGST);
 
         $this->db->transBegin();
 
@@ -267,10 +313,37 @@ class ProformaService
                 $total += (float) ($item['amount'] ?? 0);
             }
 
+            $cgst = 0.0;
+            $sgst = 0.0;
+            $igst = 0.0;
+            $totalGst = 0.0;
+            $netAmount = $total;
+
+            if ($invoiceType === ProformaModel::TYPE_GST && $gstPercent > 0) {
+                $tax = ($total * $gstPercent) / 100.0;
+                if ($gstMode === ProformaModel::GST_MODE_IGST) {
+                    $igst = $tax;
+                } else {
+                    $cgst = $tax / 2.0;
+                    $sgst = $tax / 2.0;
+                }
+                $totalGst = $cgst + $sgst + $igst;
+                $netAmount = $total + $totalGst;
+            }
+
             $this->proformas->update($proformaId, [
                 'proforma_date' => $proformaDate,
+                'invoice_type'  => $invoiceType,
                 'billing_from'  => $billingFrom ?: null,
                 'billing_to'    => $billingTo ?: null,
+                'currency'      => $currency,
+                'gst_percent'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($gstPercent, 2, '.', '') : null,
+                'gst_mode'      => $invoiceType === ProformaModel::TYPE_GST ? $gstMode : null,
+                'cgst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($cgst, 2, '.', '') : null,
+                'sgst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($sgst, 2, '.', '') : null,
+                'igst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($igst, 2, '.', '') : null,
+                'total_gst'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($totalGst, 2, '.', '') : null,
+                'net_amount'    => number_format($netAmount, 2, '.', ''),
                 'total_amount'  => number_format($total, 2, '.', ''),
                 'status'        => $status,
             ]);
@@ -285,6 +358,7 @@ class ProformaService
                 'id'              => (int) $proformaId,
                 'proforma_number' => (string) ($proforma['proforma_number'] ?? ''),
                 'total_amount'    => number_format($total, 2, '.', ''),
+                'net_amount'      => number_format($netAmount, 2, '.', ''),
             ];
         } catch (Throwable $e) {
             $this->db->transRollback();

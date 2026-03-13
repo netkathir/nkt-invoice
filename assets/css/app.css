@@ -451,3 +451,57 @@ body.bms-sidebar-collapsed .btn-sidebar-toggle{
         top: auto;
     }
 }
+
+/* Proforma create: invoice-like layout (uses existing Bootstrap styles) */
+.bms-invoice-card{
+    border: 1px solid rgba(0,0,0,.08);
+}
+.bms-invoice-logo{
+    width: 72px;
+    height: auto;
+}
+.bms-items-box{
+    border: 2px solid rgba(0,0,0,.25);
+    border-radius: 6px;
+    padding: 14px;
+}
+.bms-pf-icon-btn{
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 4px;
+}
+
+/* Native date input overlay (calendar picker) */
+.bms-date-wrap{
+    position: relative;
+}
+.bms-date-wrap .bms-native-date{
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 2.5rem; /* matches the calendar button width */
+    opacity: 0;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
+/* Hide DataTables sort icons on filter row (2nd header row) */
+#dtProformas thead tr:nth-child(2) th::before,
+#dtProformas thead tr:nth-child(2) th::after{
+    display: none !important;
+}
+#dtProformas thead tr:nth-child(2) th{
+    background-image: none !important;
+    padding-right: .5rem !important; /* prevent reserved space for sort icons */
+}
+
+/* DataTables v2 places sort icons in a child span */
+#dtProformas thead tr:nth-child(2) th .dt-column-order,
+#dtProformas thead tr:nth-child(2) th span.dt-column-order{
+    display: none !important;
+}

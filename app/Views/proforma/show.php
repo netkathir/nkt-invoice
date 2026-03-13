@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <div>
-        <h5 class="mb-1">Proforma: <?= esc($proforma['proforma_number']) ?></h5>
+        <h5 class="mb-1">Invoice: <?= esc($proforma['proforma_number']) ?></h5>
         <div class="text-muted small">
             <?= esc($proforma['client_name']) ?> · Date: <?= esc($proforma['proforma_date']) ?>
         </div>

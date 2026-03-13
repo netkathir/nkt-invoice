@@ -12,6 +12,29 @@ use Throwable;
 
 class ProformaController extends BaseController
 {
+    private function normalizeIsoDate(?string $value): string
+    {
+        $raw = trim((string) ($value ?? ''));
+        if ($raw === '') {
+            return '';
+        }
+
+        // Already ISO
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+            return $raw;
+        }
+
+        // Accept DD/MM/YYYY or DD-MM-YYYY from UI
+        if (preg_match('/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/', $raw, $m)) {
+            $dd = str_pad($m[1], 2, '0', STR_PAD_LEFT);
+            $mm = str_pad($m[2], 2, '0', STR_PAD_LEFT);
+            $yyyy = $m[3];
+            return $yyyy . '-' . $mm . '-' . $dd;
+        }
+
+        return $raw;
+    }
+
     public function index()
     {
         return view('proforma/index', ['active' => 'proforma']);
@@ -20,7 +43,7 @@ class ProformaController extends BaseController
     public function list()
     {
         $rows = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.name as company_name, clients.contact_person as customer_name')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->orderBy('proforma_invoices.id', 'DESC')
             ->findAll();
@@ -47,7 +70,7 @@ class ProformaController extends BaseController
             ->first();
 
         if (! $proforma) {
-            return redirect()->to('/proforma')->with('error', 'Proforma not found.');
+            return redirect()->to('/proforma')->with('error', 'Invoice not found.');
         }
 
         $clients = (new ClientModel())->orderBy('name', 'ASC')->findAll();
@@ -138,14 +161,18 @@ class ProformaController extends BaseController
         try {
             $service = new ProformaService(db_connect(), new BillableItemModel(), new ProformaModel(), new ProformaItemModel());
             $proforma = $service->create($clientId, $itemIds, [
-                'proforma_date' => (string) $this->request->getPost('proforma_date'),
-                'billing_from'  => (string) $this->request->getPost('billing_from'),
-                'billing_to'    => (string) $this->request->getPost('billing_to'),
+                'proforma_date' => $this->normalizeIsoDate((string) $this->request->getPost('proforma_date')),
+                'invoice_type'  => (string) $this->request->getPost('invoice_type'),
+                'billing_from'  => $this->normalizeIsoDate((string) $this->request->getPost('billing_from')),
+                'billing_to'    => $this->normalizeIsoDate((string) $this->request->getPost('billing_to')),
+                'currency'      => (string) $this->request->getPost('currency'),
+                'gst_percent'   => (string) $this->request->getPost('gst_percent'),
+                'gst_mode'      => (string) $this->request->getPost('gst_mode'),
             ]);
 
             return $this->response->setJSON([
                 'success'  => true,
-                'message'  => 'Proforma created.',
+                'message'  => 'Invoice created.',
                 'proforma' => $proforma,
             ]);
         } catch (Throwable $e) {
@@ -166,15 +193,19 @@ class ProformaController extends BaseController
         try {
             $service = new ProformaService(db_connect(), new BillableItemModel(), new ProformaModel(), new ProformaItemModel());
             $proforma = $service->update($proformaId, $itemIds, [
-                'proforma_date' => (string) $this->request->getPost('proforma_date'),
-                'billing_from'  => (string) $this->request->getPost('billing_from'),
-                'billing_to'    => (string) $this->request->getPost('billing_to'),
+                'proforma_date' => $this->normalizeIsoDate((string) $this->request->getPost('proforma_date')),
+                'invoice_type'  => (string) $this->request->getPost('invoice_type'),
+                'billing_from'  => $this->normalizeIsoDate((string) $this->request->getPost('billing_from')),
+                'billing_to'    => $this->normalizeIsoDate((string) $this->request->getPost('billing_to')),
+                'currency'      => (string) $this->request->getPost('currency'),
+                'gst_percent'   => (string) $this->request->getPost('gst_percent'),
+                'gst_mode'      => (string) $this->request->getPost('gst_mode'),
                 'status'        => (string) $this->request->getPost('status'),
             ]);
 
             return $this->response->setJSON([
                 'success'  => true,
-                'message'  => 'Proforma updated.',
+                'message'  => 'Invoice updated.',
                 'proforma' => $proforma,
             ]);
         } catch (Throwable $e) {
@@ -191,7 +222,7 @@ class ProformaController extends BaseController
             ->first();
 
         if (! $proforma) {
-            return redirect()->to('/proforma')->with('error', 'Proforma not found.');
+            return redirect()->to('/proforma')->with('error', 'Invoice not found.');
         }
 
         $items = (new ProformaItemModel())
@@ -221,7 +252,7 @@ class ProformaController extends BaseController
         try {
             $proforma = (new ProformaModel())->find($id);
             if (! $proforma) {
-                return $this->response->setStatusCode(404)->setJSON(['success' => false, 'message' => 'Proforma not found.']);
+                return $this->response->setStatusCode(404)->setJSON(['success' => false, 'message' => 'Invoice not found.']);
             }
 
             $piModel = new ProformaItemModel();
@@ -246,7 +277,7 @@ class ProformaController extends BaseController
             }
 
             $db->transCommit();
-            return $this->response->setJSON(['success' => true, 'message' => 'Proforma deleted.']);
+            return $this->response->setJSON(['success' => true, 'message' => 'Invoice deleted.']);
         } catch (Throwable $e) {
             $db->transRollback();
             return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => $e->getMessage()]);

@@ -2,7 +2,7 @@
 
 <?= $this->section('content') ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h5 class="mb-0">Edit Proforma Invoice</h5>
+    <h5 class="mb-0">Edit Invoice</h5>
     <a class="btn btn-light" href="<?= base_url('proforma') ?>">Back</a>
 </div>
 
@@ -24,16 +24,34 @@
                 </select>
             </div>
             <div class="col-12 col-md-2">
-                <label class="form-label">Proforma Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" id="pf_date" value="<?= esc((string) $proforma['proforma_date']) ?>" required>
+                <label class="form-label">Date Of Issue <span class="text-danger">*</span></label>
+                <div class="input-group bms-date-wrap">
+                    <input type="text" class="form-control" id="pf_date" placeholder="DD/MM/YYYY" autocomplete="off" required>
+                    <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
+                        <span aria-hidden="true">📅</span>
+                    </button>
+                    <input type="date" class="bms-native-date" id="pf_date_native" value="<?= esc((string) $proforma['proforma_date']) ?>" tabindex="-1" aria-hidden="true">
+                </div>
             </div>
             <div class="col-12 col-md-2">
                 <label class="form-label">Billing From</label>
-                <input type="date" class="form-control" id="pf_from" value="<?= esc((string) ($proforma['billing_from'] ?? '')) ?>">
+                <div class="input-group bms-date-wrap">
+                    <input type="text" class="form-control" id="pf_from" placeholder="DD/MM/YYYY" autocomplete="off">
+                    <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
+                        <span aria-hidden="true">📅</span>
+                    </button>
+                    <input type="date" class="bms-native-date" id="pf_from_native" value="<?= esc((string) ($proforma['billing_from'] ?? '')) ?>" tabindex="-1" aria-hidden="true">
+                </div>
             </div>
             <div class="col-12 col-md-2">
                 <label class="form-label">Billing To</label>
-                <input type="date" class="form-control" id="pf_to" value="<?= esc((string) ($proforma['billing_to'] ?? '')) ?>">
+                <div class="input-group bms-date-wrap">
+                    <input type="text" class="form-control" id="pf_to" placeholder="DD/MM/YYYY" autocomplete="off">
+                    <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
+                        <span aria-hidden="true">📅</span>
+                    </button>
+                    <input type="date" class="bms-native-date" id="pf_to_native" value="<?= esc((string) ($proforma['billing_to'] ?? '')) ?>" tabindex="-1" aria-hidden="true">
+                </div>
             </div>
         </div>
         <div class="row g-3 mt-0">
@@ -45,7 +63,7 @@
                 </select>
             </div>
             <div class="col-12 col-md-8 text-md-end small text-muted d-flex align-items-end justify-content-md-end">
-                Proforma No: <span class="fw-semibold ms-1"><?= esc((string) $proforma['proforma_number']) ?></span>
+                Invoice No: <span class="fw-semibold ms-1"><?= esc((string) $proforma['proforma_number']) ?></span>
             </div>
         </div>
     </div>
@@ -56,7 +74,7 @@
         <div class="fw-semibold">Billable Items</div>
         <div class="d-flex align-items-center gap-3">
             <div class="text-muted small">Total Amount: <span class="fw-semibold">₹ <span id="pf_total">0.00</span></span></div>
-            <button class="btn btn-primary" id="btnUpdateProforma" type="button" disabled>Update Proforma</button>
+            <button class="btn btn-primary" id="btnUpdateProforma" type="button" disabled>Update Invoice</button>
         </div>
     </div>
     <div class="card-body">

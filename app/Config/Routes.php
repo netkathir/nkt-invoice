@@ -86,6 +86,19 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
         $routes->post('mark-billed', 'BillableItemsController::markBilled');
     });
 
+    // Proforma Invoices
+    $routes->get('proforma', 'ProformaController::index');
+    $routes->get('proforma/list', 'ProformaController::list');
+    $routes->get('proforma/create', 'ProformaController::create');
+    $routes->get('proforma/edit/(:num)', 'ProformaController::edit/$1');
+    $routes->get('proforma/show/(:num)', 'ProformaController::show/$1');
+    $routes->get('proforma/edit-items', 'ProformaController::editItems');
+    $routes->get('proforma/pending-items', 'ProformaController::pendingItems');
+    $routes->get('proforma/getPendingItems/(:num)', 'ProformaController::getPendingItems/$1');
+    $routes->post('proforma/save', 'ProformaController::save');
+    $routes->post('proforma/update', 'ProformaController::update');
+    $routes->post('proforma/delete', 'ProformaController::delete');
+
     // Optional diagnostic route (safe for shared hosting).
     $routes->get('dbtest', 'Home::dbtest');
 

@@ -243,7 +243,7 @@ table tbody td{
     display: flex !important;
     width: 100% !important;
     justify-content: flex-start !important;
-    align-items: center !important;
+    align-items: left !important;
     gap: .35rem;
 }
 .dataTables_wrapper table.dataTable thead th .dt-column-order,
@@ -252,6 +252,16 @@ table tbody td{
     position: static !important;
     inset: auto !important;
     margin: 0 !important;
+}
+
+/* Ensure Actions headers are left-aligned (Users/Roles) */
+.dataTables_wrapper #dtUsers > thead > tr > th:last-child,
+.dataTables_wrapper #dtRoles > thead > tr > th:last-child{
+    text-align: left !important;
+}
+.dataTables_wrapper #dtUsers > thead > tr > th:last-child .dt-column-header,
+.dataTables_wrapper #dtRoles > thead > tr > th:last-child .dt-column-header{
+    justify-content: flex-start !important;
 }
 
 /* If any column is marked .text-end, force left alignment throughout */
@@ -272,6 +282,19 @@ table tbody td{
 .table td ol{
     margin-bottom: 0;
     padding-left: 1.25rem;
+}
+
+/* Consistent icon-style actions across modules */
+.bms-actions .bms-action-btn{
+    width: 34px;
+    height: 34px;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.bms-actions .bms-action-btn svg{
+    display: block;
 }
 
 .tox-tinymce{

@@ -101,6 +101,32 @@
         return '';
     }
 
+    function actionBtn(action, styleClass, title) {
+        const a = String(action || '').trim();
+        const iconName = a === 'del' ? 'delete' : a;
+        const t = String(title || a || '').trim() || 'Action';
+        return '' +
+            '<button class="btn btn-sm ' + String(styleClass || '') + ' bms-action-btn btn-' + a + '" type="button" title="' + t + '" aria-label="' + t + '">' +
+            iconSvg(iconName) +
+            '</button>';
+    }
+
+    function actionLink(action, styleClass, title, href) {
+        const a = String(action || '').trim();
+        const iconName = a === 'del' ? 'delete' : a;
+        const t = String(title || a || '').trim() || 'Action';
+        return '' +
+            '<a class="btn btn-sm ' + String(styleClass || '') + ' bms-action-btn" href="' + String(href || '#') + '" title="' + t + '" aria-label="' + t + '">' +
+            iconSvg(iconName) +
+            '</a>';
+    }
+
+    function actionGroup(innerHtml) {
+        const html = String(innerHtml || '');
+        if (!html) return '';
+        return '<div class="btn-group bms-actions" role="group" aria-label="Actions">' + html + '</div>';
+    }
+
     function descriptionPlainText(value) {
         const raw = String(value || '');
         if (!raw) return '';
@@ -470,10 +496,11 @@
                 { data: 'city', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: 'country', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: null, orderable: false, render: function (row) {
-                    return '' +
-                        '<button class="btn btn-sm btn-outline-secondary me-1 btn-view" type="button">View</button>' +
-                        '<button class="btn btn-sm btn-outline-primary me-1 btn-edit" type="button">Edit</button>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-del" type="button">Delete</button>';
+                    return actionGroup(
+                        actionBtn('view', 'btn-outline-secondary', 'View') +
+                        actionBtn('edit', 'btn-outline-primary', 'Edit') +
+                        actionBtn('del', 'btn-outline-danger', 'Delete')
+                    );
                 }},
             ],
         }));
@@ -641,11 +668,11 @@
                 }},
                 { data: 'name', render: function (d) { return d || '-'; } },
                 { data: 'description', render: function (d) { return d || '-'; } },
-                { data: null, orderable: false, className: 'text-end', render: function (row) {
-                    const btns = [];
-                    if (opts.canEdit) btns.push('<button class="btn btn-sm btn-outline-primary me-1 btn-edit" type="button">Edit</button>');
-                    if (opts.canDelete) btns.push('<button class="btn btn-sm btn-outline-danger btn-del" type="button">Delete</button>');
-                    return btns.join('');
+                { data: null, orderable: false, className: 'text-start', render: function (row) {
+                    let html = '';
+                    if (opts.canEdit) html += actionBtn('edit', 'btn-outline-primary', 'Edit');
+                    if (opts.canDelete) html += actionBtn('del', 'btn-outline-danger', 'Delete');
+                    return actionGroup(html);
                 }},
             ],
         }));
@@ -906,11 +933,11 @@
                     if (!cleaned) return key;
                     return cleaned.replace(/\b\w/g, function (m) { return m.toUpperCase(); });
                 }},
-                { data: null, orderable: false, className: 'text-end', render: function () {
-                    const btns = [];
-                    if (opts.canEdit) btns.push('<button class="btn btn-sm btn-warning me-2 btn-edit" type="button">Edit</button>');
-                    if (opts.canDelete) btns.push('<button class="btn btn-sm btn-danger btn-del" type="button">Delete</button>');
-                    return btns.join('');
+                { data: null, orderable: false, className: 'text-start', render: function () {
+                    let html = '';
+                    if (opts.canEdit) html += actionBtn('edit', 'btn-outline-primary', 'Edit');
+                    if (opts.canDelete) html += actionBtn('del', 'btn-outline-danger', 'Delete');
+                    return actionGroup(html);
                 }},
             ],
         }));
@@ -1085,12 +1112,11 @@
                 { data: 'status', orderable: false, render: function (d) {
                     return statusBadge(d);
                 }},
-                { data: null, orderable: false, className: 'text-end', render: function (row) {
-                    const btns = [];
-                    btns.push('<button class="btn btn-sm btn-primary me-2 btn-view" type="button">View</button>');
-                    if (opts.canEdit) btns.push('<button class="btn btn-sm btn-warning me-2 btn-edit" type="button">Edit</button>');
-                    if (opts.canDelete) btns.push('<button class="btn btn-sm btn-danger btn-del" type="button">Delete</button>');
-                    return btns.join('');
+                { data: null, orderable: false, className: 'text-start', render: function (row) {
+                    let html = actionBtn('view', 'btn-outline-secondary', 'View');
+                    if (opts.canEdit) html += actionBtn('edit', 'btn-outline-primary', 'Edit');
+                    if (opts.canDelete) html += actionBtn('del', 'btn-outline-danger', 'Delete');
+                    return actionGroup(html);
                 }},
             ],
             columnDefs: [
@@ -1535,10 +1561,10 @@
                     const billedDisabled = row.status !== 'Pending' ? 'disabled' : '';
                     return '' +
                         '<div class="d-flex align-items-center gap-1 flex-wrap">' +
-                            '<div class="btn-group" role="group" aria-label="Actions">' +
-                                '<button class="btn btn-sm btn-outline-primary btn-edit" type="button" title="Edit" aria-label="Edit">' + iconSvg('edit') + '</button>' +
-                                '<button class="btn btn-sm btn-outline-danger btn-del" type="button" title="Delete" aria-label="Delete">' + iconSvg('delete') + '</button>' +
-                            '</div>' +
+                            actionGroup(
+                                actionBtn('edit', 'btn-outline-primary', 'Edit') +
+                                actionBtn('del', 'btn-outline-danger', 'Delete')
+                            ) +
                             '<button class="btn btn-sm btn-outline-success btn-billed" type="button" ' + billedDisabled + '>Mark as Billed</button>' +
                         '</div>';
                 }},
@@ -1752,10 +1778,11 @@
                     return statusSelectHtml('proforma_invoices', row.id, d || 'Draft', ['Draft', 'Posted']);
                 }},
                 { data: null, orderable: false, render: function (row) {
-                    return '' +
-                        '<a class="btn btn-sm btn-outline-primary me-1" href="' + base('proforma/show/' + row.id) + '">View</a>' +
-                        '<a class="btn btn-sm btn-outline-secondary me-1" href="' + base('proforma/edit/' + row.id) + '">Edit</a>' +
-                        '<button class="btn btn-sm btn-outline-danger btn-pf-del" type="button">Delete</button>';
+                    return actionGroup(
+                        actionLink('view', 'btn-outline-secondary', 'View', base('proforma/show/' + row.id)) +
+                        actionLink('edit', 'btn-outline-primary', 'Edit', base('proforma/edit/' + row.id)) +
+                        '<button class="btn btn-sm btn-outline-danger bms-action-btn btn-pf-del" type="button" title="Delete" aria-label="Delete">' + iconSvg('delete') + '</button>'
+                    );
                 }},
             ],
         }));

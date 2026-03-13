@@ -18,7 +18,7 @@
             <tr>
                 <th>S.No</th>
                 <th>Form Name</th>
-                <th class="text-end">Actions</th>
+                <th class="text-end" style="text-align: left !important">Actions</th>
             </tr>
             </thead>
         </table>

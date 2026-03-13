@@ -13,6 +13,10 @@ $routes->get('/', function () {
 // Authentication (public)
 $routes->get('admin/login', 'AuthController::login');
 $routes->post('admin/login', 'AuthController::loginPost');
+$routes->get('admin/forgot-password', 'PasswordResetController::request');
+$routes->post('admin/forgot-password', 'PasswordResetController::requestPost');
+$routes->get('reset-password/(:segment)', 'PasswordResetController::reset/$1');
+$routes->post('reset-password/(:segment)', 'PasswordResetController::resetPost/$1');
 $routes->get('admin/logout', 'AuthController::logout');
 
 // Protected application routes (admin only)

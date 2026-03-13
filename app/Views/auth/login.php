@@ -53,6 +53,9 @@
 
                     <button class="btn btn-primary w-100" type="submit">Login</button>
                     <div class="text-center mt-3">
+                        <a class="text-decoration-none" href="<?= base_url('admin/forgot-password') ?>">Forgot Password?</a>
+                    </div>
+                    <div class="text-center mt-3">
                         <a class="text-decoration-none" href="<?= base_url('/') ?>">Back to Home</a>
                     </div>
                 </form>

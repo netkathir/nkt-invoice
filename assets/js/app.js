@@ -298,12 +298,13 @@
 
         const full = lines.join('\n');
         const hasMore = lines.length > 2;
-        const shownLines = lines.slice(0, 2).map(function (l) {
+        const shownLines = lines.slice(0, 2).map(function (l, idx) {
             let out = l;
             if (out.length > limit) {
                 out = out.slice(0, limit) + '...';
             }
-            if (hasMore && !out.endsWith('...')) {
+            // If there are more than 2 bullets, add ellipsis only at the 2nd bullet point.
+            if (hasMore && idx === 1 && !out.endsWith('...')) {
                 out = out + '...';
             }
             return out;
@@ -1996,289 +1997,621 @@
         setToolbarState();
     };
 
-    BMS.initProformaCreate = function () {
-        let table = null;
-        const selected = new Map(); // billable_item_id -> amount
+	    BMS.initProformaCreate = function () {
+	        function parseMoney(v) {
+	            const n = parseFloat(String(v || '').replace(/,/g, ''));
+	            return isFinite(n) ? n : 0;
+	        }
 
-        function parseMoney(v) {
-            const n = parseFloat(String(v || '').replace(/,/g, ''));
-            return isFinite(n) ? n : 0;
-        }
+	        function setMoney($el, value) {
+	            if (!($el && $el.length)) return;
+	            $el.val((parseFloat(value) || 0).toFixed(2));
+	        }
 
-        function setMoney($el, value) {
-            if (!($el && $el.length)) return;
-            $el.val((parseFloat(value) || 0).toFixed(2));
-        }
+	        function gstEnabled() {
+	            return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
+	        }
 
-        function gstEnabled() {
-            return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
-        }
+	        function recalcGst() {
+	            const total = parseMoney($('#pf_total').text());
+	            const enabled = gstEnabled();
+	            const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
+	            const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
 
-        function recalcGst() {
-            const total = parseMoney($('#pf_total').text());
-            const enabled = gstEnabled();
-            const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
-            const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+	            if (!enabled) {
+	                $('#pf_gst_box').addClass('d-none');
+	                setMoney($('#pf_total_gst'), 0);
+	                setMoney($('#pf_net_amount'), total);
+	                setMoney($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
+	                setMoney($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
+	                setMoney($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
+	                return;
+	            }
 
-            if (!enabled) {
-                $('#pf_gst_box').addClass('d-none');
-                setMoney($('#pf_total_gst'), 0);
-                setMoney($('#pf_net_amount'), total);
-                setMoney($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
-                setMoney($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
-                setMoney($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
-                return;
-            }
+	            $('#pf_gst_box').removeClass('d-none');
 
-            $('#pf_gst_box').removeClass('d-none');
+	            const tax = (total * percent) / 100.0;
+	            let cgst = 0, sgst = 0, igst = 0;
+	            if (mode === 'IGST') {
+	                igst = tax;
+	            } else {
+	                cgst = tax / 2.0;
+	                sgst = tax / 2.0;
+	            }
+	            const totalGst = cgst + sgst + igst;
+	            const net = total + totalGst;
 
-            const tax = (total * percent) / 100.0;
-            let cgst = 0, sgst = 0, igst = 0;
-            if (mode === 'IGST') {
-                igst = tax;
-            } else {
-                cgst = tax / 2.0;
-                sgst = tax / 2.0;
-            }
-            const totalGst = cgst + sgst + igst;
-            const net = total + totalGst;
+	            setMoney($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	            setMoney($('#pf_cgst_val'), cgst);
+	            setMoney($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	            setMoney($('#pf_sgst_val'), sgst);
+	            setMoney($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
+	            setMoney($('#pf_igst_val'), igst);
+	            setMoney($('#pf_total_gst'), totalGst);
+	            setMoney($('#pf_net_amount'), net);
+	        }
 
-            // left small box = percent amount, right box = value (kept same)
-            setMoney($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
-            setMoney($('#pf_cgst_val'), cgst);
-            setMoney($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
-            setMoney($('#pf_sgst_val'), sgst);
-            setMoney($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
-            setMoney($('#pf_igst_val'), igst);
-            setMoney($('#pf_total_gst'), totalGst);
-            setMoney($('#pf_net_amount'), net);
-        }
+	        function setTotal(total, hasItems) {
+	            const value = (parseFloat(total) || 0).toFixed(2);
+	            const $span = $('#pf_total');
+	            if ($span.length) $span.text(value);
+	            const $input = $('#pf_total_input');
+	            if ($input.length) $input.val(value);
+	            $('#btnSaveProforma').prop('disabled', !hasItems);
+	            recalcGst();
+	        }
 
-        function setTotal(total) {
-            const value = (parseFloat(total) || 0).toFixed(2);
-            const $span = $('#pf_total');
-            if ($span.length) $span.text(value);
-            const $input = $('#pf_total_input');
-            if ($input.length) $input.val(value);
-            $('#btnSaveProforma').prop('disabled', (selected.size === 0));
-            recalcGst();
-        }
+	        function rowHasAnyInput($tr) {
+	            const item = String($tr.find('.pf-item-name').val() || '').trim();
+	            const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	            const qty = String($tr.find('.pf-item-qty').val() || '').trim();
+	            const uom = String($tr.find('.pf-item-uom').val() || '').trim();
+	            const price = String($tr.find('.pf-item-price').val() || '').trim();
+	            const amt = String($tr.find('.pf-item-amt').val() || '').trim();
+	            return (item + desc + qty + uom + price + amt) !== '';
+	        }
 
-        function recalcTotal() {
-            let total = 0;
-            selected.forEach(function (amt) { total += (parseFloat(amt) || 0); });
-            setTotal(total);
-        }
+	        function recalcTotal() {
+	            let total = 0;
+	            let hasItems = false;
+	            $('#pfItemsTable tbody tr').each(function () {
+	                const $tr = $(this);
+	                if (!rowHasAnyInput($tr)) return;
+	                const amt = parseMoney($tr.find('.pf-item-amt').val());
+	                total += amt;
+	                const item = String($tr.find('.pf-item-name').val() || '').trim();
+	                const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                if (item || desc) hasItems = true;
+	            });
+	            setTotal(total, hasItems);
+	        }
 
-        function initTable() {
-            if (table) {
-                table.destroy();
-                $('#dtProformaItems').empty().append(
-                    '<thead class="table-light"><tr>' +
-                    '<th class="text-center" style="width:60px;"></th>' +
-                    '<th style="width:170px;">Item</th>' +
-                    '<th>Item Description</th>' +
-                    '<th class="text-end" style="width:120px;">Quantity</th>' +
-                    '<th style="width:110px;">UOM</th>' +
-                    '<th class="text-end" style="width:140px;">Price</th>' +
-                    '<th class="text-end" style="width:140px;">Value</th>' +
-                    '<th class="text-center" style="width:60px;"></th>' +
-                    '</tr></thead>'
-                );
-            }
+	        function syncAmountFromQtyPrice($tr) {
+	            const qty = parseMoney($tr.find('.pf-item-qty').val());
+	            const price = parseMoney($tr.find('.pf-item-price').val());
+	            const amt = qty * price;
+	            $tr.find('.pf-item-amt').val(amt.toFixed(2));
+	        }
 
-            table = $('#dtProformaItems').DataTable($.extend(true, {}, dtDefaults(), {
-                ajax: function (_data, callback) {
-                    const clientId = $('#pf_client_id').val();
-                    if (!clientId) {
-                        callback({ data: [] });
-                        return;
-                    }
-                    getJson('proforma/getPendingItems/' + clientId)
-                        .done(function (res) { callback(res); })
-                        .fail(function () { callback({ data: [] }); });
-                },
-                order: [[1, 'asc']],
-                columns: [
-                    {
-                        data: null,
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center',
-                        render: function (row) {
-                            const isSelected = selected.has(row.id);
-                            const disabled = isSelected ? '' : 'disabled';
-                            return '<button type="button" class="btn btn-danger btn-sm bms-pf-icon-btn pf-remove" data-id="' + row.id + '" ' + disabled + '>-</button>';
-                        }
-                    },
-                    { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
-                    { data: 'description', orderable: false, render: renderBulletText },
-                    { data: 'quantity', className: 'text-end' },
-                    { data: null, orderable: false, searchable: false, render: function () { return 'Nos'; } },
-                    { data: 'unit_price', className: 'text-end' },
-                    { data: 'amount', className: 'text-end' },
-                    {
-                        data: null,
-                        orderable: false,
-                        searchable: false,
-                        className: 'text-center',
-                        render: function (row) {
-                            const isSelected = selected.has(row.id);
-                            const disabled = isSelected ? 'disabled' : '';
-                            return '<button type="button" class="btn btn-primary btn-sm bms-pf-icon-btn pf-add" data-id="' + row.id + '" data-amount="' + row.amount + '" ' + disabled + '>+</button>';
-                        }
-                    },
-                ],
-                rowCallback: function (row, data) {
-                    if (selected.has(data.id)) {
-                        $(row).addClass('table-success');
-                    } else {
-                        $(row).removeClass('table-success');
-                    }
-                },
-            }));
+	        function syncPriceFromAmount($tr) {
+	            const qty = parseMoney($tr.find('.pf-item-qty').val());
+	            const amt = parseMoney($tr.find('.pf-item-amt').val());
+	            if (qty > 0) {
+	                $tr.find('.pf-item-price').val((amt / qty).toFixed(2));
+	            }
+	        }
 
-            table.on('xhr', function () {
-                selected.clear();
-                setTotal(0);
-            });
-        }
+	        function rowHtml() {
+	            return '' +
+	                '<tr>' +
+	                    '<td><input type="text" class="form-control form-control-sm pf-item-name" placeholder="Item"></td>' +
+	                    '<td><textarea rows="1" class="form-control form-control-sm pf-item-desc" placeholder="Description (one bullet per line)"></textarea></td>' +
+	                    '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="1"></td>' +
+	                    '<td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>' +
+	                    '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-price" value="0.00"></td>' +
+	                    '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-amt" value="0.00"></td>' +
+	                    '<td class="text-center">' +
+	                        '<div class="btn-group" role="group" aria-label="Row actions">' +
+	                            '<button type="button" class="btn btn-sm btn-primary bms-pf-icon-btn pf-row-add">+</button>' +
+	                            '<button type="button" class="btn btn-sm btn-danger bms-pf-icon-btn pf-row-remove">-</button>' +
+	                        '</div>' +
+	                    '</td>' +
+	                '</tr>';
+	        }
 
-        $('#pf_client_id').on('change', function () {
-            const $opt = $('#pf_client_id option:selected');
-            const company = ($opt.data('company') || '').toString().trim();
-            const gst = ($opt.data('gst') || '').toString().trim();
-            const addr1 = ($opt.data('addr1') || '').toString().trim();
-            const addr2 = ($opt.data('addr2') || '').toString().trim();
-            const city = ($opt.data('city') || '').toString().trim();
-            const state = ($opt.data('state') || '').toString().trim();
-            const pincode = ($opt.data('pincode') || '').toString().trim();
+	        function addRow(afterTr) {
+	            const $row = $(rowHtml());
+	            if (afterTr && afterTr.length) {
+	                $row.insertAfter(afterTr);
+	            } else {
+	                $('#pfItemsTable tbody').append($row);
+	            }
+	            recalcTotal();
+	            return $row;
+	        }
 
-            $('#pf_company').val(company);
-            $('#pf_gst').val(gst);
-            $('#pf_addr1').val(addr1);
-            $('#pf_addr2').val(addr2);
-            $('#pf_city').val(city);
-            $('#pf_state').val(state);
-            $('#pf_pincode').val(pincode);
+	        function ensureOneRow() {
+	            const $rows = $('#pfItemsTable tbody tr');
+	            if (!$rows.length) addRow(null);
+	        }
 
-            selected.clear();
-            setTotal(0);
-            initTable();
-        });
+	        function collectItems() {
+	            const items = [];
+	            $('#pfItemsTable tbody tr').each(function () {
+	                const $tr = $(this);
+	                const item = String($tr.find('.pf-item-name').val() || '').trim();
+	                const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                const qty = parseMoney($tr.find('.pf-item-qty').val());
+	                const price = parseMoney($tr.find('.pf-item-price').val());
+	                const amt = parseMoney($tr.find('.pf-item-amt').val());
 
-        initTable();
-        setTotal(0);
-        (function initCompanyField() {
-            const $opt = $('#pf_client_id option:selected');
-            $('#pf_company').val(($opt.data('company') || '').toString().trim());
-            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
-            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
-            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
-            $('#pf_city').val(($opt.data('city') || '').toString().trim());
-            $('#pf_state').val(($opt.data('state') || '').toString().trim());
-            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
-        })();
+	                if (!item && !desc && qty === 0 && price === 0 && amt === 0) return;
 
-        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
-        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+	                const fullDesc = item && desc ? (item + "\n" + desc) : (desc || item);
+	                items.push({
+	                    description: fullDesc,
+	                    quantity: qty,
+	                    unit_price: price,
+	                    amount: amt
+	                });
+	            });
+	            return items;
+	        }
 
-        $('#pf_invoice_type').on('change', recalcGst);
-        $('#pf_gst_percent').on('input', recalcGst);
-        $(document).on('change', 'input[name="pf_gst_mode"]', recalcGst);
-        recalcGst();
+	        $('#pf_client_id').on('change', function () {
+	            const $opt = $('#pf_client_id option:selected');
+	            $('#pf_company').val(($opt.data('company') || '').toString().trim());
+	            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
+	            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
+	            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
+	            $('#pf_city').val(($opt.data('city') || '').toString().trim());
+	            $('#pf_state').val(($opt.data('state') || '').toString().trim());
+	            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
+	        });
 
-        $('#dtProformaItems')
-            .off('click', 'button.pf-add')
-            .on('click', 'button.pf-add', function (e) {
-                e.preventDefault();
-                const id = parseInt($(this).data('id'), 10) || 0;
-                if (!id) return;
-                const amt = parseFloat($(this).data('amount')) || 0;
-                selected.set(id, amt);
-                recalcTotal();
-                table && table.rows().invalidate('data').draw(false);
-            });
+	        (function initCompanyField() {
+	            const $opt = $('#pf_client_id option:selected');
+	            $('#pf_company').val(($opt.data('company') || '').toString().trim());
+	            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
+	            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
+	            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
+	            $('#pf_city').val(($opt.data('city') || '').toString().trim());
+	            $('#pf_state').val(($opt.data('state') || '').toString().trim());
+	            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
+	        })();
 
-        $('#dtProformaItems')
-            .off('click', 'button.pf-remove')
-            .on('click', 'button.pf-remove', function (e) {
-                e.preventDefault();
-                const id = parseInt($(this).data('id'), 10) || 0;
-                if (!id) return;
-                selected.delete(id);
-                recalcTotal();
-                table && table.rows().invalidate('data').draw(false);
-            });
+	        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
+	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
 
-        $('#btnSaveProforma').on('click', function () {
-            const clientId = $('#pf_client_id').val();
-            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
-            const currency = ($('#pf_currency').val() || '').trim();
-            const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
-            const invoiceType = ($('#pf_invoice_type').val() || '').trim();
-            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
-            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
-            const ids = Array.from(selected.keys());
-            if (!clientId) {
-                notify('Client is required.', 'danger');
-                return;
-            }
-            if (!pfDate) {
-                notify('Date Of Issue is required.', 'danger');
-                return;
-            }
-            if (!invoiceType) {
-                notify('Invoice Type is required.', 'danger');
-                return;
-            }
-            if (!currency) {
-                notify('Currency is required.', 'danger');
-                return;
-            }
-            if (!dueDate) {
-                notify('Due Date is required.', 'danger');
-                return;
-            }
-            if (ids.length === 0) {
-                notify('Select at least one billable item.', 'danger');
-                return;
-            }
+	        $('#pf_invoice_type').on('change', recalcGst);
+	        $('#pf_gst_percent').on('input', recalcGst);
+	        $(document).on('change', 'input[name="pf_gst_mode"]', recalcGst);
+	        recalcGst();
 
-            postJson('proforma/save', {
-                client_id: clientId,
-                item_ids: ids,
-                proforma_date: pfDate,
-                invoice_type: invoiceType,
-                billing_from: $('#pf_from').val(),
-                billing_to: dueDate,
-                currency: currency,
-                gst_percent: gstEnabled() ? gstPercent : '',
-                gst_mode: gstEnabled() ? gstMode : '',
-            })
-                .done(function (res) {
-                    notify(res.message || 'Invoice created.', 'success');
-                    if (res.proforma && res.proforma.id) {
-                        window.location.href = base('proforma/show/' + res.proforma.id);
-                    } else {
-                        window.location.href = base('proforma');
-                    }
-                })
-                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger'); });
-        });
-    };
+	        ensureOneRow();
+	        setTotal(0, false);
 
-    BMS.initProformaEdit = function () {
-        let table = null;
+	        $('#pfItemsTable')
+	            .off('click', 'button.pf-row-add')
+	            .on('click', 'button.pf-row-add', function (e) {
+	                e.preventDefault();
+	                addRow($(this).closest('tr'));
+	            });
 
-        function recalcTotal() {
-            let total = 0;
-            $('#dtProformaItems input.pf-chk:checked').each(function () {
-                total += (parseFloat($(this).data('amount')) || 0);
-            });
-            $('#pf_total').text(total.toFixed(2));
-            $('#btnUpdateProforma').prop('disabled', ($('#dtProformaItems input.pf-chk:checked').length === 0));
-        }
+	        $('#pfItemsTable')
+	            .off('click', 'button.pf-row-remove')
+	            .on('click', 'button.pf-row-remove', function (e) {
+	                e.preventDefault();
+	                const $tr = $(this).closest('tr');
+	                $tr.remove();
+	                ensureOneRow();
+	                recalcTotal();
+	            });
+
+	        $('#pfItemsTable')
+	            .off('input', '.pf-item-qty,.pf-item-price')
+	            .on('input', '.pf-item-qty,.pf-item-price', function () {
+	                const $tr = $(this).closest('tr');
+	                syncAmountFromQtyPrice($tr);
+	                recalcTotal();
+	            });
+
+	        $('#pfItemsTable')
+	            .off('input', '.pf-item-amt')
+	            .on('input', '.pf-item-amt', function () {
+	                const $tr = $(this).closest('tr');
+	                syncPriceFromAmount($tr);
+	                recalcTotal();
+	            });
+
+	        $('#pfItemsTable')
+	            .off('input', '.pf-item-name,.pf-item-desc,.pf-item-uom')
+	            .on('input', '.pf-item-name,.pf-item-desc,.pf-item-uom', recalcTotal);
+
+	        $('#btnSaveProforma').on('click', function () {
+	            const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
+	            const clientId = $('#pf_client_id').val();
+	            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+	            const currency = ($('#pf_currency').val() || '').trim();
+	            const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
+	            const invoiceType = ($('#pf_invoice_type').val() || '').trim();
+	            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
+	            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
+	            const items = collectItems();
+
+	            if (!invoiceNo) {
+	                notify('Invoice No is required.', 'danger');
+	                return;
+	            }
+	            if (!clientId) {
+	                notify('Client is required.', 'danger');
+	                return;
+	            }
+	            if (!pfDate) {
+	                notify('Date Of Issue is required.', 'danger');
+	                return;
+	            }
+	            if (!invoiceType) {
+	                notify('Invoice Type is required.', 'danger');
+	                return;
+	            }
+	            if (!currency) {
+	                notify('Currency is required.', 'danger');
+	                return;
+	            }
+	            if (!dueDate) {
+	                notify('Due Date is required.', 'danger');
+	                return;
+	            }
+	            if (!items.length) {
+	                notify('Add at least one item.', 'danger');
+	                return;
+	            }
+
+	            postJson('proforma/save', {
+	                client_id: clientId,
+	                proforma_number: invoiceNo,
+	                proforma_date: pfDate,
+	                invoice_type: invoiceType,
+	                billing_from: $('#pf_from').val(),
+	                billing_to: dueDate,
+	                currency: currency,
+	                gst_percent: gstEnabled() ? gstPercent : '',
+	                gst_mode: gstEnabled() ? gstMode : '',
+	                items: items,
+	            })
+	                .done(function (res) {
+	                    notify(res.message || 'Invoice created.', 'success');
+	                    if (res.proforma && res.proforma.id) {
+	                        window.location.href = base('proforma/show/' + res.proforma.id);
+	                    } else {
+	                        window.location.href = base('proforma');
+	                    }
+	                })
+	                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger'); });
+	        });
+	    };
+
+	    BMS.initProformaEdit = function () {
+	        // New edit form uses the same structure as Create (editable item rows).
+	        if ($('#pfItemsTable').length) {
+	            function parseMoney(v) {
+	                const n = parseFloat(String(v || '').replace(/,/g, ''));
+	                return isFinite(n) ? n : 0;
+	            }
+
+	            function setMoney($el, value) {
+	                if (!($el && $el.length)) return;
+	                $el.val((parseFloat(value) || 0).toFixed(2));
+	            }
+
+	            function gstEnabled() {
+	                return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
+	            }
+
+	            function recalcGst() {
+	                const total = parseMoney($('#pf_total').text());
+	                const enabled = gstEnabled();
+	                const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
+	                const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+
+	                if (!enabled) {
+	                    $('#pf_gst_box').addClass('d-none');
+	                    setMoney($('#pf_total_gst'), 0);
+	                    setMoney($('#pf_net_amount'), total);
+	                    setMoney($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
+	                    setMoney($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
+	                    setMoney($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
+	                    return;
+	                }
+
+	                $('#pf_gst_box').removeClass('d-none');
+
+	                const tax = (total * percent) / 100.0;
+	                let cgst = 0, sgst = 0, igst = 0;
+	                if (mode === 'IGST') {
+	                    igst = tax;
+	                } else {
+	                    cgst = tax / 2.0;
+	                    sgst = tax / 2.0;
+	                }
+	                const totalGst = cgst + sgst + igst;
+	                const net = total + totalGst;
+
+	                setMoney($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	                setMoney($('#pf_cgst_val'), cgst);
+	                setMoney($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	                setMoney($('#pf_sgst_val'), sgst);
+	                setMoney($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
+	                setMoney($('#pf_igst_val'), igst);
+	                setMoney($('#pf_total_gst'), totalGst);
+	                setMoney($('#pf_net_amount'), net);
+	            }
+
+	            function setTotal(total, hasItems) {
+	                const value = (parseFloat(total) || 0).toFixed(2);
+	                const $span = $('#pf_total');
+	                if ($span.length) $span.text(value);
+	                const $input = $('#pf_total_input');
+	                if ($input.length) $input.val(value);
+	                $('#btnUpdateProforma').prop('disabled', !hasItems);
+	                recalcGst();
+	            }
+
+	            function rowHasAnyInput($tr) {
+	                const item = String($tr.find('.pf-item-name').val() || '').trim();
+	                const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                const qty = String($tr.find('.pf-item-qty').val() || '').trim();
+	                const uom = String($tr.find('.pf-item-uom').val() || '').trim();
+	                const price = String($tr.find('.pf-item-price').val() || '').trim();
+	                const amt = String($tr.find('.pf-item-amt').val() || '').trim();
+	                return (item + desc + qty + uom + price + amt) !== '';
+	            }
+
+	            function recalcTotal() {
+	                let total = 0;
+	                let hasItems = false;
+	                $('#pfItemsTable tbody tr').each(function () {
+	                    const $tr = $(this);
+	                    if (!rowHasAnyInput($tr)) return;
+	                    const amt = parseMoney($tr.find('.pf-item-amt').val());
+	                    total += amt;
+	                    const item = String($tr.find('.pf-item-name').val() || '').trim();
+	                    const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                    if (item || desc) hasItems = true;
+	                });
+	                setTotal(total, hasItems);
+	            }
+
+	            function syncAmountFromQtyPrice($tr) {
+	                const qty = parseMoney($tr.find('.pf-item-qty').val());
+	                const price = parseMoney($tr.find('.pf-item-price').val());
+	                const amt = qty * price;
+	                $tr.find('.pf-item-amt').val(amt.toFixed(2));
+	            }
+
+	            function syncPriceFromAmount($tr) {
+	                const qty = parseMoney($tr.find('.pf-item-qty').val());
+	                const amt = parseMoney($tr.find('.pf-item-amt').val());
+	                if (qty > 0) {
+	                    $tr.find('.pf-item-price').val((amt / qty).toFixed(2));
+	                }
+	            }
+
+	            function rowHtml() {
+	                return '' +
+	                    '<tr>' +
+	                        '<td>' +
+	                            '<input type="hidden" class="pf-item-id" value="0">' +
+	                            '<input type="text" class="form-control form-control-sm pf-item-name" placeholder="Item">' +
+	                        '</td>' +
+	                        '<td><textarea rows="1" class="form-control form-control-sm pf-item-desc" placeholder="Description (one bullet per line)"></textarea></td>' +
+	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="1"></td>' +
+	                        '<td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>' +
+	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-price" value="0.00"></td>' +
+	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-amt" value="0.00"></td>' +
+	                        '<td class="text-center">' +
+	                            '<div class="btn-group" role="group" aria-label="Row actions">' +
+	                                '<button type="button" class="btn btn-sm btn-primary bms-pf-icon-btn pf-row-add">+</button>' +
+	                                '<button type="button" class="btn btn-sm btn-danger bms-pf-icon-btn pf-row-remove">-</button>' +
+	                            '</div>' +
+	                        '</td>' +
+	                    '</tr>';
+	            }
+
+	            function addRow(afterTr) {
+	                const $row = $(rowHtml());
+	                if (afterTr && afterTr.length) {
+	                    $row.insertAfter(afterTr);
+	                } else {
+	                    $('#pfItemsTable tbody').append($row);
+	                }
+	                recalcTotal();
+	                return $row;
+	            }
+
+	            function ensureOneRow() {
+	                const $rows = $('#pfItemsTable tbody tr');
+	                if (!$rows.length) addRow(null);
+	            }
+
+	            function collectItems() {
+	                const items = [];
+	                $('#pfItemsTable tbody tr').each(function () {
+	                    const $tr = $(this);
+	                    const id = parseInt($tr.find('.pf-item-id').val() || '0', 10) || 0;
+	                    const item = String($tr.find('.pf-item-name').val() || '').trim();
+	                    const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                    const qty = parseMoney($tr.find('.pf-item-qty').val());
+	                    const price = parseMoney($tr.find('.pf-item-price').val());
+	                    const amt = parseMoney($tr.find('.pf-item-amt').val());
+
+	                    if (!item && !desc && qty === 0 && price === 0 && amt === 0) return;
+
+	                    const fullDesc = item && desc ? (item + "\n" + desc) : (desc || item);
+	                    items.push({
+	                        id: id,
+	                        description: fullDesc,
+	                        quantity: qty,
+	                        unit_price: price,
+	                        amount: amt
+	                    });
+	                });
+	                return items;
+	            }
+
+	            function initCompanyField() {
+	                const $opt = $('#pf_client_id option:selected');
+	                $('#pf_company').val(($opt.data('company') || '').toString().trim());
+	                $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
+	                $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
+	                $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
+	                $('#pf_city').val(($opt.data('city') || '').toString().trim());
+	                $('#pf_state').val(($opt.data('state') || '').toString().trim());
+	                $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
+	            }
+
+	            initCompanyField();
+	            $('#pf_client_id').on('change', initCompanyField);
+	            attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
+	            attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+
+	            $('#pf_invoice_type').on('change', recalcGst);
+	            $('#pf_gst_percent').on('input', recalcGst);
+	            $(document).on('change', 'input[name="pf_gst_mode"]', recalcGst);
+
+	            ensureOneRow();
+	            recalcTotal();
+
+	            $('#pfItemsTable')
+	                .off('click', 'button.pf-row-add')
+	                .on('click', 'button.pf-row-add', function (e) {
+	                    e.preventDefault();
+	                    addRow($(this).closest('tr'));
+	                });
+
+	            $('#pfItemsTable')
+	                .off('click', 'button.pf-row-remove')
+	                .on('click', 'button.pf-row-remove', function (e) {
+	                    e.preventDefault();
+	                    const $tr = $(this).closest('tr');
+	                    $tr.remove();
+	                    ensureOneRow();
+	                    recalcTotal();
+	                });
+
+	            $('#pfItemsTable')
+	                .off('input', '.pf-item-qty,.pf-item-price')
+	                .on('input', '.pf-item-qty,.pf-item-price', function () {
+	                    const $tr = $(this).closest('tr');
+	                    syncAmountFromQtyPrice($tr);
+	                    recalcTotal();
+	                });
+
+	            $('#pfItemsTable')
+	                .off('input', '.pf-item-amt')
+	                .on('input', '.pf-item-amt', function () {
+	                    const $tr = $(this).closest('tr');
+	                    syncPriceFromAmount($tr);
+	                    recalcTotal();
+	                });
+
+	            $('#pfItemsTable')
+	                .off('input', '.pf-item-name,.pf-item-desc,.pf-item-uom')
+	                .on('input', '.pf-item-name,.pf-item-desc,.pf-item-uom', recalcTotal);
+
+	            $('#btnUpdateProforma').on('click', function () {
+	                const proformaId = parseInt($('#pf_id').val() || '0', 10) || 0;
+	                const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
+	                const clientId = $('#pf_client_id').val();
+	                const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+	                const currency = ($('#pf_currency').val() || '').trim();
+	                const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
+	                const invoiceType = ($('#pf_invoice_type').val() || '').trim();
+	                const gstPercent = ($('#pf_gst_percent').val() || '').trim();
+	                const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
+	                const items = collectItems();
+
+	                if (!proformaId) return;
+	                if (!invoiceNo) {
+	                    notify('Invoice No is required.', 'danger');
+	                    return;
+	                }
+	                if (!clientId) {
+	                    notify('Client is required.', 'danger');
+	                    return;
+	                }
+	                if (!pfDate) {
+	                    notify('Date Of Issue is required.', 'danger');
+	                    return;
+	                }
+	                if (!invoiceType) {
+	                    notify('Invoice Type is required.', 'danger');
+	                    return;
+	                }
+	                if (!currency) {
+	                    notify('Currency is required.', 'danger');
+	                    return;
+	                }
+	                if (!dueDate) {
+	                    notify('Due Date is required.', 'danger');
+	                    return;
+	                }
+	                if (!items.length) {
+	                    notify('Add at least one item.', 'danger');
+	                    return;
+	                }
+
+	                postJson('proforma/update', {
+	                    proforma_id: proformaId,
+	                    proforma_number: invoiceNo,
+	                    client_id: clientId,
+	                    proforma_date: pfDate,
+	                    invoice_type: invoiceType,
+	                    billing_from: $('#pf_from').val(),
+	                    billing_to: dueDate,
+	                    currency: currency,
+	                    gst_percent: gstEnabled() ? gstPercent : '',
+	                    gst_mode: gstEnabled() ? gstMode : '',
+	                    items: items,
+	                })
+	                    .done(function (res) {
+	                        notify(res.message || 'Updated.', 'success');
+	                        if (res.proforma && res.proforma.id) {
+	                            window.location.href = base('proforma/show/' + res.proforma.id);
+	                        }
+	                    })
+	                    .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Update failed.', 'danger'); });
+	            });
+
+	            return;
+	        }
+
+	        let table = null;
+	        const viewModalEl = document.getElementById('billableViewModal');
+	        const viewModal = viewModalEl ? new bootstrap.Modal(viewModalEl) : null;
+
+	        function parseMoney(v) {
+	            const n = parseFloat(String(v || '').replace(/,/g, ''));
+	            return isFinite(n) ? n : 0;
+	        }
+
+	        function setTotal(total) {
+	            const value = (parseFloat(total) || 0).toFixed(2);
+	            const $span = $('#pf_total');
+	            if ($span.length) $span.text(value);
+	            const $input = $('#pf_total_input');
+	            if ($input.length) $input.val(value);
+	        }
+
+	        function recalcTotal() {
+	            let total = 0;
+	            $('#dtProformaItems input.pf-chk:checked').each(function () {
+	                total += (parseFloat($(this).data('amount')) || 0);
+	            });
+	            setTotal(total);
+	            $('#btnUpdateProforma').prop('disabled', ($('#dtProformaItems input.pf-chk:checked').length === 0));
+	        }
 
         const proformaId = parseInt($('#pf_id').val(), 10) || 0;
         const clientId = $('#pf_client_id').val();
@@ -2287,7 +2620,7 @@
         attachNativeCalendar('#pf_from', '#pf_from_native', function () {});
         attachNativeCalendar('#pf_to', '#pf_to_native', function () {});
 
-        table = $('#dtProformaItems').DataTable($.extend(true, {}, dtDefaults(), {
+	        table = $('#dtProformaItems').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: function (_data, callback) {
                 if (!clientId || !proformaId) {
                     callback({ data: [] });
@@ -2299,20 +2632,50 @@
                     .fail(function () { callback({ data: [] }); });
             },
             order: [[2, 'desc']],
-            columns: [
-                { data: null, orderable: false, render: function (row) {
-                    const checked = row.included ? 'checked' : '';
-                    return '<input class="form-check-input pf-chk" type="checkbox" value="' + row.id + '" data-amount="' + row.amount + '" ' + checked + '>';
-                }},
-                { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
-                { data: 'entry_date', render: formatUiDate },
-                { data: 'description', orderable: false, render: renderBulletText },
-                { data: 'quantity', className: 'text-end' },
-                { data: 'unit_price', className: 'text-end' },
-                { data: 'amount', className: 'text-end' },
-                { data: 'billing_month', render: function (d) { return d || '-'; } },
-            ],
-        }));
+	            columns: [
+	                { data: null, orderable: false, render: function (row) {
+	                    const checked = row.included ? 'checked' : '';
+	                    return '<input class="form-check-input pf-chk" type="checkbox" value="' + row.id + '" data-amount="' + row.amount + '" ' + checked + '>';
+	                }},
+	                { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
+	                { data: 'entry_date', render: formatUiDate },
+	                { data: 'description', orderable: false, render: function (d, t, row) {
+	                    const plain = descriptionPlainText(d);
+	                    if (t === 'sort' || t === 'type' || t === 'filter') return plain;
+	                    const inner = renderTruncatedDescriptionBullets(d, 'display', 25);
+	                    if (!plain) return inner;
+	                    return '' +
+	                        '<button type="button" class="btn btn-link p-0 text-start text-decoration-none link-dark pf-edit-desc-view" data-id="' + row.id + '">' +
+	                            inner +
+	                        '</button>';
+	                }},
+	                { data: 'quantity', className: 'text-end' },
+	                { data: 'unit_price', className: 'text-end' },
+	                { data: 'amount', className: 'text-end' },
+	                { data: 'billing_month', render: function (d) { return d || '-'; } },
+	            ],
+	        }));
+
+	        $('#dtProformaItems').off('click', '.pf-edit-desc-view').on('click', '.pf-edit-desc-view', function () {
+	            if (!viewModal || !table) return;
+	            let $tr = $(this).closest('tr');
+	            if ($tr.hasClass('child')) $tr = $tr.prev();
+	            const row = table.row($tr).data();
+	            if (!row) return;
+	            const desc = String(row.description || '').trim();
+	            if (!desc) return;
+
+	            const entryNo = row.entry_no || ('BI-' + String(row.id || '').padStart(5, '0'));
+	            $('#bi_view_entry_no').text(entryNo || '-');
+	            $('#bi_view_date').text(formatUiDate(row.entry_date, 'display'));
+	            $('#bi_view_client').text(String($('#pf_client_id option:selected').text() || '').trim() || '-');
+	            $('#bi_view_month').text(String(row.billing_month || '').trim() || '-');
+	            $('#bi_view_amount').text(String(row.amount || '').trim() || '-');
+	            $('#bi_view_status').text(String(row.status || '').trim() || '-');
+	            $('#bi_view_description').html(renderBulletText(row.description, 'display'));
+
+	            viewModal.show();
+	        });
 
         $('#dtProformaItems').on('draw.dt', function () {
             $('#pf_chkAll').prop('checked', false);
@@ -2327,29 +2690,35 @@
 
         $('#dtProformaItems').off('change', 'input.pf-chk').on('change', 'input.pf-chk', recalcTotal);
 
-        $('#btnUpdateProforma').on('click', function () {
-            const ids = [];
-            $('#dtProformaItems input.pf-chk:checked').each(function () { ids.push(parseInt($(this).val(), 10)); });
-            if (ids.length === 0) return;
-            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
-            if (!pfDate) {
-                notify('Date Of Issue is required.', 'danger');
-                return;
-            }
+	        $('#btnUpdateProforma').on('click', function () {
+	            const ids = [];
+	            $('#dtProformaItems input.pf-chk:checked').each(function () { ids.push(parseInt($(this).val(), 10)); });
+	            if (ids.length === 0) return;
+	            const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
+	            if (!invoiceNo) {
+	                notify('Invoice No is required.', 'danger');
+	                return;
+	            }
+	            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+	            if (!pfDate) {
+	                notify('Date Of Issue is required.', 'danger');
+	                return;
+	            }
             const pfStatus = ($('#pf_status').val() || '').trim();
             if (!pfStatus) {
                 notify('Status is required.', 'danger');
                 return;
             }
 
-            postJson('proforma/update', {
-                proforma_id: proformaId,
-                item_ids: ids,
-                proforma_date: pfDate,
-                billing_from: dmyToIso(($('#pf_from').val() || '').trim()),
-                billing_to: dmyToIso(($('#pf_to').val() || '').trim()),
-                status: pfStatus,
-            })
+	            postJson('proforma/update', {
+	                proforma_id: proformaId,
+	                proforma_number: invoiceNo,
+	                item_ids: ids,
+	                proforma_date: pfDate,
+	                billing_from: dmyToIso(($('#pf_from').val() || '').trim()),
+	                billing_to: dmyToIso(($('#pf_due').val() || $('#pf_to').val() || '').trim()),
+	                status: pfStatus,
+	            })
                 .done(function (res) {
                     notify(res.message || 'Updated.', 'success');
                     if (res.proforma && res.proforma.id) {

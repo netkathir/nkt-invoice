@@ -3,6 +3,7 @@
     $isActive = static fn (string $key): string => $active === $key ? 'active' : '';
     $mastersOpen = in_array($active, ['client_master'], true);
     $accessOpen = in_array($active, ['users', 'roles', 'permissions', 'role_permissions'], true);
+    $invoicesOpen = in_array($active, ['proforma'], true);
     $hasAccessMenu = can('users.view') || can('roles.view') || can('permissions.view') || can('roles.assign_perms');
     $canProforma = can('billable_items.view') || can('client_masters.view');
 ?>
@@ -134,14 +135,33 @@
                 </a>
 
                 <?php if ($canProforma): ?>
-                    <a class="nav-link <?= $isActive('proforma') ?>" href="<?= base_url('proforma') ?>" data-bms-title="Invoices">
+                    <a class="nav-link nav-parent <?= $invoicesOpen ? 'active' : '' ?>" data-bs-toggle="collapse" href="#navInvoices" role="button" aria-expanded="<?= $invoicesOpen ? 'true' : 'false' ?>" aria-controls="navInvoices" data-bms-title="Invoices">
                         <span class="nav-ico" aria-hidden="true">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                 <path d="M7 3h10v2H7V3Zm12 4H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2Zm0 12H5V9h14v10ZM7 11h10v2H7v-2Zm0 4h7v2H7v-2Z" fill="currentColor" opacity=".85"/>
                             </svg>
                         </span>
-                        <span class="nav-txt">Invoices</span>
+                        <span class="nav-txt d-flex align-items-center justify-content-between w-100">
+                            <span>Invoices</span>
+                            <span class="nav-caret" aria-hidden="true">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                    <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </span>
+                        </span>
                     </a>
+                    <div class="collapse <?= $invoicesOpen ? 'show' : '' ?>" id="navInvoices">
+                        <div class="nav flex-column nav-pills nav-sub">
+                            <a class="nav-link <?= $isActive('proforma') ?>" href="<?= base_url('proforma') ?>">
+                                <span class="nav-ico" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                        <path d="M7 3h10v2H7V3Zm12 4H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2Zm0 12H5V9h14v10ZM7 11h10v2H7v-2Zm0 4h7v2H7v-2Z" fill="currentColor" opacity=".85"/>
+                                    </svg>
+                                </span>
+                                <span class="nav-txt">Invoices</span>
+                            </a>
+                        </div>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>

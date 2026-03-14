@@ -74,11 +74,18 @@ class ProformaController extends BaseController
         }
 
         $clients = (new ClientModel())->orderBy('name', 'ASC')->findAll();
+        $items = (new ProformaItemModel())
+            ->select('billable_items.id, billable_items.description, billable_items.quantity, billable_items.unit_price, billable_items.amount')
+            ->join('billable_items', 'billable_items.id = proforma_items.billable_item_id')
+            ->where('proforma_items.proforma_id', $id)
+            ->orderBy('proforma_items.id', 'ASC')
+            ->findAll();
 
-        return view('proforma/edit', [
+        return view('proforma/edit_new', [
             'active'   => 'proforma',
             'clients'  => $clients,
             'proforma' => $proforma,
+            'items'    => $items,
         ]);
     }
 
@@ -151,8 +158,68 @@ class ProformaController extends BaseController
     public function save()
     {
         $clientId = (int) $this->request->getPost('client_id');
-        $itemIds = (array) $this->request->getPost('item_ids');
-        $itemIds = array_values(array_filter(array_map('intval', $itemIds)));
+        $proformaNumber = trim((string) $this->request->getPost('proforma_number'));
+        $items = $this->request->getPost('items');
+        $itemIds = [];
+
+        if ($proformaNumber === '') {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Invoice No is required.']);
+        }
+        if ($clientId <= 0) {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Client is required.']);
+        }
+
+        $createdBillableIds = [];
+        if (is_array($items) && $items !== []) {
+            $pfDate = $this->normalizeIsoDate((string) $this->request->getPost('proforma_date'));
+            if ($pfDate === '') {
+                $pfDate = date('Y-m-d');
+            }
+
+            $billables = new BillableItemModel();
+            foreach ($items as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $desc = trim((string) ($row['description'] ?? ''));
+                $qty = (float) ($row['quantity'] ?? 0);
+                $unitPrice = (float) ($row['unit_price'] ?? 0);
+                $amount = (float) ($row['amount'] ?? ($qty * $unitPrice));
+
+                if ($desc === '' && $qty === 0.0 && $unitPrice === 0.0 && $amount === 0.0) {
+                    continue;
+                }
+                if ($desc === '') {
+                    return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Item description is required.']);
+                }
+                if ($qty <= 0) {
+                    return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Quantity must be greater than 0.']);
+                }
+
+                $id = $billables->insert([
+                    'entry_date'  => $pfDate,
+                    'client_id'   => $clientId,
+                    'description' => $desc,
+                    'quantity'    => number_format($qty, 2, '.', ''),
+                    'unit_price'  => number_format($unitPrice, 2, '.', ''),
+                    'amount'      => number_format($amount, 2, '.', ''),
+                    'status'      => BillableItemModel::STATUS_PENDING,
+                ], true);
+
+                if (! $id) {
+                    $errors = $billables->errors();
+                    $msg = $errors ? (string) (array_values($errors)[0] ?? 'Invalid item.') : 'Invalid item.';
+                    return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => $msg]);
+                }
+
+                $createdBillableIds[] = (int) $id;
+            }
+
+            $itemIds = $createdBillableIds;
+        } else {
+            $itemIds = (array) $this->request->getPost('item_ids');
+            $itemIds = array_values(array_filter(array_map('intval', $itemIds)));
+        }
 
         if ($clientId <= 0 || $itemIds === []) {
             return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Select a client and at least one item.']);
@@ -161,6 +228,7 @@ class ProformaController extends BaseController
         try {
             $service = new ProformaService(db_connect(), new BillableItemModel(), new ProformaModel(), new ProformaItemModel());
             $proforma = $service->create($clientId, $itemIds, [
+                'proforma_number'=> $proformaNumber,
                 'proforma_date' => $this->normalizeIsoDate((string) $this->request->getPost('proforma_date')),
                 'invoice_type'  => (string) $this->request->getPost('invoice_type'),
                 'billing_from'  => $this->normalizeIsoDate((string) $this->request->getPost('billing_from')),
@@ -176,6 +244,13 @@ class ProformaController extends BaseController
                 'proforma' => $proforma,
             ]);
         } catch (Throwable $e) {
+            if ($createdBillableIds !== []) {
+                try {
+                    (new BillableItemModel())->whereIn('id', $createdBillableIds)->delete();
+                } catch (Throwable $ignored) {
+                    // ignore cleanup errors
+                }
+            }
             return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }
     }
@@ -183,16 +258,130 @@ class ProformaController extends BaseController
     public function update()
     {
         $proformaId = (int) $this->request->getPost('proforma_id');
-        $itemIds = (array) $this->request->getPost('item_ids');
-        $itemIds = array_values(array_filter(array_map('intval', $itemIds)));
+        $proformaNumber = trim((string) $this->request->getPost('proforma_number'));
+        $items = $this->request->getPost('items');
+        $itemIds = [];
 
-        if ($proformaId <= 0 || $itemIds === []) {
-            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Select at least one item.']);
+        if ($proformaId <= 0) {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Invalid invoice.']);
+        }
+        if ($proformaNumber === '') {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Invoice No is required.']);
+        }
+
+        $createdBillableIds = [];
+        if (is_array($items) && $items !== []) {
+            $proforma = (new ProformaModel())->find($proformaId);
+            if (! $proforma) {
+                return $this->response->setStatusCode(404)->setJSON(['success' => false, 'message' => 'Invoice not found.']);
+            }
+
+            $clientId = (int) ($proforma['client_id'] ?? 0);
+            if ($clientId <= 0) {
+                return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Invalid invoice client.']);
+            }
+
+            $targetClientId = (int) $this->request->getPost('client_id');
+            if ($targetClientId > 0 && $targetClientId !== $clientId) {
+                $exists = (new ClientModel())->find($targetClientId);
+                if (! $exists) {
+                    return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Invalid client.']);
+                }
+
+                (new ProformaModel())->update($proformaId, ['client_id' => $targetClientId]);
+                (new BillableItemModel())
+                    ->where('proforma_id', $proformaId)
+                    ->set(['client_id' => $targetClientId])
+                    ->update();
+
+                $clientId = $targetClientId;
+            }
+
+            $pfDate = $this->normalizeIsoDate((string) $this->request->getPost('proforma_date'));
+            if ($pfDate === '') {
+                $pfDate = date('Y-m-d');
+            }
+
+            $billables = new BillableItemModel();
+            foreach ($items as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+
+                $id = (int) ($row['id'] ?? 0);
+                $desc = trim((string) ($row['description'] ?? ''));
+                $qty = (float) ($row['quantity'] ?? 0);
+                $unitPrice = (float) ($row['unit_price'] ?? 0);
+                $amount = (float) ($row['amount'] ?? ($qty * $unitPrice));
+
+                if ($desc === '' && $qty === 0.0 && $unitPrice === 0.0 && $amount === 0.0) {
+                    continue;
+                }
+                if ($desc === '') {
+                    return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Item description is required.']);
+                }
+                if ($qty <= 0) {
+                    return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Quantity must be greater than 0.']);
+                }
+
+                if ($id > 0) {
+                    $existing = $billables->find($id);
+                    if (! $existing) {
+                        return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Some items are invalid.']);
+                    }
+                    if ((int) ($existing['proforma_id'] ?? 0) !== $proformaId) {
+                        return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Some items are not linked to this invoice.']);
+                    }
+                    if (! empty($existing['invoice_id'])) {
+                        return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Cannot edit items that are already invoiced.']);
+                    }
+
+                    $billables->update($id, [
+                        'entry_date'  => $pfDate,
+                        'client_id'   => $clientId,
+                        'description' => $desc,
+                        'quantity'    => number_format($qty, 2, '.', ''),
+                        'unit_price'  => number_format($unitPrice, 2, '.', ''),
+                        'amount'      => number_format($amount, 2, '.', ''),
+                    ]);
+
+                    $itemIds[] = $id;
+                } else {
+                    $newId = $billables->insert([
+                        'entry_date'  => $pfDate,
+                        'client_id'   => $clientId,
+                        'description' => $desc,
+                        'quantity'    => number_format($qty, 2, '.', ''),
+                        'unit_price'  => number_format($unitPrice, 2, '.', ''),
+                        'amount'      => number_format($amount, 2, '.', ''),
+                        'status'      => BillableItemModel::STATUS_PENDING,
+                    ], true);
+
+                    if (! $newId) {
+                        $errors = $billables->errors();
+                        $msg = $errors ? (string) (array_values($errors)[0] ?? 'Invalid item.') : 'Invalid item.';
+                        return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => $msg]);
+                    }
+
+                    $createdBillableIds[] = (int) $newId;
+                    $itemIds[] = (int) $newId;
+                }
+            }
+
+            $itemIds = array_values(array_filter(array_map('intval', $itemIds)));
+        } else {
+            $itemIds = (array) $this->request->getPost('item_ids');
+            $itemIds = array_values(array_filter(array_map('intval', $itemIds)));
+        }
+
+        if ($itemIds === []) {
+            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Add at least one item.']);
         }
 
         try {
             $service = new ProformaService(db_connect(), new BillableItemModel(), new ProformaModel(), new ProformaItemModel());
             $proforma = $service->update($proformaId, $itemIds, [
+                'proforma_number'=> $proformaNumber,
                 'proforma_date' => $this->normalizeIsoDate((string) $this->request->getPost('proforma_date')),
                 'invoice_type'  => (string) $this->request->getPost('invoice_type'),
                 'billing_from'  => $this->normalizeIsoDate((string) $this->request->getPost('billing_from')),
@@ -200,7 +389,6 @@ class ProformaController extends BaseController
                 'currency'      => (string) $this->request->getPost('currency'),
                 'gst_percent'   => (string) $this->request->getPost('gst_percent'),
                 'gst_mode'      => (string) $this->request->getPost('gst_mode'),
-                'status'        => (string) $this->request->getPost('status'),
             ]);
 
             return $this->response->setJSON([
@@ -209,6 +397,13 @@ class ProformaController extends BaseController
                 'proforma' => $proforma,
             ]);
         } catch (Throwable $e) {
+            if ($createdBillableIds !== []) {
+                try {
+                    (new BillableItemModel())->whereIn('id', $createdBillableIds)->delete();
+                } catch (Throwable $ignored) {
+                    // ignore cleanup errors
+                }
+            }
             return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }
     }

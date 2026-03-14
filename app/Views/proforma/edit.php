@@ -6,9 +6,21 @@
     <a class="btn btn-light" href="<?= base_url('proforma') ?>">Back</a>
 </div>
 
-<div class="card mb-3">
+<div class="card bms-invoice-card mb-3">
     <div class="card-body">
         <input type="hidden" id="pf_id" value="<?= esc((string) $proforma['id']) ?>">
+
+        <div class="d-flex align-items-start gap-3 mb-3">
+            <div class="flex-shrink-0">
+                <img src="<?= base_url('favicon_netk.png') ?>" alt="Company Logo" class="bms-invoice-logo">
+            </div>
+            <div class="flex-grow-1">
+                <div class="h5 mb-1">Invoice</div>
+                <div class="text-muted small">Invoice</div>
+            </div>
+        </div>
+
+        <hr class="my-3">
         <div class="row g-3 align-items-end">
             <div class="col-12 col-md-6">
                 <label class="form-label">Client</label>
@@ -62,8 +74,9 @@
                     <option value="Posted" <?= ($proforma['status'] ?? '') === 'Posted' ? 'selected' : '' ?>>Posted</option>
                 </select>
             </div>
-            <div class="col-12 col-md-8 text-md-end small text-muted d-flex align-items-end justify-content-md-end">
-                Invoice No: <span class="fw-semibold ms-1"><?= esc((string) $proforma['proforma_number']) ?></span>
+            <div class="col-12 col-md-4">
+                <label class="form-label">Invoice No <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="pf_invoice_no" value="<?= esc((string) $proforma['proforma_number']) ?>" required>
             </div>
         </div>
     </div>
@@ -84,7 +97,7 @@
                 <th><input class="form-check-input" type="checkbox" id="pf_chkAll"></th>
                 <th>Entry No</th>
                 <th>Date</th>
-                <th>Description</th>
+                <th>Item Description</th>
                 <th>Qty</th>
                 <th>Unit Price</th>
                 <th>Amount</th>
@@ -94,6 +107,8 @@
         </table>
     </div>
 </div>
+
+<?= view('billable_items/view_modal') ?>
 
 <script>
     window.addEventListener('DOMContentLoaded', function () {

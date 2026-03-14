@@ -13,6 +13,11 @@ html, body{
     height: 100%;
 }
 
+/* Prevent layout "jump" between pages with/without scrollbar */
+html{
+    overflow-y: scroll;
+}
+
 body{
     color: var(--ink);
     background: radial-gradient(1200px 500px at 20% 5%, rgba(91, 157, 255, .55), rgba(255,255,255,0) 60%),
@@ -39,6 +44,10 @@ body{
     width: var(--sidebar-width);
     padding: 14px;
     transition: width .18s ease;
+    flex: 0 0 var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    flex-shrink: 0;
+    z-index: 1030;
 }
 
 .app-main{
@@ -70,6 +79,22 @@ body{
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+/* Keep sidebar panel static on long pages (desktop). */
+@media (min-width: 992px){
+    .app-sidebar{
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        align-self: flex-start;
+        box-sizing: border-box;
+    }
+    .app-panel--sidebar{
+        position: relative;
+        top: auto;
+        height: 100%;
+    }
 }
 
 .app-panel--header,
@@ -370,6 +395,8 @@ table tbody td{
 
 body.bms-sidebar-collapsed .app-sidebar{
     width: 78px;
+    flex: 0 0 78px;
+    max-width: 78px;
 }
 body.bms-sidebar-collapsed .app-sidebar{
     padding: 10px;

@@ -318,8 +318,82 @@ class RolesController extends BaseController
             ? (array) $registry->permissionMatrix
             : [];
 
-        // Prevent "Not seeded" warnings when new permission keys were deployed
-        // but migrations were not re-run on the server.
+        // Merge newly added "Forms" (modules) into the matrix.
+        // These are created from the Permissions (Forms) screen as non-dot keys,
+        // and should show up here with CRUD checkbox behavior automatically.
+        $forms = db_connect()
+            ->table('permissions')
+            ->select(['key', 'label', 'module'])
+            ->where("`key` NOT LIKE '%.%'", null, false)
+            ->where("module IS NOT NULL", null, false)
+            ->where("TRIM(module) <> ''", null, false)
+            ->where("module <> 'Access'", null, false)
+            ->orderBy('module', 'ASC')
+            ->orderBy('label', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        foreach ($forms as $f) {
+            $formKey = trim((string) ($f['key'] ?? ''));
+            if ($formKey === '' || str_contains($formKey, '.')) {
+                continue;
+            }
+
+            $moduleName = trim((string) ($f['module'] ?? ''));
+            $label = trim((string) ($f['label'] ?? ''));
+            if ($label === '') {
+                $label = $moduleName !== '' ? $moduleName : $formKey;
+            }
+            if ($moduleName === '') {
+                $moduleName = 'Other';
+            }
+
+            // Avoid duplicates: if this form's CRUD keys are already covered by the matrix, skip.
+            $crudKeys = [$formKey . '.view', $formKey . '.create', $formKey . '.edit', $formKey . '.delete'];
+            $covered = false;
+            foreach ($spec as $pages) {
+                foreach ((array) $pages as $levels) {
+                    foreach (['read', 'write', 'delete'] as $lvl) {
+                        foreach ((array) ($levels[$lvl] ?? []) as $k) {
+                            if (in_array((string) $k, $crudKeys, true)) {
+                                $covered = true;
+                                break 3;
+                            }
+                        }
+                    }
+                }
+            }
+            if ($covered) {
+                continue;
+            }
+
+            // Avoid duplicates: if the same label already exists anywhere, skip.
+            $already = false;
+            foreach ($spec as $m => $pages) {
+                foreach (array_keys((array) $pages) as $pageLabel) {
+                    if (strcasecmp((string) $pageLabel, $label) === 0) {
+                        $already = true;
+                        break 2;
+                    }
+                }
+            }
+            if ($already) {
+                continue;
+            }
+
+            if (! isset($spec[$moduleName]) || ! is_array($spec[$moduleName])) {
+                $spec[$moduleName] = [];
+            }
+
+            $spec[$moduleName][$label] = [
+                'read'   => [$formKey . '.view'],
+                'write'  => [$formKey . '.create', $formKey . '.edit'],
+                'delete' => [$formKey . '.delete'],
+            ];
+        }
+
+        // Prevent "Not seeded" warnings when new permission keys were deployed/created
+        // but migrations were not re-run on a target server.
         if ($spec !== []) {
             $this->ensurePermissionMatrixSeeded($spec);
         }

@@ -21,7 +21,7 @@ class ProformaService
 
     /**
      * @param list<int> $billableItemIds
-     * @param array{proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string} $meta
+     * @param array{proforma_number?:string,proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string,invoice_type?:string,gst_percent?:string|float,gst_mode?:string} $meta
      * @return array{id:int,proforma_number:string,total_amount:string}
      */
     public function create(int $clientId, array $billableItemIds, array $meta = []): array
@@ -97,9 +97,10 @@ class ProformaService
 
             $proformaId = null;
             $proformaNumber = null;
+            $customNumber = trim((string) ($meta['proforma_number'] ?? ''));
 
             for ($i = 0; $i < 3; $i++) {
-                $proformaNumber = $this->proformas->nextProformaNumber($proformaDate);
+                $proformaNumber = $customNumber !== '' ? $customNumber : $this->proformas->nextProformaNumber($proformaDate);
 
                 $proformaId = $this->proformas->insert([
                     'proforma_number' => $proformaNumber,
@@ -122,6 +123,15 @@ class ProformaService
 
                 if ($proformaId) {
                     break;
+                }
+
+                if ($customNumber !== '') {
+                    $err = $this->proformas->db ? (array) $this->proformas->db->error() : [];
+                    $code = (int) ($err['code'] ?? 0);
+                    if ($code === 1062) {
+                        throw new RuntimeException('Invoice No already exists.');
+                    }
+                    throw new RuntimeException('Unable to create invoice with the given Invoice No.');
                 }
             }
 
@@ -167,7 +177,7 @@ class ProformaService
 
     /**
      * @param list<int> $billableItemIds
-     * @param array{proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string} $meta
+     * @param array{proforma_number?:string,proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string,invoice_type?:string,gst_percent?:string|float,gst_mode?:string} $meta
      * @return array{id:int,proforma_number:string,total_amount:string}
      */
     public function update(int $proformaId, array $billableItemIds, array $meta = []): array
@@ -208,13 +218,25 @@ class ProformaService
         $gstPercent = isset($meta['gst_percent']) && $meta['gst_percent'] !== '' ? (float) $meta['gst_percent'] : (float) ($proforma['gst_percent'] ?? 0);
         $gstMode = isset($meta['gst_mode']) && $meta['gst_mode'] !== '' ? (string) $meta['gst_mode'] : (string) ($proforma['gst_mode'] ?? ProformaModel::GST_MODE_CGST_SGST);
 
-        $this->db->transBegin();
+	        $this->db->transBegin();
 
-        try {
-            $currentRows = $this->proformaItems
-                ->select('billable_item_id')
-                ->where('proforma_id', $proformaId)
-                ->findAll();
+	        try {
+	            $customNumber = trim((string) ($meta['proforma_number'] ?? ''));
+	            $currentNumber = (string) ($proforma['proforma_number'] ?? '');
+	            if ($customNumber !== '' && $customNumber !== $currentNumber) {
+	                $exists = $this->proformas
+	                    ->where('proforma_number', $customNumber)
+	                    ->where('id !=', $proformaId)
+	                    ->countAllResults();
+	                if ($exists > 0) {
+	                    throw new RuntimeException('Invoice No already exists.');
+	                }
+	            }
+
+	            $currentRows = $this->proformaItems
+	                ->select('billable_item_id')
+	                ->where('proforma_id', $proformaId)
+	                ->findAll();
 
             $currentIds = array_values(array_filter(array_map(
                 static fn (array $r): int => (int) ($r['billable_item_id'] ?? 0),
@@ -309,8 +331,40 @@ class ProformaService
             }
 
             $total = 0.0;
+            $amountMap = [];
             foreach ($selectedItems as $item) {
-                $total += (float) ($item['amount'] ?? 0);
+                $amt = (float) ($item['amount'] ?? 0);
+                $total += $amt;
+                $amountMap[(int) ($item['id'] ?? 0)] = number_format($amt, 2, '.', '');
+            }
+
+            // Keep proforma_items.amount in sync with billable_items.amount.
+            if ($amountMap !== []) {
+                $piRows = $this->proformaItems
+                    ->select('id, billable_item_id')
+                    ->where('proforma_id', $proformaId)
+                    ->whereIn('billable_item_id', array_keys($amountMap))
+                    ->findAll();
+
+                $updates = [];
+                foreach ($piRows as $r) {
+                    $bid = (int) ($r['billable_item_id'] ?? 0);
+                    $pid = (int) ($r['id'] ?? 0);
+                    if ($pid <= 0 || $bid <= 0) {
+                        continue;
+                    }
+                    if (! isset($amountMap[$bid])) {
+                        continue;
+                    }
+                    $updates[] = [
+                        'id'     => $pid,
+                        'amount' => $amountMap[$bid],
+                    ];
+                }
+
+                if ($updates !== []) {
+                    $this->proformaItems->updateBatch($updates, 'id');
+                }
             }
 
             $cgst = 0.0;
@@ -331,35 +385,41 @@ class ProformaService
                 $netAmount = $total + $totalGst;
             }
 
-            $this->proformas->update($proformaId, [
-                'proforma_date' => $proformaDate,
-                'invoice_type'  => $invoiceType,
-                'billing_from'  => $billingFrom ?: null,
-                'billing_to'    => $billingTo ?: null,
-                'currency'      => $currency,
-                'gst_percent'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($gstPercent, 2, '.', '') : null,
-                'gst_mode'      => $invoiceType === ProformaModel::TYPE_GST ? $gstMode : null,
-                'cgst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($cgst, 2, '.', '') : null,
-                'sgst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($sgst, 2, '.', '') : null,
-                'igst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($igst, 2, '.', '') : null,
-                'total_gst'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($totalGst, 2, '.', '') : null,
-                'net_amount'    => number_format($netAmount, 2, '.', ''),
-                'total_amount'  => number_format($total, 2, '.', ''),
-                'status'        => $status,
-            ]);
+	            $updatePayload = [
+	                'proforma_date' => $proformaDate,
+	                'invoice_type'  => $invoiceType,
+	                'billing_from'  => $billingFrom ?: null,
+	                'billing_to'    => $billingTo ?: null,
+	                'currency'      => $currency,
+	                'gst_percent'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($gstPercent, 2, '.', '') : null,
+	                'gst_mode'      => $invoiceType === ProformaModel::TYPE_GST ? $gstMode : null,
+	                'cgst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($cgst, 2, '.', '') : null,
+	                'sgst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($sgst, 2, '.', '') : null,
+	                'igst_amount'   => $invoiceType === ProformaModel::TYPE_GST ? number_format($igst, 2, '.', '') : null,
+	                'total_gst'     => $invoiceType === ProformaModel::TYPE_GST ? number_format($totalGst, 2, '.', '') : null,
+	                'net_amount'    => number_format($netAmount, 2, '.', ''),
+	                'total_amount'  => number_format($total, 2, '.', ''),
+	                'status'        => $status,
+	            ];
 
-            if ($this->db->transStatus() === false) {
-                throw new RuntimeException('Database error while updating proforma invoice.');
-            }
+	            if ($customNumber !== '') {
+	                $updatePayload['proforma_number'] = $customNumber;
+	            }
+
+	            $this->proformas->update($proformaId, $updatePayload);
+
+	            if ($this->db->transStatus() === false) {
+	                throw new RuntimeException('Database error while updating proforma invoice.');
+	            }
 
             $this->db->transCommit();
 
-            return [
-                'id'              => (int) $proformaId,
-                'proforma_number' => (string) ($proforma['proforma_number'] ?? ''),
-                'total_amount'    => number_format($total, 2, '.', ''),
-                'net_amount'      => number_format($netAmount, 2, '.', ''),
-            ];
+	            return [
+	                'id'              => (int) $proformaId,
+	                'proforma_number' => $customNumber !== '' ? $customNumber : (string) ($proforma['proforma_number'] ?? ''),
+	                'total_amount'    => number_format($total, 2, '.', ''),
+	                'net_amount'      => number_format($netAmount, 2, '.', ''),
+	            ];
         } catch (Throwable $e) {
             $this->db->transRollback();
             throw $e;

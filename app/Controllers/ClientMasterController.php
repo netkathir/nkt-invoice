@@ -74,8 +74,42 @@ class ClientMasterController extends BaseController
         }
 
         try {
+            $db = db_connect();
+
+            $counts = [
+                'billable_items'    => 0,
+                'proforma_invoices' => 0,
+                'invoices'          => 0,
+                'payments'          => 0,
+                'proforma_payments' => 0,
+            ];
+
+            foreach (array_keys($counts) as $table) {
+                if (! $db->tableExists($table)) {
+                    continue;
+                }
+                try {
+                    $counts[$table] = (int) $db->table($table)->where('client_id', $id)->countAllResults();
+                } catch (Throwable) {
+                    $counts[$table] = 0;
+                }
+            }
+
             (new ClientModel())->delete($id);
-            return $this->response->setJSON(['success' => true, 'message' => 'Client deleted.']);
+
+            $parts = [];
+            if ($counts['billable_items'] > 0) $parts[] = $counts['billable_items'] . ' billable item(s)';
+            if ($counts['proforma_invoices'] > 0) $parts[] = $counts['proforma_invoices'] . ' invoice(s)';
+            if ($counts['invoices'] > 0) $parts[] = $counts['invoices'] . ' generated invoice(s)';
+            if ($counts['payments'] > 0) $parts[] = $counts['payments'] . ' payment(s)';
+            if ($counts['proforma_payments'] > 0) $parts[] = $counts['proforma_payments'] . ' proforma payment(s)';
+
+            $msg = 'Client deleted.';
+            if ($parts !== []) {
+                $msg .= ' Related records deleted: ' . implode(', ', $parts) . '.';
+            }
+
+            return $this->response->setJSON(['success' => true, 'message' => $msg]);
         } catch (Throwable $e) {
             return $this->response->setStatusCode(500)->setJSON(['success' => false, 'message' => $e->getMessage()]);
         }

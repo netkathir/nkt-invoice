@@ -37,7 +37,7 @@ CREATE TABLE `proforma_invoices` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `proforma_number` (`proforma_number`),
   KEY `proforma_client_date` (`client_id`,`proforma_date`),
-  CONSTRAINT `fk_proforma_invoices_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+  CONSTRAINT `fk_proforma_invoices_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `invoices` (
@@ -55,7 +55,7 @@ CREATE TABLE `invoices` (
   UNIQUE KEY `invoice_number` (`invoice_number`),
   KEY `invoice_client_date` (`client_id`,`invoice_date`),
   KEY `invoice_proforma` (`proforma_id`),
-  CONSTRAINT `fk_invoices_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT `fk_invoices_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT `fk_invoices_proforma` FOREIGN KEY (`proforma_id`) REFERENCES `proforma_invoices` (`id`) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -80,7 +80,7 @@ CREATE TABLE `billable_items` (
   KEY `billable_status_client` (`status`,`client_id`),
   KEY `billable_proforma` (`proforma_id`),
   KEY `billable_invoice` (`invoice_id`),
-  CONSTRAINT `fk_billable_items_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  CONSTRAINT `fk_billable_items_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
   CONSTRAINT `fk_billable_items_proforma` FOREIGN KEY (`proforma_id`) REFERENCES `proforma_invoices` (`id`) ON UPDATE CASCADE ON DELETE SET NULL,
   CONSTRAINT `fk_billable_items_invoice` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -94,7 +94,7 @@ CREATE TABLE `proforma_items` (
   KEY `pi_proforma` (`proforma_id`),
   KEY `pi_billable` (`billable_item_id`),
   CONSTRAINT `fk_proforma_items_proforma` FOREIGN KEY (`proforma_id`) REFERENCES `proforma_invoices` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT `fk_proforma_items_billable` FOREIGN KEY (`billable_item_id`) REFERENCES `billable_items` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+  CONSTRAINT `fk_proforma_items_billable` FOREIGN KEY (`billable_item_id`) REFERENCES `billable_items` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `proforma_payments` (
@@ -112,7 +112,7 @@ CREATE TABLE `proforma_payments` (
   KEY `pp_proforma_date` (`proforma_id`,`payment_date`),
   KEY `pp_client_date` (`client_id`,`payment_date`),
   CONSTRAINT `fk_proforma_payments_proforma` FOREIGN KEY (`proforma_id`) REFERENCES `proforma_invoices` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT `fk_proforma_payments_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+  CONSTRAINT `fk_proforma_payments_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `daily_expenses` (
@@ -147,8 +147,8 @@ CREATE TABLE `payments` (
   PRIMARY KEY (`id`),
   KEY `payments_client_date` (`client_id`,`payment_date`),
   KEY `payments_invoice` (`invoice_id`),
-  CONSTRAINT `fk_payments_invoice` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  CONSTRAINT `fk_payments_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+  CONSTRAINT `fk_payments_invoice` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_payments_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `admins` (

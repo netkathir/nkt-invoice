@@ -9,6 +9,40 @@ use Throwable;
 
 class PaymentsController extends BaseController
 {
+    private function resolveView(string $view): string
+    {
+        $view = trim($view);
+        if ($view === '') {
+            return $view;
+        }
+
+        $base = rtrim(APPPATH, "\\/") . DIRECTORY_SEPARATOR . 'Views' . DIRECTORY_SEPARATOR;
+        $file = $base . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $view) . '.php';
+        if (is_file($file)) {
+            return $view;
+        }
+
+        // Fallbacks for case-sensitive deployments (Linux) where the folder may be "Payments" instead of "payments".
+        if (str_starts_with($view, 'payments/')) {
+            $alt = 'Payments/' . substr($view, strlen('payments/'));
+            $altFile = $base . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $alt) . '.php';
+            if (is_file($altFile)) {
+                return $alt;
+            }
+        }
+
+        // Fallback for legacy singular folder name.
+        if (str_starts_with($view, 'payments/')) {
+            $alt = 'payment/' . substr($view, strlen('payments/'));
+            $altFile = $base . str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $alt) . '.php';
+            if (is_file($altFile)) {
+                return $alt;
+            }
+        }
+
+        return $view;
+    }
+
     private function computeInvoiceTotal(array $proforma): float
     {
         $sub = (float) ($proforma['total_amount'] ?? 0);
@@ -22,7 +56,7 @@ class PaymentsController extends BaseController
 
     public function index()
     {
-        return view('payments/index', ['active' => 'payments']);
+        return view($this->resolveView('payments/index'), ['active' => 'payments']);
     }
 
     public function list()
@@ -312,7 +346,7 @@ class PaymentsController extends BaseController
             $status = 'Fully Paid';
         }
 
-        return view('payments/view', [
+        return view($this->resolveView('payments/view'), [
             'active'        => 'payments',
             'invoice'       => [
                 'id'             => (int) $inv['id'],

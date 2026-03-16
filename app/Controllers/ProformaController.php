@@ -412,7 +412,7 @@ class ProformaController extends BaseController
     public function show(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -592,17 +592,8 @@ class ProformaController extends BaseController
             $y += 14;
         }
 
-        // Right meta block
+        // Right meta block (no Status)
         $yR = 132.0;
-        $pdf->setFont('Helvetica', '', 9);
-        $pdf->setTextColor(90, 90, 90);
-        $pdf->text($xR - $pdf->estimateTextWidth('Status'), $yR, 'Status');
-        $yR += 16;
-        $pdf->setFont('Helvetica', 'B', 10);
-        $pdf->setTextColor(0, 0, 0);
-        $status = (string) (($proforma['status'] ?? '') ?: '-');
-        $pdf->text($xR - $pdf->estimateTextWidth($status), $yR, $status);
-        $yR += 22;
 
         $pdf->setFont('Helvetica', '', 9);
         $pdf->setTextColor(90, 90, 90);

@@ -68,13 +68,6 @@
         </div>
         <div class="row g-3 mt-0">
             <div class="col-12 col-md-4">
-                <label class="form-label">Status <span class="text-danger">*</span></label>
-                <select class="form-select" id="pf_status">
-                    <option value="Draft" <?= ($proforma['status'] ?? '') === 'Draft' ? 'selected' : '' ?>>Draft</option>
-                    <option value="Posted" <?= ($proforma['status'] ?? '') === 'Posted' ? 'selected' : '' ?>>Posted</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-4">
                 <label class="form-label">Invoice No <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="pf_invoice_no" value="<?= esc((string) $proforma['proforma_number']) ?>" required>
             </div>

@@ -1008,6 +1008,9 @@
                 }},
                 { data: null, render: function (row) {
                     const key = String((row && row.key) || '').trim();
+                    const labelName = String((row && row.label) || '').trim();
+                    if (labelName) return labelName;
+
                     const moduleName = String((row && row.module) || '').trim();
                     if (moduleName) return moduleName;
 
@@ -2000,6 +2003,732 @@
         });
 
         setToolbarState();
+    };
+
+    BMS.initPayments = function () {
+        const $tableEl = $('#dtPayments');
+        if (! $tableEl.length) return;
+
+        let table = null;
+        let pendingInvoiceId = 0;
+        try {
+            table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
+                ajax: { url: base('payments/list'), dataSrc: 'data' },
+                order: [[2, 'desc']],
+                columns: [
+                    { data: null, orderable: false, className: 'text-center', render: function (row) {
+                        return '<input class="form-check-input pay-row-check" type="checkbox" value="' + (row && row.id ? row.id : '') + '">';
+                    }},
+                    { data: null, orderable: false, render: function (_d, _t, _r, meta) {
+                        return (meta.row + meta.settings._iDisplayStart + 1);
+                    }},
+                    { data: 'proforma_number', defaultContent: '-' },
+                    { data: null, render: function (_d, _t, row) { return (row && (row.customer_name || row.company_name)) ? (row.customer_name || row.company_name) : '-'; } },
+                    { data: 'total_paid', className: 'text-end', defaultContent: '0.00' },
+                    { data: 'remaining_balance', className: 'text-end', defaultContent: '0.00' },
+                    { data: 'payment_status', defaultContent: '-' },
+                ],
+                columnDefs: [
+                    { targets: [0, 1], searchable: false },
+                ],
+            }));
+        } catch (e) {
+            notify('Payments table failed to initialize. Please refresh the page.', 'danger');
+        }
+
+        function selectedId() {
+            const $checked = $tableEl.find('tbody input.pay-row-check:checked').first();
+            return parseInt($checked.val() || '0', 10) || 0;
+        }
+
+        function setToolbarState() {
+            const id = selectedId();
+            $('#payBtnEdit').prop('disabled', !id);
+            $('#payBtnView').prop('disabled', !id);
+        }
+
+        function showListPanel() {
+            $('#payAddPanel').addClass('d-none');
+            $('#payListPanel').removeClass('d-none');
+            $('#payBtnSearch').prop('disabled', false);
+            $('#payBtnAdd').prop('disabled', false);
+            setToolbarState();
+        }
+
+        function showAddPanel() {
+            $('#payListPanel').addClass('d-none');
+            $('#payAddPanel').removeClass('d-none');
+            $('#payBtnSearch').prop('disabled', true);
+            $('#payBtnAdd').prop('disabled', true);
+            $('#payBtnView').prop('disabled', true);
+            setAddViewLink(0);
+        }
+
+        function setAddViewLink(invoiceId) {
+            const id = parseInt(invoiceId || '0', 10) || 0;
+            const $btn = $('#payAddViewBtnTop');
+            if (! $btn.length) return;
+            if (!id) {
+                $btn.addClass('disabled').attr('href', '#').attr('tabindex', '-1').attr('aria-disabled', 'true');
+                return;
+            }
+            $btn.removeClass('disabled').attr('href', base('payments/view/' + id)).removeAttr('tabindex').attr('aria-disabled', 'false');
+        }
+
+        function clearFilters() {
+            if (!table) return;
+            $tableEl.find('thead input.pay-col-filter').val('');
+            table.search('');
+            table.columns().search('');
+            table.draw();
+        }
+
+        // Column filters (second header row)
+        $tableEl.find('thead').on('input change', 'input.pay-col-filter', function () {
+            if (!table) return;
+            const col = parseInt($(this).data('col') || '0', 10) || 0;
+            const raw = String($(this).val() || '');
+            table.column(col).search(raw).draw();
+        });
+
+        // Single-select checkboxes
+        $tableEl.on('change', 'tbody input.pay-row-check', function () {
+            if (this.checked) {
+                $tableEl.find('tbody input.pay-row-check').not(this).prop('checked', false);
+            }
+            setToolbarState();
+        });
+
+        // Row click toggles selection (ignore input/select/a/button)
+        $tableEl.on('click', 'tbody tr', function (e) {
+            if ($(e.target).closest('button,a,input,select,textarea,label').length) return;
+            let $tr = $(this);
+            if ($tr.hasClass('child')) {
+                $tr = $tr.prev('.parent');
+            }
+            const $chk = $tr.find('input.pay-row-check');
+            if (! $chk.length) return;
+            $chk.prop('checked', true).trigger('change');
+        });
+
+        // Clear button resets filters + selection
+        $(document).off('click.pay', '#payBtnClear').on('click.pay', '#payBtnClear', function () {
+            if (!table) return;
+            $tableEl.find('tbody input.pay-row-check').prop('checked', false);
+            clearFilters();
+            setToolbarState();
+        });
+
+        // Toolbar actions
+        $(document).off('click.pay', '#payBtnSearch').on('click.pay', '#payBtnSearch', function () {
+            const $global = $('.dataTables_wrapper .dataTables_filter input').first();
+            if ($global.length) {
+                $global.trigger('focus');
+            }
+        });
+
+        let customersLoaded = false;
+        let customersCache = [];
+
+        function loadCustomers() {
+            if (customersLoaded) return $.Deferred().resolve(customersCache).promise();
+            return getJson('payments/customers')
+                .done(function (res) {
+                    customersCache = (res && res.data) ? res.data : [];
+                    customersLoaded = true;
+                })
+                .fail(function () {
+                    notify('Unable to load customers.', 'danger');
+                });
+        }
+
+        function loadInvoicesByCustomer(clientId) {
+            return getJson('payments/invoices-by-customer/' + clientId)
+                .fail(function () {
+                    notify('Unable to load invoices for this customer.', 'danger');
+                });
+        }
+
+        function setSelectState($sel, stateText, disabled) {
+            if (!($sel && $sel.length)) return;
+            $sel.empty();
+            $sel.append('<option value=\"\">' + String(stateText || 'Select') + '</option>');
+            $sel.prop('disabled', !!disabled);
+        }
+
+        function clearSummary() {
+            // Add form currently matches reference screenshot (no summary section).
+        }
+
+        function renderCustomerOptions(selectedClientId) {
+            const $sel = $('#payCustomer');
+            if (! $sel.length) return;
+            $sel.empty();
+            $sel.append('<option value=\"\">-- Select Customer --</option>');
+            (customersCache || []).forEach(function (c) {
+                const cid = parseInt(c.client_id || c.id || '0', 10) || 0;
+                const label = String(c.label || c.contact_person || c.name || ('Customer #' + cid));
+                const opt = $('<option></option>').attr('value', String(cid)).text(label);
+                if (selectedClientId && cid === selectedClientId) opt.attr('selected', 'selected');
+                $sel.append(opt);
+            });
+        }
+
+        function renderInvoiceOptionsForClient(clientId, selectedInvoiceId) {
+            const $sel = $('#payInvoice');
+            if (! $sel.length) return;
+
+            if (!clientId) {
+                setSelectState($sel, '-- Select Customer First --', true);
+                return;
+            }
+
+            $sel.empty();
+            $sel.append('<option value=\"\">-- Select Invoice --</option>');
+            // Options are populated via API call in customer change handler.
+            $sel.prop('disabled', false);
+        }
+
+        function openAddFlow(selectedInvoiceId) {
+            clearSummary();
+            $('#payAmount').val('');
+            $('#payMode').val('');
+            $('#payRemarks').val('');
+
+            setSelectState($('#payCustomer'), 'Loading...', true);
+            setSelectState($('#payInvoice'), '-- Select Customer First --', true);
+            showAddPanel();
+            pendingInvoiceId = parseInt(selectedInvoiceId || '0', 10) || 0;
+
+            loadCustomers()
+                .done(function () {
+                    if (!customersCache || !customersCache.length) {
+                        notify('No customers found. Create an invoice first.', 'info');
+                    }
+                    renderCustomerOptions(0);
+                    $('#payCustomer').prop('disabled', false);
+                    setSelectState($('#payInvoice'), '-- Select Customer First --', true);
+
+                    if (pendingInvoiceId) {
+                        getJson('payments/invoice/' + pendingInvoiceId)
+                            .done(function (res) {
+                                const inv = res && res.invoice ? res.invoice : null;
+                                const cid = inv ? (parseInt(inv.client_id || '0', 10) || 0) : 0;
+                                if (cid) {
+                                    $('#payCustomer').val(String(cid)).trigger('change');
+                                }
+                            });
+                    }
+                })
+                .fail(function () {
+                    setSelectState($('#payCustomer'), 'Unable to load customers', true);
+                    setSelectState($('#payInvoice'), 'Unable to load invoices', true);
+                });
+        }
+
+        $(document).off('click.pay', '#payBtnAdd').on('click.pay', '#payBtnAdd', function (e) {
+            // If JS is working, stay on the same page; if not, the link navigates to ?add=1 as fallback.
+            e.preventDefault();
+            const selected = selectedId();
+            openAddFlow(selected);
+        });
+
+        $(document).off('click.pay', '#payBtnEdit').on('click.pay', '#payBtnEdit', function () {
+            const id = selectedId();
+            if (!id) return;
+            openAddFlow(id);
+        });
+
+        $(document).off('change.pay', '#payCustomer').on('change.pay', '#payCustomer', function () {
+            const clientId = parseInt($(this).val() || '0', 10) || 0;
+            clearSummary();
+            if (!clientId) {
+                setSelectState($('#payInvoice'), '-- Select Customer First --', true);
+                $('#payInvHistory').addClass('d-none');
+                $('#payAmountMax').text('');
+                return;
+            }
+
+            setSelectState($('#payInvoice'), 'Loading...', true);
+            loadInvoicesByCustomer(clientId)
+                .done(function (res) {
+                    const rows = (res && res.data) ? res.data : [];
+                    const $sel = $('#payInvoice');
+                    $sel.empty();
+                    $sel.append('<option value=\"\">-- Select Invoice --</option>');
+                    rows.forEach(function (r) {
+                        const id = parseInt(r.id || '0', 10) || 0;
+                        const invNo = r.proforma_number || ('Invoice #' + id);
+                        const bal = (r.remaining_balance != null) ? String(r.remaining_balance) : '';
+                        const label = invNo + (bal ? (' (Balance: ' + bal + ')') : '');
+                        $sel.append($('<option></option>').attr('value', String(id)).text(label));
+                    });
+                    $sel.prop('disabled', false);
+                    $('#payInvHistory').addClass('d-none');
+                    $('#payAmountMax').text('');
+
+                    if (pendingInvoiceId) {
+                        const pid = pendingInvoiceId;
+                        pendingInvoiceId = 0;
+                        $sel.val(String(pid)).trigger('change');
+                    }
+                })
+                .fail(function () {
+                    setSelectState($('#payInvoice'), 'Unable to load invoices', true);
+                    $('#payInvHistory').addClass('d-none');
+                    $('#payAmountMax').text('');
+                });
+        });
+
+        function renderHistory(inv) {
+            if (!inv) {
+                $('#payInvHistory').addClass('d-none');
+                $('#payAmountMax').text('');
+                return;
+            }
+
+            $('#payHistInvDate').text(inv.invoice_date ? formatUiDate(inv.invoice_date, 'display') : '-');
+            $('#payHistTotal').text(inv.invoice_total || '0.00');
+            $('#payHistPaid').text(inv.total_paid || '0.00');
+            $('#payHistBal').text(inv.remaining || '0.00');
+            $('#payInvHistory').removeClass('d-none');
+
+            const max = parseFloat(String(inv.remaining || '').replace(/,/g, '')) || 0;
+            if (max > 0) {
+                $('#payAmount').attr('max', String(max.toFixed(2)));
+                $('#payAmountMax').text('Maximum: ' + max.toFixed(2));
+            } else {
+                $('#payAmount').removeAttr('max');
+                $('#payAmountMax').text('');
+            }
+        }
+
+        function openTxnHistory(invoiceId) {
+            const modalEl = document.getElementById('payViewModal');
+            if (!invoiceId || !modalEl || typeof bootstrap === 'undefined') return;
+
+            getJson('payments/invoice/' + invoiceId)
+                .done(function (res) {
+                    const inv = res && res.invoice ? res.invoice : null;
+                    const rows = res && res.payments ? res.payments : [];
+                    $('#payViewInvoiceNo').text('Invoice: ' + (inv ? (inv.invoice_no || '-') : '-'));
+                    $('#payViewCustomer').text('Customer: ' + (inv ? (inv.customer_name || '-') : '-'));
+                    $('#payViewTotal').text(inv ? inv.invoice_total : '0.00');
+                    $('#payViewPaid').text(inv ? inv.total_paid : '0.00');
+                    $('#payViewRemaining').text(inv ? inv.remaining : '0.00');
+
+                    const $body = $('#payViewBody');
+                    $body.empty();
+                    if (!rows.length) {
+                        $body.append('<tr><td colspan=\"6\" class=\"text-center text-muted\">No payments.</td></tr>');
+                    } else {
+                        rows.forEach(function (p, idx) {
+                            const dt = p.payment_date || '-';
+                            const md = p.payment_mode || '-';
+                            const rf = p.reference_number || '-';
+                            const rm = p.remarks || '-';
+                            const amt = p.amount != null ? String(p.amount) : '0.00';
+                            $body.append(
+                                '<tr>' +
+                                '<td>' + (idx + 1) + '</td>' +
+                                '<td>' + dt + '</td>' +
+                                '<td>' + md + '</td>' +
+                                '<td>' + rf + '</td>' +
+                                '<td>' + rm + '</td>' +
+                                '<td class=\"text-end\">' + amt + '</td>' +
+                                '</tr>'
+                            );
+                        });
+                    }
+
+                    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                })
+                .fail(function (xhr) {
+                    notify((xhr.responseJSON && xhr.responseJSON.message) || 'Unable to load payment details.', 'danger');
+                });
+        }
+
+        $(document).off('change.pay', '#payInvoice').on('change.pay', '#payInvoice', function () {
+            const invoiceId = parseInt($(this).val() || '0', 10) || 0;
+            setAddViewLink(invoiceId);
+            if (!invoiceId) {
+                renderHistory(null);
+                return;
+            }
+
+            getJson('payments/invoice/' + invoiceId)
+                .done(function (res) {
+                    renderHistory(res && res.invoice ? res.invoice : null);
+                })
+                .fail(function () {
+                    renderHistory(null);
+                    notify('Unable to load invoice history.', 'danger');
+                });
+        });
+
+        $(document).off('click.pay', '#payTxnBtn').on('click.pay', '#payTxnBtn', function () {
+            const invoiceId = parseInt($('#payInvoice').val() || '0', 10) || 0;
+            openTxnHistory(invoiceId);
+        });
+
+        $(document).off('click.pay', '#paySaveBtn').on('click.pay', '#paySaveBtn', function () {
+            const proformaId = parseInt($('#payInvoice').val() || '0', 10) || 0;
+            const paymentDate = String($('#payDate').val() || '').trim();
+            const amount = parseFloat(String($('#payAmount').val() || '').trim());
+            const mode = String($('#payMode').val() || '').trim();
+            const remarks = String($('#payRemarks').val() || '').trim();
+
+            if (!proformaId) { notify('Invoice is required.', 'danger'); return; }
+            if (!paymentDate) { notify('Payment date is required.', 'danger'); return; }
+            if (!(amount > 0)) { notify('Amount must be greater than 0.', 'danger'); return; }
+            if (!mode) { notify('Payment method is required.', 'danger'); return; }
+
+            $('#paySaveBtn').prop('disabled', true);
+            postJson('payments/save', {
+                proforma_id: proformaId,
+                payment_date: paymentDate,
+                amount: amount.toFixed(2),
+                payment_mode: mode,
+                reference_number: '',
+                remarks: remarks
+            }).done(function (res) {
+                notify((res && res.message) ? res.message : 'Saved.', 'success');
+                window.location.href = base('payments/view/' + proformaId);
+            }).fail(function (xhr) {
+                notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger');
+            }).always(function () {
+                $('#paySaveBtn').prop('disabled', false);
+            });
+        });
+
+        $(document).off('click.pay', '#payAddBackBtn').on('click.pay', '#payAddBackBtn', function (e) {
+            e.preventDefault();
+            showListPanel();
+            if (table) table.ajax.reload(null, false);
+        });
+
+        $(document).off('click.pay', '#payBtnView').on('click.pay', '#payBtnView', function () {
+            const id = selectedId();
+            if (!id) return;
+            window.location.href = base('payments/view/' + id);
+        });
+
+        // Reset selection state on reload
+        if (table) {
+            table.on('draw', function () {
+                $tableEl.find('tbody input.pay-row-check').prop('checked', false);
+                setToolbarState();
+            });
+        }
+
+        setToolbarState();
+
+        // If server rendered the Add panel (payments?add=1), hydrate it on load.
+        if (!$('#payAddPanel').hasClass('d-none')) {
+            let invId = 0;
+            try {
+                invId = parseInt((new URLSearchParams(window.location.search || '')).get('invoice_id') || '0', 10) || 0;
+            } catch (e) {
+                invId = 0;
+            }
+            openAddFlow(invId);
+        }
+    };
+
+    BMS.initPaymentReport = function () {
+        const $tableEl = $('#dtPaymentReport');
+        if (! $tableEl.length) return;
+
+        const $status = $('#prPaymentStatus');
+        const ajaxUrl = function () {
+            const st = String($status.val() || 'All');
+            return base('payment-report/list?payment_status=' + encodeURIComponent(st));
+        };
+
+        const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
+            ajax: { url: ajaxUrl(), dataSrc: 'data' },
+            order: [[1, 'desc']],
+            columns: [
+                { data: null, orderable: false, render: function (_d, _t, _r, meta) {
+                    return (meta.row + meta.settings._iDisplayStart + 1);
+                }},
+                { data: 'invoice', defaultContent: '-' },
+                { data: 'customer_name', defaultContent: '-' },
+                { data: 'total_amount', className: 'text-end', defaultContent: '0.00' },
+                { data: 'due_date', render: formatUiDateDmy },
+                { data: 'total_paid', className: 'text-end', defaultContent: '0.00' },
+                { data: 'remaining_balance', className: 'text-end', defaultContent: '0.00' },
+                { data: 'payment_status', defaultContent: '-' },
+            ],
+        }));
+
+        $(document).off('click.pr', '#prBtnSearch').on('click.pr', '#prBtnSearch', function () {
+            table.ajax.url(ajaxUrl()).load();
+        });
+
+        $(document).off('click.pr', '#prBtnDownload').on('click.pr', '#prBtnDownload', function () {
+            const st = String($status.val() || 'All');
+            window.location.href = base('payment-report/download?payment_status=' + encodeURIComponent(st));
+        });
+    };
+
+    BMS.initDailyExpenseForm = function () {
+        const $tableEl = $('#dtDailyExpenses');
+        if (! $tableEl.length) return;
+
+        const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
+            ajax: { url: base('day-book/daily-expense-form/list'), dataSrc: 'data' },
+            order: [[2, 'desc']],
+            columns: [
+                { data: null, orderable: false, render: function (_d, _t, _r, meta) {
+                    return (meta.row + meta.settings._iDisplayStart + 1);
+                }},
+                { data: 'expense_code', defaultContent: '-' },
+                { data: 'expense_date', render: formatUiDateDmy },
+                { data: 'category', defaultContent: '-' },
+                { data: 'description', defaultContent: '-' },
+                { data: 'amount', className: 'text-end', defaultContent: '0.00' },
+                { data: 'payment_method', defaultContent: '-' },
+                { data: 'paid_to', defaultContent: '-' },
+                { data: null, orderable: false, render: function (_d, _t, row) {
+                    const id = row && row.id ? row.id : 0;
+                    const viewBtn =
+                        '<button class=\"btn btn-sm btn-outline-info de-btn-view\" type=\"button\" data-id=\"' + id + '\" title=\"View\" aria-label=\"View\">' +
+                        iconSvg('view') +
+                        '</button>';
+                    const editLink =
+                        '<a class=\"btn btn-sm btn-outline-primary\" href=\"' + base('day-book/daily-expense-form/edit/' + id) + '\" title=\"Edit\" aria-label=\"Edit\">' +
+                        iconSvg('edit') +
+                        '</a>';
+                    const delBtn =
+                        '<button class=\"btn btn-sm btn-outline-danger de-btn-del\" type=\"button\" data-id=\"' + id + '\" title=\"Delete\" aria-label=\"Delete\">' +
+                        iconSvg('delete') +
+                        '</button>';
+
+                    return actionGroup(viewBtn + editLink + delBtn);
+                }},
+            ],
+        }));
+
+        function openModal(mode, row) {
+            const modalEl = document.getElementById('deModal');
+            if (!modalEl || typeof bootstrap === 'undefined') return;
+
+            $('#deModalLabel').text(mode === 'edit' ? 'Edit Daily Expense Entry' : 'New Daily Expense Entry');
+            $('#deId').val(row && row.id ? row.id : '');
+            $('#deDate').val((row && row.expense_date) ? String(row.expense_date).slice(0, 10) : '');
+            $('#deCategory').val((row && row.category) ? row.category : '');
+            $('#deDesc').val((row && row.description) ? row.description : '');
+            $('#deAmount').val((row && row.amount != null) ? row.amount : '');
+            $('#deMethod').val((row && row.payment_method) ? row.payment_method : '');
+            $('#dePaidTo').val((row && row.paid_to) ? row.paid_to : '');
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        }
+
+        function findRowById(id) {
+            const data = table.rows().data().toArray();
+            return data.find(function (r) { return parseInt(r.id || '0', 10) === id; }) || null;
+        }
+
+        // New entry is handled by server-rendered create page.
+
+        $(document).off('click.de', '#deBtnSearch').on('click.de', '#deBtnSearch', function () {
+            const q = String($('#deSearch').val() || '').trim();
+            table.search(q).draw();
+        });
+        $(document).off('keydown.de', '#deSearch').on('keydown.de', '#deSearch', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $('#deBtnSearch').trigger('click');
+            }
+        });
+
+        $(document).off('click.de', '#deBtnSave').on('click.de', '#deBtnSave', function () {
+            const id = parseInt($('#deId').val() || '0', 10) || 0;
+            const expenseDate = String($('#deDate').val() || '').trim();
+            const category = String($('#deCategory').val() || '').trim();
+            const description = String($('#deDesc').val() || '').trim();
+            const amount = parseFloat(String($('#deAmount').val() || '').trim());
+            const method = String($('#deMethod').val() || '').trim();
+            const paidTo = String($('#dePaidTo').val() || '').trim();
+
+            if (!expenseDate) { notify('Date is required.', 'danger'); return; }
+            if (!(amount > 0)) { notify('Amount must be greater than 0.', 'danger'); return; }
+            if (!method) { notify('Payment method is required.', 'danger'); return; }
+
+            $('#deBtnSave').prop('disabled', true);
+            postJson('day-book/daily-expense-form/save', {
+                id: id ? id : '',
+                expense_date: expenseDate,
+                category: category,
+                description: description,
+                amount: amount.toFixed(2),
+                payment_method: method,
+                paid_to: paidTo
+            }).done(function (res) {
+                notify((res && res.message) ? res.message : 'Saved.', 'success');
+                table.ajax.reload(null, false);
+                const modalEl = document.getElementById('deModal');
+                if (modalEl && typeof bootstrap !== 'undefined') bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+            }).fail(function (xhr) {
+                notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger');
+            }).always(function () {
+                $('#deBtnSave').prop('disabled', false);
+            });
+        });
+
+        $(document).off('click.de', '.de-btn-view').on('click.de', '.de-btn-view', function () {
+            const id = parseInt($(this).data('id') || '0', 10) || 0;
+            const row = findRowById(id);
+            const modalEl = document.getElementById('deViewModal');
+            if (!modalEl || typeof bootstrap === 'undefined') return;
+
+            $('#deVCode').text(row && row.expense_code ? row.expense_code : '-');
+            $('#deVDate').text(row && row.expense_date ? formatUiDateDmy(row.expense_date, 'display') : '-');
+            $('#deVCat').text(row && row.category ? row.category : '-');
+            $('#deVDesc').text(row && row.description ? row.description : '-');
+            $('#deVAmt').text(row && row.amount != null ? String(row.amount) : '0.00');
+            $('#deVMethod').text(row && row.payment_method ? row.payment_method : '-');
+            $('#deVPaidTo').text(row && row.paid_to ? row.paid_to : '-');
+
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        });
+
+        // Edit action goes to server-rendered edit page.
+
+        $(document).off('click.de', '.de-btn-del').on('click.de', '.de-btn-del', function () {
+            const id = parseInt($(this).data('id') || '0', 10) || 0;
+            if (!id) return;
+            if (!confirm('Delete this expense?')) return;
+            postJson('day-book/daily-expense-form/delete', { id: id })
+                .done(function (res) {
+                    notify((res && res.message) ? res.message : 'Deleted.', 'success');
+                    table.ajax.reload(null, false);
+                })
+                .fail(function (xhr) {
+                    notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger');
+                });
+        });
+    };
+
+    BMS.initDailyExpenseReport = function () {
+        const $cat = $('#derCategory');
+        if (! $cat.length) return;
+
+        attachNativeCalendar('#derStart', '#derStartNative', function () {});
+        attachNativeCalendar('#derEnd', '#derEndNative', function () {});
+
+        function currentFilters() {
+            return {
+                start_date: String($('#derStartNative').val() || '').trim(),
+                end_date: String($('#derEndNative').val() || '').trim(),
+                category: String($('#derCategory').val() || 'All').trim(),
+            };
+        }
+
+        function loadCategories() {
+            return getJson('day-book/daily-expense-report/categories')
+                .done(function (res) {
+                    const cats = (res && res.data) ? res.data : [];
+                    $cat.find('option').not(':first').remove();
+                    cats.forEach(function (c) {
+                        $cat.append($('<option></option>').attr('value', c).text(c));
+                    });
+                });
+        }
+
+        function renderReport(payload) {
+            const summary = payload && payload.summary ? payload.summary : null;
+            $('#derTotalEntries').text(summary ? String(summary.total_entries || 0) : '0');
+            $('#derTotalAmount').text(summary ? String(summary.total_amount || '0.00') : '0.00');
+            $('#derCategories').text(summary ? String(summary.categories || 0) : '0');
+
+            const $catBody = $('#derCatTable tbody');
+            $catBody.empty();
+            const byCat = payload && payload.by_category ? payload.by_category : [];
+            if (!byCat.length) {
+                $catBody.append('<tr><td colspan=\"3\" class=\"text-center text-muted\">No records.</td></tr>');
+            } else {
+                let grandCount = 0;
+                let grandTotal = 0;
+                byCat.forEach(function (r) {
+                    grandCount += parseInt(r.count || '0', 10) || 0;
+                    grandTotal += parseFloat(String(r.total_amount || '0').replace(/,/g, '')) || 0;
+                    $catBody.append(
+                        '<tr>' +
+                        '<td>' + (r.category || '-') + '</td>' +
+                        '<td class=\"text-end\">' + (r.count || 0) + '</td>' +
+                        '<td class=\"text-end\">' + (r.total_amount || '0.00') + '</td>' +
+                        '</tr>'
+                    );
+                });
+                $catBody.append(
+                    '<tr class=\"table-light\">' +
+                    '<td class=\"fw-semibold\">Grand Total</td>' +
+                    '<td class=\"text-end fw-semibold\">' + grandCount + '</td>' +
+                    '<td class=\"text-end fw-semibold\">' + grandTotal.toFixed(2) + '</td>' +
+                    '</tr>'
+                );
+            }
+
+            const $det = $('#derDetailTable tbody');
+            $det.empty();
+            const details = payload && payload.details ? payload.details : [];
+            if (!details.length) {
+                $det.append('<tr><td colspan=\"7\" class=\"text-center text-muted\">No records.</td></tr>');
+            } else {
+                details.forEach(function (r) {
+                    $det.append(
+                        '<tr>' +
+                        '<td>' + (r.expense_code || '-') + '</td>' +
+                        '<td>' + (r.expense_date ? formatUiDateDmy(r.expense_date, 'display') : '-') + '</td>' +
+                        '<td>' + (r.category || '-') + '</td>' +
+                        '<td>' + (r.description || '-') + '</td>' +
+                        '<td class=\"text-end\">' + (r.amount || '0.00') + '</td>' +
+                        '<td>' + (r.payment_method || '-') + '</td>' +
+                        '<td>' + (r.paid_to || '-') + '</td>' +
+                        '</tr>'
+                    );
+                });
+            }
+        }
+
+        function fetchAndRender() {
+            const f = currentFilters();
+            return getJson('day-book/daily-expense-report/data', f)
+                .done(function (res) {
+                    renderReport(res);
+                })
+                .fail(function () {
+                    notify('Unable to generate report.', 'danger');
+                });
+        }
+
+        $(document).off('click.der', '#derBtnGenerate').on('click.der', '#derBtnGenerate', function () {
+            fetchAndRender();
+        });
+
+        $(document).off('click.der', '#derBtnExcel').on('click.der', '#derBtnExcel', function () {
+            const f = currentFilters();
+            window.location.href = base('day-book/daily-expense-report/export-csv?start_date=' + encodeURIComponent(f.start_date) + '&end_date=' + encodeURIComponent(f.end_date) + '&category=' + encodeURIComponent(f.category));
+        });
+
+        $(document).off('click.der', '#derBtnPdf').on('click.der', '#derBtnPdf', function () {
+            const f = currentFilters();
+            window.location.href = base('day-book/daily-expense-report/export-pdf?start_date=' + encodeURIComponent(f.start_date) + '&end_date=' + encodeURIComponent(f.end_date) + '&category=' + encodeURIComponent(f.category));
+        });
+
+        loadCategories().always(function () {
+            fetchAndRender();
+        });
+    };
+
+    BMS.initDailyExpenseEntry = function () {
+        const $txt = $('#de_exp_date');
+        const $nat = $('#de_exp_date_native');
+        if (!($txt.length && $nat.length)) return;
+        attachNativeCalendar('#de_exp_date', '#de_exp_date_native', function () {});
     };
 
 	    BMS.initProformaCreate = function () {

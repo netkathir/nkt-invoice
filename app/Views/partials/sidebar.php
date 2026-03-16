@@ -3,7 +3,8 @@
     $isActive = static fn (string $key): string => $active === $key ? 'active' : '';
     $mastersOpen = in_array($active, ['client_master'], true);
     $accessOpen = in_array($active, ['users', 'roles', 'permissions', 'role_permissions'], true);
-    $invoicesOpen = in_array($active, ['proforma'], true);
+    $invoicesOpen = in_array($active, ['proforma', 'payments', 'payment_report'], true);
+    $dayBookOpen = in_array($active, ['day_book_form', 'day_book_report'], true);
     $hasAccessMenu = can('users.view') || can('roles.view') || can('permissions.view') || can('roles.assign_perms');
     $canProforma = can('billable_items.view') || can('client_masters.view');
 ?>
@@ -160,9 +161,64 @@
                                 </span>
                                 <span class="nav-txt">Invoices</span>
                             </a>
+                            <a class="nav-link <?= $isActive('payments') ?>" href="<?= base_url('payments') ?>">
+                                <span class="nav-ico" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 1l8 4v6c0 5-3.4 9.7-8 11-4.6-1.3-8-6-8-11V5l8-4Z" fill="currentColor" opacity=".25"/>
+                                        <path d="M7 13h10v2H7v-2Zm0-4h10v2H7V9Z" fill="currentColor" opacity=".85"/>
+                                    </svg>
+                                </span>
+                                <span class="nav-txt">Payment</span>
+                            </a>
+                            <a class="nav-link <?= $isActive('payment_report') ?>" href="<?= base_url('payment-report') ?>">
+                                <span class="nav-ico" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                        <path d="M7 3h10v2H7V3Zm12 4H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2Zm0 12H5V9h14v10ZM7 11h10v2H7v-2Zm0 4h7v2H7v-2Z" fill="currentColor" opacity=".35"/>
+                                        <path d="M16 11h2v8h-2v-8Zm-3 3h2v5h-2v-5Zm-3-2h2v7h-2v-7Z" fill="currentColor" opacity=".85"/>
+                                    </svg>
+                                </span>
+                                <span class="nav-txt">Payment Report</span>
+                            </a>
                         </div>
                     </div>
                 <?php endif; ?>
+
+                <a class="nav-link nav-parent <?= $dayBookOpen ? 'active' : '' ?>" data-bs-toggle="collapse" href="#navDayBook" role="button" aria-expanded="<?= $dayBookOpen ? 'true' : 'false' ?>" aria-controls="navDayBook" data-bms-title="Day Book">
+                    <span class="nav-ico" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M7 3h10v2H7V3Zm12 4H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2Zm0 12H5V9h14v10ZM7 11h10v2H7v-2Zm0 4h7v2H7v-2Z" fill="currentColor" opacity=".85"/>
+                        </svg>
+                    </span>
+                    <span class="nav-txt d-flex align-items-center justify-content-between w-100">
+                        <span>Day Book</span>
+                        <span class="nav-caret" aria-hidden="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </span>
+                    </span>
+                </a>
+                <div class="collapse <?= $dayBookOpen ? 'show' : '' ?>" id="navDayBook">
+                    <div class="nav flex-column nav-pills nav-sub">
+                        <a class="nav-link <?= $isActive('day_book_form') ?>" href="<?= base_url('day-book/daily-expense-form') ?>">
+                            <span class="nav-ico" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M5 4h14v16H5V4Zm2 2v12h10V6H7Z" fill="currentColor" opacity=".85"/>
+                                    <path d="M8 8h8v2H8V8Zm0 4h8v2H8v-2Z" fill="currentColor" opacity=".45"/>
+                                </svg>
+                            </span>
+                            <span class="nav-txt">Daily Expense Form</span>
+                        </a>
+                        <a class="nav-link <?= $isActive('day_book_report') ?>" href="<?= base_url('day-book/daily-expense-report') ?>">
+                            <span class="nav-ico" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                    <path d="M4 19h16v2H4v-2Zm3-2h2V7H7v10Zm4 0h2V3h-2v14Zm4 0h2V11h-2v6Z" fill="currentColor" opacity=".85"/>
+                                </svg>
+                            </span>
+                            <span class="nav-txt">Daily Expense Report</span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

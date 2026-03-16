@@ -101,6 +101,38 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
     $routes->post('proforma/update', 'ProformaController::update');
     $routes->post('proforma/delete', 'ProformaController::delete');
 
+    // Payments (Invoices)
+    $routes->get('payments', 'PaymentsController::index');
+    $routes->get('payments/list', 'PaymentsController::list');
+    $routes->get('payments/invoice-options', 'PaymentsController::invoiceOptions');
+    $routes->get('payments/customers', 'PaymentsController::customers');
+    $routes->get('payments/invoices-by-customer/(:num)', 'PaymentsController::invoicesByCustomer/$1');
+    $routes->get('payments/invoice/(:num)', 'PaymentsController::invoice/$1');
+    $routes->get('payments/view/(:num)', 'PaymentsController::view/$1');
+    $routes->post('payments/save', 'PaymentsController::save');
+
+    // Payment Report (Invoices)
+    $routes->get('payment-report', 'PaymentReportController::index');
+    $routes->get('payment-report/list', 'PaymentReportController::list');
+    $routes->get('payment-report/download', 'PaymentReportController::download');
+
+    // Day Book
+    $routes->get('day-book/daily-expense-form', 'DailyExpenseController::index');
+    $routes->get('day-book/daily-expense-form/create', 'DailyExpenseController::create');
+    $routes->get('day-book/daily-expense-form/edit/(:num)', 'DailyExpenseController::edit/$1');
+    $routes->get('day-book/daily-expense-form/receipt/(:num)', 'DailyExpenseController::receipt/$1');
+    $routes->get('day-book/daily-expense-form/list', 'DailyExpenseController::list');
+    $routes->post('day-book/daily-expense-form/save', 'DailyExpenseController::save');
+    $routes->post('day-book/daily-expense-form/store', 'DailyExpenseController::store');
+    $routes->post('day-book/daily-expense-form/update/(:num)', 'DailyExpenseController::update/$1');
+    $routes->post('day-book/daily-expense-form/delete', 'DailyExpenseController::delete');
+
+    $routes->get('day-book/daily-expense-report', 'DailyExpenseReportController::index');
+    $routes->get('day-book/daily-expense-report/categories', 'DailyExpenseReportController::categories');
+    $routes->get('day-book/daily-expense-report/data', 'DailyExpenseReportController::data');
+    $routes->get('day-book/daily-expense-report/export-csv', 'DailyExpenseReportController::exportCsv');
+    $routes->get('day-book/daily-expense-report/export-pdf', 'DailyExpenseReportController::exportPdf');
+
     // Optional diagnostic route (safe for shared hosting).
     $routes->get('dbtest', 'Home::dbtest');
 

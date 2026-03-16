@@ -167,10 +167,6 @@
                     <div class="inv-meta-label">Currency</div>
                     <div class="inv-small fw-semibold"><?= esc($currency) ?></div>
                 </div>
-                <div class="col-6">
-                    <div class="inv-meta-label">Status</div>
-                    <div class="inv-small fw-semibold"><?= esc((string) (($proforma['status'] ?? '') ?: '-')) ?></div>
-                </div>
                 <?php if ($dueDate !== ''): ?>
                     <div class="col-12">
                         <div class="inv-meta-label">Due Date</div>
@@ -185,7 +181,7 @@
         <table class="table table-bordered inv-items mb-0">
             <thead>
             <tr>
-                <th style="width: 54px;">#</th>
+                <th style="width: 54px;">S.No</th>
                 <th>Description</th>
                 <th class="text-end" style="width: 90px;">Qty</th>
                 <th class="text-end" style="width: 130px;">Unit Price</th>
@@ -288,4 +284,3 @@
     </script>
 <?php endif; ?>
 <?= $this->endSection() ?>
-

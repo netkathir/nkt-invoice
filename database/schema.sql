@@ -97,6 +97,42 @@ CREATE TABLE `proforma_items` (
   CONSTRAINT `fk_proforma_items_billable` FOREIGN KEY (`billable_item_id`) REFERENCES `billable_items` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `proforma_payments` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `proforma_id` int(10) unsigned NOT NULL,
+  `client_id` int(10) unsigned NOT NULL,
+  `payment_date` date NOT NULL,
+  `payment_mode` varchar(50) DEFAULT NULL,
+  `amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `reference_number` varchar(100) DEFAULT NULL,
+  `remarks` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `pp_proforma_date` (`proforma_id`,`payment_date`),
+  KEY `pp_client_date` (`client_id`,`payment_date`),
+  CONSTRAINT `fk_proforma_payments_proforma` FOREIGN KEY (`proforma_id`) REFERENCES `proforma_invoices` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT `fk_proforma_payments_client` FOREIGN KEY (`client_id`) REFERENCES `clients` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `daily_expenses` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `expense_code` varchar(30) NOT NULL,
+  `expense_date` date NOT NULL,
+  `category` varchar(100) DEFAULT NULL,
+  `description` text,
+  `remarks` text,
+  `amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `payment_method` varchar(50) DEFAULT NULL,
+  `paid_to` varchar(191) DEFAULT NULL,
+  `receipt_path` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `daily_expenses_expense_code` (`expense_code`),
+  KEY `daily_expenses_date_category` (`expense_date`,`category`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `payments` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `payment_date` date NOT NULL,

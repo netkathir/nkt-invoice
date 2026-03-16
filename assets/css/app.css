@@ -532,3 +532,17 @@ body.bms-sidebar-collapsed .btn-sidebar-toggle{
 #dtProformas thead tr:nth-child(2) th span.dt-column-order{
     display: none !important;
 }
+
+/* Payments: hide sort icons on filter row (2nd header row) */
+#dtPayments thead tr:nth-child(2) th::before,
+#dtPayments thead tr:nth-child(2) th::after{
+    display: none !important;
+}
+#dtPayments thead tr:nth-child(2) th{
+    background-image: none !important;
+    padding-right: .5rem !important;
+}
+#dtPayments thead tr:nth-child(2) th .dt-column-order,
+#dtPayments thead tr:nth-child(2) th span.dt-column-order{
+    display: none !important;
+}

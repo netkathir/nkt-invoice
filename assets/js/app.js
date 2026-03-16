@@ -1945,13 +1945,6 @@
         });
 
         // Toolbar actions
-        $('#pfBtnSearch').on('click', function () {
-            const $global = $('.dataTables_wrapper .dataTables_filter input').first();
-            if ($global.length) {
-                $global.trigger('focus');
-            }
-        });
-
         $('#pfBtnPrint').off('click').on('click', function () {
             const id = selectedId();
             if (!id) {

@@ -71,10 +71,10 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label mb-0 text-md-end fw-semibold">Address Line2</label>
+                        <label class="form-label mb-0 text-md-end fw-semibold">Address Line1</label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <input type="text" class="form-control" id="pf_addr2" value="">
+                        <input type="text" class="form-control" id="pf_addr1" value="">
                     </div>
 
                     <div class="col-12 col-md-4">
@@ -132,10 +132,10 @@
                     </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label mb-0 text-md-end fw-semibold">Address Line1</label>
+                        <label class="form-label mb-0 text-md-end fw-semibold">Address Line2</label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <input type="text" class="form-control" id="pf_addr1" value="">
+                        <input type="text" class="form-control" id="pf_addr2" value="">
                     </div>
 
                     <div class="col-12 col-md-4">

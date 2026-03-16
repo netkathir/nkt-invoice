@@ -111,6 +111,13 @@
                 <tbody>
                 <tr><td colspan="7" class="text-center text-muted">No records.</td></tr>
                 </tbody>
+                <tfoot class="table-light">
+                <tr>
+                    <th colspan="4" class="text-end">Total</th>
+                    <th class="text-end" id="derDetailTotal">0.00</th>
+                    <th colspan="2"></th>
+                </tr>
+                </tfoot>
             </table>
         </div>
     </div>

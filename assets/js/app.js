@@ -2486,7 +2486,9 @@
                 { data: 'expense_code', defaultContent: '-' },
                 { data: 'expense_date', render: formatUiDateDmy },
                 { data: 'category', defaultContent: '-' },
-                { data: 'description', defaultContent: '-' },
+                { data: 'description', defaultContent: '-', render: function (d, t) {
+                    return renderTruncatedDescription(d, t, 20);
+                }},
                 { data: 'amount', className: 'text-end', defaultContent: '0.00' },
                 { data: 'payment_method', defaultContent: '-' },
                 { data: 'paid_to', defaultContent: '-' },
@@ -2643,6 +2645,7 @@
             $('#derTotalEntries').text(summary ? String(summary.total_entries || 0) : '0');
             $('#derTotalAmount').text(summary ? String(summary.total_amount || '0.00') : '0.00');
             $('#derCategories').text(summary ? String(summary.categories || 0) : '0');
+            $('#derDetailTotal').text(summary ? String(summary.total_amount || '0.00') : '0.00');
 
             const $catBody = $('#derCatTable tbody');
             $catBody.empty();
@@ -2677,20 +2680,24 @@
             const details = payload && payload.details ? payload.details : [];
             if (!details.length) {
                 $det.append('<tr><td colspan=\"7\" class=\"text-center text-muted\">No records.</td></tr>');
+                $('#derDetailTotal').text('0.00');
             } else {
+                let sum = 0;
                 details.forEach(function (r) {
+                    sum += parseFloat(String(r.amount || '0').replace(/,/g, '')) || 0;
                     $det.append(
                         '<tr>' +
                         '<td>' + (r.expense_code || '-') + '</td>' +
                         '<td>' + (r.expense_date ? formatUiDateDmy(r.expense_date, 'display') : '-') + '</td>' +
                         '<td>' + (r.category || '-') + '</td>' +
-                        '<td>' + (r.description || '-') + '</td>' +
+                        '<td>' + renderTruncatedDescription((r.description || ''), 'display', 20) + '</td>' +
                         '<td class=\"text-end\">' + (r.amount || '0.00') + '</td>' +
                         '<td>' + (r.payment_method || '-') + '</td>' +
                         '<td>' + (r.paid_to || '-') + '</td>' +
                         '</tr>'
                     );
                 });
+                $('#derDetailTotal').text(sum.toFixed(2));
             }
         }
 
@@ -3485,15 +3492,40 @@
 
         function enableSidebarTooltips() {
             disableSidebarTooltips();
+
+            function buildTitle(el) {
+                const main = String(el.getAttribute('data-bms-title') || '').trim();
+                if (!main) return '';
+
+                // If this is a parent with a submenu, include child items in tooltip when sidebar is collapsed.
+                if (document.body.classList.contains('bms-sidebar-collapsed') && el.classList.contains('nav-parent')) {
+                    const href = String(el.getAttribute('href') || '').trim();
+                    if (href && href.charAt(0) === '#') {
+                        const panel = document.querySelector(href);
+                        if (panel) {
+                            const subs = Array.from(panel.querySelectorAll('a.nav-link .nav-txt'))
+                                .map(function (n) { return String(n.textContent || '').trim(); })
+                                .filter(function (t) { return !!t; });
+                            if (subs.length) {
+                                return main + '\n' + subs.map(function (t) { return '• ' + t; }).join('\n');
+                            }
+                        }
+                    }
+                }
+
+                return main;
+            }
+
             document.querySelectorAll('.app-sidebar [data-bms-title]').forEach(function (el) {
-                const title = el.getAttribute('data-bms-title');
+                const title = buildTitle(el);
                 if (!title) return;
                 try {
                     sidebarTooltips.push(new bootstrap.Tooltip(el, {
                         title: title,
                         placement: 'right',
-                        trigger: 'hover',
+                        trigger: 'hover focus',
                         container: document.body,
+                        customClass: 'bms-sidebar-tooltip',
                     }));
                 } catch (e) {}
             });
@@ -3529,6 +3561,20 @@
         $(document).on('click', '.app-sidebar a.nav-parent', function (e) {
             if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
             e.preventDefault();
+
+            // Show tooltip (with submenu items) on click in collapsed mode.
+            try {
+                const tip = bootstrap.Tooltip.getOrCreateInstance(this, {
+                    placement: 'right',
+                    trigger: 'manual',
+                    container: document.body,
+                    customClass: 'bms-sidebar-tooltip',
+                });
+                tip.show();
+                setTimeout(function () {
+                    try { tip.hide(); } catch (_e) {}
+                }, 1800);
+            } catch (_e) {}
         });
 
         // Real-time status dropdown updates (all DataTables)

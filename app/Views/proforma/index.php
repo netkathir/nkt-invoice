@@ -9,7 +9,7 @@
         <a class="btn btn-sm btn-primary" href="<?= base_url('proforma/create') ?>">Add</a>
         <button class="btn btn-sm btn-outline-secondary" id="pfBtnEdit" type="button" disabled>Edit</button>
         <button class="btn btn-sm btn-outline-danger" id="pfBtnDelete" type="button" disabled>Delete</button>
-        <button class="btn btn-sm btn-outline-warning" id="pfBtnPdf" type="button" disabled>Generate PDF</button>
+        <button class="btn btn-sm btn-warning text-dark" id="pfBtnPdf" type="button" disabled>Generate PDF</button>
         <button class="btn btn-sm btn-outline-primary" id="pfBtnView" type="button" disabled>View</button>
     </div>
 </div>

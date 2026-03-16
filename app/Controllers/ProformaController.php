@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\ProformaService;
+use App\Libraries\SimplePdf;
 use App\Models\BillableItemModel;
 use App\Models\ClientModel;
 use App\Models\ProformaItemModel;
@@ -432,6 +433,359 @@ class ProformaController extends BaseController
             'proforma'=> $proforma,
             'items'   => $items,
         ]);
+    }
+
+    public function print(int $id)
+    {
+        $autoprint = (string) $this->request->getGet('autoprint') === '1';
+
+        $proforma = (new ProformaModel())
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->join('clients', 'clients.id = proforma_invoices.client_id')
+            ->where('proforma_invoices.id', $id)
+            ->first();
+
+        if (! $proforma) {
+            return redirect()->to('/proforma')->with('error', 'Invoice not found.');
+        }
+
+        $items = (new ProformaItemModel())
+            ->select('proforma_items.amount, billable_items.entry_date, billable_items.description, billable_items.quantity, billable_items.unit_price, billable_items.billing_month')
+            ->join('billable_items', 'billable_items.id = proforma_items.billable_item_id')
+            ->where('proforma_items.proforma_id', $id)
+            ->orderBy('proforma_items.id', 'ASC')
+            ->findAll();
+
+        return view('proforma/print_standard', [
+            'title'     => 'Invoice ' . (string) ($proforma['proforma_number'] ?? ''),
+            'proforma'  => $proforma,
+            'items'     => $items,
+            'autoprint' => $autoprint,
+        ]);
+    }
+
+    public function pdf(int $id)
+    {
+        $proforma = (new ProformaModel())
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->join('clients', 'clients.id = proforma_invoices.client_id')
+            ->where('proforma_invoices.id', $id)
+            ->first();
+
+        if (! $proforma) {
+            return $this->response->setStatusCode(404)->setBody('Invoice not found.');
+        }
+
+        $items = (new ProformaItemModel())
+            ->select('proforma_items.amount, billable_items.entry_date, billable_items.description, billable_items.quantity, billable_items.unit_price, billable_items.billing_month')
+            ->join('billable_items', 'billable_items.id = proforma_items.billable_item_id')
+            ->where('proforma_items.proforma_id', $id)
+            ->orderBy('proforma_items.id', 'ASC')
+            ->findAll();
+
+        $currency = (string) (($proforma['currency'] ?? '') ?: 'INR');
+        // Use ASCII prefix for maximum PDF font compatibility (standard Helvetica is WinAnsi).
+        $moneyPrefix = $currency . ' ';
+
+        $fromName = (string) (config('Email')->fromName ?? 'Billing Management System');
+        $fromEmail = (string) (config('Email')->fromEmail ?? '');
+
+        $invoiceType = (string) (($proforma['invoice_type'] ?? '') ?: 'Invoice');
+        $invoiceNo = (string) (($proforma['proforma_number'] ?? '') ?: '');
+        $issueDate = (string) (($proforma['proforma_date'] ?? '') ?: '');
+
+        $billToName = (string) (($proforma['client_name'] ?? '') ?: '');
+        $billToContact = (string) (($proforma['contact_person'] ?? '') ?: '');
+        $billToEmail = (string) (($proforma['email'] ?? '') ?: '');
+        $billToPhone = (string) (($proforma['phone'] ?? '') ?: '');
+        $billToAddr1 = trim((string) (($proforma['billing_address'] ?? '') ?: ($proforma['address'] ?? '')));
+        $billToCity = (string) (($proforma['city'] ?? '') ?: '');
+        $billToState = (string) (($proforma['state'] ?? '') ?: '');
+        $billToCountry = (string) (($proforma['country'] ?? '') ?: '');
+        $billToPostal = (string) (($proforma['postal_code'] ?? '') ?: '');
+
+        $subTotal = (float) ($proforma['total_amount'] ?? 0);
+        $netAmount = (float) (($proforma['net_amount'] ?? null) ?? $subTotal);
+        $totalGst = (float) (($proforma['total_gst'] ?? null) ?? 0);
+        $cgst = (float) (($proforma['cgst_amount'] ?? null) ?? 0);
+        $sgst = (float) (($proforma['sgst_amount'] ?? null) ?? 0);
+        $igst = (float) (($proforma['igst_amount'] ?? null) ?? 0);
+        $gstPercent = (float) (($proforma['gst_percent'] ?? null) ?? 0);
+        $gstMode = (string) (($proforma['gst_mode'] ?? '') ?: '');
+
+        $pdf = new SimplePdf();
+        $pdf->addPage();
+
+        $pageW = 595.28;
+        $pageH = 841.89;
+        $margin = 36.0;
+        $xL = $margin;
+        $xR = $pageW - $margin;
+        $y = 48.0;
+
+        // Header (left)
+        $pdf->setFont('Helvetica', 'B', 12);
+        $pdf->text($xL, $y, $fromName);
+        $y += 16;
+        if ($fromEmail !== '') {
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->setTextColor(80, 80, 80);
+            $pdf->text($xL, $y, $fromEmail);
+            $pdf->setTextColor(0, 0, 0);
+        }
+
+        // Header (right)
+        $pdf->setFont('Helvetica', 'B', 18);
+        $title = strtoupper($invoiceType);
+        $pdf->text($xR - $pdf->estimateTextWidth($title), 48.0, $title);
+
+        $pdf->setFont('Helvetica', '', 10);
+        $meta1 = 'Invoice No: ' . $invoiceNo;
+        $meta2 = $issueDate !== '' ? ('Date: ' . $issueDate) : '';
+        $pdf->setTextColor(80, 80, 80);
+        $pdf->text($xR - $pdf->estimateTextWidth($meta1), 70.0, $meta1);
+        if ($meta2 !== '') {
+            $pdf->text($xR - $pdf->estimateTextWidth($meta2), 86.0, $meta2);
+        }
+        $pdf->setTextColor(0, 0, 0);
+
+        // Divider
+        $pdf->setDrawColor(180, 180, 180);
+        $pdf->setLineWidth(1.0);
+        $pdf->line($xL, 108.0, $xR, 108.0);
+
+        // Bill To
+        $y = 132.0;
+        $pdf->setFont('Helvetica', '', 9);
+        $pdf->setTextColor(90, 90, 90);
+        $pdf->text($xL, $y, 'Bill To');
+        $pdf->setTextColor(0, 0, 0);
+        $y += 16;
+
+        $pdf->setFont('Helvetica', 'B', 11);
+        $pdf->text($xL, $y, $billToName);
+        $y += 15;
+        $pdf->setFont('Helvetica', '', 10);
+        if ($billToContact !== '') {
+            $pdf->text($xL, $y, $billToContact);
+            $y += 14;
+        }
+        if ($billToAddr1 !== '') {
+            foreach (preg_split('/\\r?\\n/', $billToAddr1) ?: [] as $ln) {
+                $ln = trim((string) $ln);
+                if ($ln === '') continue;
+                $pdf->text($xL, $y, $ln);
+                $y += 14;
+            }
+        }
+        $place = trim(implode(', ', array_values(array_filter([$billToCity, $billToState, $billToCountry]))));
+        $placeLine = trim($place . ($billToPostal !== '' ? (' - ' . $billToPostal) : ''));
+        if ($placeLine !== '') {
+            $pdf->text($xL, $y, $placeLine);
+            $y += 14;
+        }
+        $contactLine = trim($billToEmail . ($billToEmail !== '' && $billToPhone !== '' ? ' / ' : '') . $billToPhone);
+        if ($contactLine !== '') {
+            $pdf->setTextColor(90, 90, 90);
+            $pdf->text($xL, $y, $contactLine);
+            $pdf->setTextColor(0, 0, 0);
+            $y += 14;
+        }
+
+        // Right meta block
+        $yR = 132.0;
+        $pdf->setFont('Helvetica', '', 9);
+        $pdf->setTextColor(90, 90, 90);
+        $pdf->text($xR - $pdf->estimateTextWidth('Status'), $yR, 'Status');
+        $yR += 16;
+        $pdf->setFont('Helvetica', 'B', 10);
+        $pdf->setTextColor(0, 0, 0);
+        $status = (string) (($proforma['status'] ?? '') ?: '-');
+        $pdf->text($xR - $pdf->estimateTextWidth($status), $yR, $status);
+        $yR += 22;
+
+        $pdf->setFont('Helvetica', '', 9);
+        $pdf->setTextColor(90, 90, 90);
+        $pdf->text($xR - $pdf->estimateTextWidth('Currency'), $yR, 'Currency');
+        $yR += 16;
+        $pdf->setFont('Helvetica', 'B', 10);
+        $pdf->setTextColor(0, 0, 0);
+        $pdf->text($xR - $pdf->estimateTextWidth($currency), $yR, $currency);
+        $yR += 22;
+
+        $billingFrom = (string) (($proforma['billing_from'] ?? '') ?: '-');
+        $billingTo = (string) (($proforma['billing_to'] ?? '') ?: '-');
+        $pdf->setFont('Helvetica', '', 9);
+        $pdf->setTextColor(90, 90, 90);
+        $pdf->text($xR - $pdf->estimateTextWidth('Billing Period'), $yR, 'Billing Period');
+        $yR += 16;
+        $pdf->setFont('Helvetica', 'B', 10);
+        $pdf->setTextColor(0, 0, 0);
+        $bp = $billingFrom . ' to ' . $billingTo;
+        $pdf->text($xR - $pdf->estimateTextWidth($bp), $yR, $bp);
+
+        // Items table
+        $tableTop = max($y + 18.0, 250.0);
+        $x0 = $xL;
+        $wNo = 28.0;
+        $wDesc = 255.0;
+        $wQty = 55.0;
+        $wUnit = 85.0;
+        $wAmt = ($xR - $x0) - ($wNo + $wDesc + $wQty + $wUnit);
+        $rowH = 20.0;
+        $lineH = 12.0;
+
+        $drawHeader = function (float $top) use ($pdf, $x0, $xR, $wNo, $wDesc, $wQty, $wUnit, $wAmt, $rowH): void {
+            $pdf->setDrawColor(160, 160, 160);
+            $pdf->setFillColor(245, 245, 245);
+            $pdf->setLineWidth(1.0);
+            $pdf->rect($x0, $top, $xR - $x0, $rowH, true, true);
+
+            $pdf->setFont('Helvetica', 'B', 10);
+            $pdf->text($x0 + 8, $top + 14, '#');
+            $pdf->text($x0 + $wNo + 6, $top + 14, 'Description');
+            $pdf->text($x0 + $wNo + $wDesc + 10, $top + 14, 'Qty');
+            $pdf->text($x0 + $wNo + $wDesc + $wQty + 10, $top + 14, 'Unit Price');
+            $pdf->text($x0 + $wNo + $wDesc + $wQty + $wUnit + 10, $top + 14, 'Amount');
+        };
+
+        $yT = $tableTop;
+        $drawHeader($yT);
+        $yT += $rowH;
+
+        $pdf->setFont('Helvetica', '', 10);
+        $pdf->setDrawColor(200, 200, 200);
+        $pdf->setLineWidth(1.0);
+
+        $idx = 1;
+        foreach ($items as $it) {
+            $descRaw = (string) ($it['description'] ?? '');
+            $lines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', $descRaw) ?: [])));
+            $itemName = $lines[0] ?? '';
+            $rest = $lines;
+            if ($rest !== []) {
+                array_shift($rest);
+            }
+
+            $descLines = [];
+            if ($itemName !== '') {
+                $descLines[] = [$itemName, true];
+            }
+            foreach ($rest as $b) {
+                $b = trim($b);
+                if ($b === '') continue;
+                $wrapped = $pdf->wrapText('- ' . $b, $wDesc - 12, 9);
+                foreach ($wrapped as $wl) {
+                    $descLines[] = [$wl, false];
+                }
+            }
+            if ($descLines === []) {
+                $descLines[] = ['-', false];
+            }
+
+            $descHeight = (count($descLines) * $lineH) + 6.0;
+            $h = max($rowH, $descHeight);
+
+            // Page break (simple)
+            if (($yT + $h + 160.0) > $pageH) {
+                $pdf->addPage();
+                $yT = 48.0;
+                $drawHeader($yT);
+                $yT += $rowH;
+            }
+
+            // Row border
+            $pdf->setFillColor(255, 255, 255);
+            $pdf->rect($x0, $yT, $xR - $x0, $h, true, false);
+
+            // Column separators (optional light lines)
+            $pdf->setDrawColor(220, 220, 220);
+            $pdf->line($x0 + $wNo, $yT, $x0 + $wNo, $yT + $h);
+            $pdf->line($x0 + $wNo + $wDesc, $yT, $x0 + $wNo + $wDesc, $yT + $h);
+            $pdf->line($x0 + $wNo + $wDesc + $wQty, $yT, $x0 + $wNo + $wDesc + $wQty, $yT + $h);
+            $pdf->line($x0 + $wNo + $wDesc + $wQty + $wUnit, $yT, $x0 + $wNo + $wDesc + $wQty + $wUnit, $yT + $h);
+
+            // Cells
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->text($x0 + 8, $yT + 14, (string) $idx);
+
+            $yy = $yT + 14;
+            foreach ($descLines as $dl) {
+                [$txt, $bold] = $dl;
+                $pdf->setFont('Helvetica', $bold ? 'B' : '', $bold ? 10 : 9);
+                $pdf->text($x0 + $wNo + 6, $yy, (string) $txt);
+                $yy += $lineH;
+            }
+
+            $qtyTxt = number_format((float) ($it['quantity'] ?? 0), 2);
+            $unitTxt = $moneyPrefix . number_format((float) ($it['unit_price'] ?? 0), 2);
+            $amtTxt = $moneyPrefix . number_format((float) ($it['amount'] ?? 0), 2);
+
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->text($x0 + $wNo + $wDesc + $wQty - 8 - $pdf->estimateTextWidth($qtyTxt), $yT + 14, $qtyTxt);
+            $pdf->text($x0 + $wNo + $wDesc + $wQty + $wUnit - 8 - $pdf->estimateTextWidth($unitTxt), $yT + 14, $unitTxt);
+            $pdf->text($xR - 8 - $pdf->estimateTextWidth($amtTxt), $yT + 14, $amtTxt);
+
+            $yT += $h;
+            $idx++;
+        }
+
+        // Totals
+        $yTotals = $yT + 22.0;
+        if (($yTotals + 140.0) > $pageH) {
+            $pdf->addPage();
+            $yTotals = 80.0;
+        }
+
+        $pdf->setDrawColor(180, 180, 180);
+        $pdf->line($x0, $yTotals - 10.0, $xR, $yTotals - 10.0);
+
+        $labelX = $xR - 220.0;
+        $valX = $xR;
+
+        $row = function (string $label, string $value) use ($pdf, $labelX, $valX, &$yTotals): void {
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->setTextColor(90, 90, 90);
+            $pdf->text($labelX, $yTotals, $label);
+            $pdf->setTextColor(0, 0, 0);
+            $pdf->setFont('Helvetica', 'B', 10);
+            $pdf->text($valX - $pdf->estimateTextWidth($value), $yTotals, $value);
+            $yTotals += 16.0;
+        };
+
+        $row('Sub Total', $moneyPrefix . number_format($subTotal, 2));
+        if ($gstPercent > 0 || $totalGst > 0) {
+            $gstLabel = 'GST (' . number_format($gstPercent, 2) . '%)' . ($gstMode !== '' ? (' / ' . $gstMode) : '');
+            $row($gstLabel, $moneyPrefix . number_format($totalGst, 2));
+            if ($cgst > 0) $row('CGST', $moneyPrefix . number_format($cgst, 2));
+            if ($sgst > 0) $row('SGST', $moneyPrefix . number_format($sgst, 2));
+            if ($igst > 0) $row('IGST', $moneyPrefix . number_format($igst, 2));
+        }
+
+        $pdf->setFont('Helvetica', 'B', 12);
+        $pdf->setTextColor(0, 0, 0);
+        $pdf->text($labelX, $yTotals + 6.0, 'Net Amount');
+        $netTxt = $moneyPrefix . number_format($netAmount, 2);
+        $pdf->text($valX - $pdf->estimateTextWidth($netTxt, 12), $yTotals + 6.0, $netTxt);
+        $yTotals += 34.0;
+
+        $pdf->setDrawColor(180, 180, 180);
+        $sigW = 200.0;
+        $pdf->line($xR - $sigW, $yTotals + 34.0, $xR, $yTotals + 34.0);
+        $pdf->setFont('Helvetica', '', 10);
+        $pdf->setTextColor(90, 90, 90);
+        $pdf->text($xR - $sigW + 32.0, $yTotals + 50.0, 'Authorized Signature');
+
+        $bin = $pdf->output();
+        $fileNo = preg_replace('/[^A-Za-z0-9\\-_.]+/', '-', $invoiceNo) ?: ('invoice-' . $id);
+        $filename = 'Invoice-' . $fileNo . '.pdf';
+
+        return $this->response
+            ->setHeader('Content-Type', 'application/pdf')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setHeader('Cache-Control', 'private, max-age=0, must-revalidate')
+            ->setHeader('Pragma', 'public')
+            ->setBody($bin);
     }
 
     public function delete()

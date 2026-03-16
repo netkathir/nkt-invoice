@@ -1949,8 +1949,13 @@
             }
         });
 
-        $('#pfBtnPrint').on('click', function () {
-            window.print();
+        $('#pfBtnPrint').off('click').on('click', function () {
+            const id = selectedId();
+            if (!id) {
+                notify('Select an invoice to print.', 'danger');
+                return;
+            }
+            window.open(base('proforma/print/' + id + '?autoprint=1'), '_blank');
         });
 
         $('#pfBtnView').on('click', function () {
@@ -1965,11 +1970,11 @@
             window.location.href = base('proforma/edit/' + id);
         });
 
-        $('#pfBtnPdf').on('click', function () {
+        $('#pfBtnPdf').off('click').on('click', function () {
             const id = selectedId();
             if (!id) return;
-            // Simple default behavior: open View page; user can Print -> Save as PDF.
-            window.open(base('proforma/show/' + id), '_blank');
+            // Triggers a PDF download (server sets Content-Disposition: attachment).
+            window.location.href = base('proforma/pdf/' + id);
         });
 
         $('#pfBtnDelete').on('click', function () {

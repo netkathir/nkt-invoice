@@ -92,6 +92,8 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
     $routes->get('proforma/create', 'ProformaController::create');
     $routes->get('proforma/edit/(:num)', 'ProformaController::edit/$1');
     $routes->get('proforma/show/(:num)', 'ProformaController::show/$1');
+    $routes->get('proforma/print/(:num)', 'ProformaController::print/$1');
+    $routes->get('proforma/pdf/(:num)', 'ProformaController::pdf/$1');
     $routes->get('proforma/edit-items', 'ProformaController::editItems');
     $routes->get('proforma/pending-items', 'ProformaController::pendingItems');
     $routes->get('proforma/getPendingItems/(:num)', 'ProformaController::getPendingItems/$1');

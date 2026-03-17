@@ -35,32 +35,37 @@
                         <label class="form-label mb-0 text-md-end fw-semibold">Client Name <span class="text-danger">*</span></label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <input class="form-control" id="pf_client_name" list="pf_client_list" placeholder="Type to search" autocomplete="off" required>
-                        <datalist id="pf_client_list">
-                            <?php foreach ($clients as $c): ?>
-                                <?php
-                                    $clientLabel = $c['name'] ?: ($c['contact_person'] ?: ($c['email'] ?: ($c['phone'] ?: ('Client #' . $c['id']))));
-                                    $company = $c['name'] ?: $clientLabel;
-                                    $gst = $c['gst_no'] ?? ($c['gst'] ?? '');
-                                    $addr1 = $c['address'] ?? '';
-                                    $addr2 = $c['billing_address'] ?? '';
-                                    $city = $c['city'] ?? '';
-                                    $state = $c['state'] ?? '';
-                                    $pincode = $c['postal_code'] ?? ($c['pincode'] ?? '');
-                                ?>
-                                <option
-                                    value="<?= esc($clientLabel) ?>"
-                                    data-id="<?= esc((string) $c['id']) ?>"
-                                    data-company="<?= esc((string) $company) ?>"
-                                    data-gst="<?= esc((string) $gst) ?>"
-                                    data-addr1="<?= esc((string) $addr1) ?>"
-                                    data-addr2="<?= esc((string) $addr2) ?>"
-                                    data-city="<?= esc((string) $city) ?>"
-                                    data-state="<?= esc((string) $state) ?>"
-                                    data-pincode="<?= esc((string) $pincode) ?>"
-                                ></option>
-                            <?php endforeach; ?>
-                        </datalist>
+                        <div class="bms-combobox" id="pf_client_combo">
+                            <input type="text" class="form-control" id="pf_client_name" placeholder="Search client" autocomplete="off">
+                            <div class="bms-combobox-menu d-none" id="pf_client_menu">
+                                <?php foreach ($clients as $c): ?>
+                                    <?php
+                                        $clientLabel = $c['name'] ?: ($c['contact_person'] ?: ($c['email'] ?: ($c['phone'] ?: ('Client #' . $c['id']))));
+                                        $company = $c['name'] ?: $clientLabel;
+                                        $gst = $c['gst_no'] ?? ($c['gst'] ?? '');
+                                        $addr1 = $c['address'] ?? '';
+                                        $addr2 = $c['billing_address'] ?? '';
+                                        $city = $c['city'] ?? '';
+                                        $state = $c['state'] ?? '';
+                                        $pincode = $c['postal_code'] ?? ($c['pincode'] ?? '');
+                                    ?>
+                                    <button
+                                        type="button"
+                                        class="bms-combobox-item"
+                                        data-id="<?= esc((string) $c['id']) ?>"
+                                        data-label="<?= esc((string) $clientLabel) ?>"
+                                        data-company="<?= esc((string) $company) ?>"
+                                        data-gst="<?= esc((string) $gst) ?>"
+                                        data-addr1="<?= esc((string) $addr1) ?>"
+                                        data-addr2="<?= esc((string) $addr2) ?>"
+                                        data-city="<?= esc((string) $city) ?>"
+                                        data-state="<?= esc((string) $state) ?>"
+                                        data-pincode="<?= esc((string) $pincode) ?>"
+                                    ><?= esc($clientLabel) ?></button>
+                                <?php endforeach; ?>
+                                <div class="bms-combobox-empty d-none">No results</div>
+                            </div>
+                        </div>
                         <input type="hidden" id="pf_client_id" value="">
                         <div class="invalid-feedback">Client Name is required.</div>
                         <input type="hidden" id="pf_from" value="">
@@ -128,7 +133,7 @@
                     </div>
                     <div class="col-12 col-md-8">
                         <div class="input-group bms-date-wrap">
-                            <input type="text" class="form-control" id="pf_date" placeholder="DD/MM/YYYY" autocomplete="off" required>
+                            <input type="text" class="form-control" id="pf_date" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                                 <span aria-hidden="true">📅</span>
                             </button>
@@ -260,7 +265,7 @@
                     <div class="col-4 text-end fw-semibold">Due Date <span class="text-danger">*</span></div>
                     <div class="col-8">
                         <div class="input-group bms-date-wrap">
-                            <input type="text" class="form-control" id="pf_due" placeholder="DD/MM/YYYY" autocomplete="off" required>
+                            <input type="text" class="form-control" id="pf_due" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                                 <span aria-hidden="true">📅</span>
                             </button>

@@ -674,6 +674,42 @@ body.bms-sidebar-collapsed .btn-sidebar-toggle{
     border-radius: 4px;
 }
 
+/* Searchable combobox (invoice create client select) */
+.bms-combobox{
+    position: relative;
+}
+.bms-combobox-menu{
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.12);
+    border-radius: 6px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    max-height: 240px;
+    overflow: auto;
+    padding: 6px 0;
+}
+.bms-combobox-item{
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: .45rem .75rem;
+    background: transparent;
+    border: 0;
+}
+.bms-combobox-item:hover,
+.bms-combobox-item:focus{
+    background: rgba(0,0,0,.06);
+    outline: none;
+}
+.bms-combobox-empty{
+    padding: .5rem .75rem;
+    color: #6c757d;
+}
+
 /* Native date input overlay (calendar picker) */
 .bms-date-wrap{
     position: relative;

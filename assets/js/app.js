@@ -81,6 +81,19 @@
         return m[3] + '/' + m[2] + '/' + m[1];
     }
 
+    function isoToDmyText(iso) {
+        const raw = String(iso || '').trim().slice(0, 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+        if (!m) return '';
+        const yyyy = m[1];
+        const mm = parseInt(m[2], 10);
+        const dd = m[3];
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const mon = months[mm - 1];
+        if (!mon) return '';
+        return dd + ' ' + mon + ' ' + yyyy;
+    }
+
     function dmyToIso(dmy) {
         const raw = String(dmy || '').trim();
         if (!raw) return '';
@@ -94,6 +107,22 @@
         return yyyy + '-' + mm + '-' + dd;
     }
 
+    function textToIso(dmyText) {
+        const raw = String(dmyText || '').trim();
+        if (!raw) return '';
+        const m = /^(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})$/.exec(raw);
+        if (!m) return dmyToIso(raw);
+        const dd = String(m[1]).padStart(2, '0');
+        const mon = m[2].toLowerCase();
+        const yyyy = m[3];
+        const map = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+        const mo = map[mon] || 0;
+        const d = parseInt(dd, 10);
+        if (mo < 1 || mo > 12 || d < 1 || d > 31) return '';
+        const mm = String(mo).padStart(2, '0');
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
     function formatUiDateDmy(value, type) {
         const raw = String(value || '').trim();
         if (!raw) return type === 'display' ? '-' : '';
@@ -102,10 +131,12 @@
     }
 
     // Attach native calendar to a text input (DD/MM/YYYY) using a hidden <input type="date">
-    function attachNativeCalendar(textEl, nativeEl, onIsoChange) {
+    function attachNativeCalendar(textEl, nativeEl, onIsoChange, formatUi, parseUi) {
         const $txt = $(textEl);
         const $nat = $(nativeEl);
         if (!$txt.length || !$nat.length) return;
+        const toUi = typeof formatUi === 'function' ? formatUi : isoToDmy;
+        const toIso = typeof parseUi === 'function' ? parseUi : dmyToIso;
 
         function openPicker() {
             const el = $nat.get(0);
@@ -125,7 +156,7 @@
         function applyIso(iso) {
             const v = String(iso || '').trim().slice(0, 10);
             $nat.val(v);
-            $txt.val(v ? isoToDmy(v) : '');
+            $txt.val(v ? toUi(v) : '');
             onIsoChange && onIsoChange(v);
         }
 
@@ -142,7 +173,7 @@
         });
 
         $txt.off('input.bmsDate blur.bmsDate').on('input.bmsDate blur.bmsDate', function () {
-            const iso = dmyToIso($txt.val());
+            const iso = toIso($txt.val());
             if (iso) {
                 $nat.val(iso);
                 onIsoChange && onIsoChange(iso);
@@ -152,7 +183,7 @@
         });
 
         if ($nat.val()) {
-            $txt.val(isoToDmy($nat.val()));
+            $txt.val(toUi($nat.val()));
         }
     }
 
@@ -1871,8 +1902,8 @@
                 }},
                 { data: 'proforma_number' },
                 { data: 'invoice_type', orderable: false, render: function (d) { return d || 'GST Invoice'; } },
-                { data: 'proforma_date', render: formatUiDateDmy },
-                { data: 'billing_to', render: formatUiDateDmy },
+                { data: 'proforma_date', render: formatUiDate },
+                { data: 'billing_to', render: formatUiDate },
                 { data: null, render: function (_d, _t, row) { return (row && (row.customer_name || row.contact_person || row.client_name)) ? (row.customer_name || row.contact_person || row.client_name) : '-'; } },
                 { data: null, render: function (_d, _t, row) { return (row && (row.company_name || row.client_name)) ? (row.company_name || row.client_name) : '-'; } },
                 { data: null, className: 'text-end', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
@@ -1908,17 +1939,17 @@
         $tableEl.find('thead').on('input change', 'input.pf-col-filter', function () {
             const col = parseInt($(this).data('col') || '0', 10) || 0;
             const raw = String($(this).val() || '');
-            const iso = $(this).hasClass('pf-col-filter-dmy') ? dmyToIso(raw) : '';
+            const iso = $(this).hasClass('pf-col-filter-dmy') ? textToIso(raw) : '';
             table.column(col).search(iso || raw).draw();
         });
 
         // Native calendar for issue/due filters
         attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"4\"]'), '#pf_issue_native', function (iso) {
             table.column(4).search(iso || '').draw();
-        });
+        }, isoToDmyText, textToIso);
         attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"5\"]'), '#pf_due_native', function (iso) {
             table.column(5).search(iso || '').draw();
-        });
+        }, isoToDmyText, textToIso);
 
         // Single-select checkboxes
         $tableEl.on('change', 'tbody input.pf-row-check', function () {
@@ -2939,17 +2970,11 @@
 	            return items;
 	        }
 
-	        function findClientOption(value) {
-	            const raw = String(value || '').trim().toLowerCase();
-	            if (!raw) return null;
-	            const options = document.querySelectorAll('#pf_client_list option');
-	            for (let i = 0; i < options.length; i++) {
-	                const opt = options[i];
-	                const v = String(opt.value || '').trim().toLowerCase();
-	                if (v === raw) return opt;
-	            }
-	            return null;
-	        }
+	        const $clientCombo = $('#pf_client_combo');
+	        const $clientInput = $('#pf_client_name');
+	        const $clientMenu = $('#pf_client_menu');
+	        const $clientItems = $clientMenu.find('.bms-combobox-item');
+	        const $clientEmpty = $clientMenu.find('.bms-combobox-empty');
 
 	        function clearClientFields() {
 	            $('#pf_client_id').val('');
@@ -2962,8 +2987,7 @@
 	            $('#pf_pincode').val('');
 	        }
 
-	        function applyClientOption(opt) {
-	            const $opt = $(opt);
+	        function applyClientOption($opt) {
 	            $('#pf_client_id').val(($opt.data('id') || '').toString().trim());
 	            $('#pf_company').val(($opt.data('company') || '').toString().trim());
 	            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
@@ -2974,21 +2998,71 @@
 	            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
 	        }
 
-	        function syncClientFromInput() {
-	            const value = $('#pf_client_name').val();
-	            const opt = findClientOption(value);
-	            if (opt) {
-	                applyClientOption(opt);
-	            } else {
-	                clearClientFields();
-	            }
+	        function filterClientList(query) {
+	            const q = String(query || '').trim().toLowerCase();
+	            let shown = 0;
+	            $clientItems.each(function () {
+	                const $item = $(this);
+	                const label = String($item.data('label') || '').toLowerCase();
+	                const match = !q || label.indexOf(q) !== -1;
+	                $item.toggleClass('d-none', !match);
+	                if (match) shown += 1;
+	            });
+	            $clientEmpty.toggleClass('d-none', shown > 0);
 	        }
 
-	        $('#pf_client_name').on('input change blur', syncClientFromInput);
-	        syncClientFromInput();
+	        function openClientMenu() {
+	            if ($clientMenu.length) $clientMenu.removeClass('d-none');
+	        }
 
-	        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
-	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+	        function closeClientMenu() {
+	            if ($clientMenu.length) $clientMenu.addClass('d-none');
+	        }
+
+	        $clientInput.on('focus', function () {
+	            openClientMenu();
+	            filterClientList($clientInput.val());
+	        });
+
+	        $clientInput.on('input', function () {
+	            openClientMenu();
+	            filterClientList($clientInput.val());
+	            $('#pf_client_id').val('');
+	            clearClientFields();
+	        });
+
+	        $clientInput.on('keydown', function (e) {
+	            if (e.key === 'Escape') {
+	                closeClientMenu();
+	                return;
+	            }
+	            if (e.key !== 'Enter') return;
+	            const $first = $clientItems.filter(':not(.d-none)').first();
+	            if ($first.length) {
+	                e.preventDefault();
+	                $clientInput.val(($first.data('label') || '').toString().trim());
+	                applyClientOption($first);
+	                closeClientMenu();
+	            }
+	        });
+
+	        $clientMenu.on('click', '.bms-combobox-item', function () {
+	            const $opt = $(this);
+	            $clientInput.val(($opt.data('label') || '').toString().trim());
+	            applyClientOption($opt);
+	            closeClientMenu();
+	        });
+
+	        $(document).on('click', function (e) {
+	            if (!$clientCombo.length) return;
+	            if ($(e.target).closest('#pf_client_combo').length) return;
+	            closeClientMenu();
+	        });
+
+	        filterClientList('');
+
+	        attachNativeCalendar('#pf_date', '#pf_date_native', function () {}, isoToDmyText, textToIso);
+	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {}, isoToDmyText, textToIso);
 
 	        $('#pf_invoice_type').on('change', recalcGst);
 	        $('#pf_gst_percent').on('input', recalcGst);
@@ -3065,9 +3139,9 @@
 	        $('#btnSaveProforma').on('click', function () {
 	            const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
 	            const clientId = String($('#pf_client_id').val() || '').trim();
-	            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+	            const pfDate = textToIso(($('#pf_date').val() || '').trim());
 	            const currency = ($('#pf_currency').val() || '').trim();
-	            const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
+	            const dueDate = textToIso(($('#pf_due').val() || '').trim());
 	            const invoiceType = ($('#pf_invoice_type').val() || '').trim();
 	            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
 	            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();

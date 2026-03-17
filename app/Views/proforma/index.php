@@ -18,7 +18,7 @@
         <table id="dtProformas" class="table table-striped table-bordered nowrap w-100">
             <thead>
             <tr>
-                <th class="text-center" style="width: 44px;">#</th>
+                <th class="text-center" style="width: 44px;"></th>
                 <th style="width: 70px;">S.No</th>
                 <th>Invoice No</th>
                 <th>Invoice Type</th>
@@ -37,7 +37,7 @@
                 <th class="sorting_disabled"><input class="form-control form-control-sm pf-col-filter" data-col="3" placeholder="Search"></th>
                 <th class="sorting_disabled">
                     <div class="input-group input-group-sm bms-date-wrap">
-                        <input type="text" class="form-control pf-col-filter pf-col-filter-dmy" data-col="4" placeholder="DD/MM/YYYY" autocomplete="off">
+                        <input type="text" class="form-control pf-col-filter pf-col-filter-dmy" data-col="4" autocomplete="off">
                         <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                             <span aria-hidden="true">📅</span>
                         </button>
@@ -46,7 +46,7 @@
                 </th>
                 <th class="sorting_disabled">
                     <div class="input-group input-group-sm bms-date-wrap">
-                        <input type="text" class="form-control pf-col-filter pf-col-filter-dmy" data-col="5" placeholder="DD/MM/YYYY" autocomplete="off">
+                        <input type="text" class="form-control pf-col-filter pf-col-filter-dmy" data-col="5" autocomplete="off">
                         <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                             <span aria-hidden="true">📅</span>
                         </button>

@@ -635,7 +635,7 @@ class ProformaController extends BaseController
             $pdf->rect($x0, $top, $xR - $x0, $rowH, true, true);
 
             $pdf->setFont('Helvetica', 'B', 10);
-            $pdf->text($x0 + 8, $top + 14, '#');
+            $pdf->text($x0 + 8, $top + 14, 'S.No');
             $pdf->text($x0 + $wNo + 6, $top + 14, 'Description');
             $pdf->text($x0 + $wNo + $wDesc + 10, $top + 14, 'Qty');
             $pdf->text($x0 + $wNo + $wDesc + $wQty + 10, $top + 14, 'Unit Price');

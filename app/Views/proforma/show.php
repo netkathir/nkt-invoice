@@ -14,6 +14,7 @@
 
     $companyName = (string) (($proforma['client_name'] ?? '') ?: '');
     $customerName = (string) (($proforma['contact_person'] ?? '') ?: $companyName);
+    $gstNo = (string) (($proforma['gst_no'] ?? '') ?: '');
     $addr1 = (string) (($proforma['address'] ?? '') ?: '');
     $addr2 = (string) (($proforma['billing_address'] ?? '') ?: '');
     $city = (string) (($proforma['city'] ?? '') ?: '');
@@ -60,7 +61,7 @@
                         <label class="form-label mb-0 text-md-end fw-semibold">GST NO</label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <input type="text" class="form-control" value="" readonly>
+                        <input type="text" class="form-control" value="<?= esc($gstNo) ?>" readonly>
                     </div>
 
                     <div class="col-12 col-md-4">

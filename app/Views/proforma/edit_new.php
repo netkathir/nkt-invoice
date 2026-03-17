@@ -67,10 +67,10 @@
                         <input type="hidden" id="pf_from" value="<?= esc((string) ($proforma['billing_from'] ?? '')) ?>">
                     </div>
 
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-4" id="pf_gst_row">
                         <label class="form-label mb-0 text-md-end fw-semibold">GST NO</label>
                     </div>
-                    <div class="col-12 col-md-8">
+                    <div class="col-12 col-md-8" id="pf_gst_col">
                         <input type="text" class="form-control" id="pf_gst" value="" readonly>
                     </div>
 
@@ -193,7 +193,20 @@
                                 <input type="hidden" class="pf-item-id" value="<?= esc((string) ($it['id'] ?? '0')) ?>">
                                 <input type="text" class="form-control form-control-sm pf-item-name" value="<?= esc($itemName) ?>" placeholder="Item">
                             </td>
-                            <td><textarea rows="1" class="form-control form-control-sm pf-item-desc" placeholder="Description (one bullet per line)"><?= esc($descText) ?></textarea></td>
+                            <td>
+                                <?php $descLines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', (string) $descText) ?: []))); ?>
+                                <div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;">
+                                    <ul>
+                                        <?php if ($descLines !== []): ?>
+                                            <?php foreach ($descLines as $line): ?>
+                                                <li><?= esc($line) ?></li>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <li><br></li>
+                                        <?php endif; ?>
+                                    </ul>
+                                </div>
+                            </td>
                             <td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="<?= esc(number_format((float) ($it['quantity'] ?? 1), 2, '.', '')) ?>"></td>
                             <td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>
                             <td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-price" value="<?= esc(number_format((float) ($it['unit_price'] ?? 0), 2, '.', '')) ?>"></td>
@@ -216,10 +229,7 @@
                 <div class="row g-2 align-items-center">
                     <div class="col-4 text-end fw-semibold">Total</div>
                     <div class="col-8">
-                        <div class="input-group">
-                            <span class="input-group-text">₹</span>
-                            <input type="text" class="form-control" id="pf_total_input" value="0.00" readonly>
-                        </div>
+                        <input type="text" class="form-control" id="pf_total_input" value="0.00" readonly>
                         <span id="pf_total" class="d-none">0.00</span>
                     </div>
                 </div>

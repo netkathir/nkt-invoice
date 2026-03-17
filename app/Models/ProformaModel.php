@@ -61,9 +61,7 @@ class ProformaModel extends Model
 
     public function nextProformaNumber(?string $date = null): string
     {
-        $date = $date ?: date('Y-m-d');
-        $datePart = date('Ymd', strtotime($date));
-        $prefix = "PF-{$datePart}-";
+        $prefix = 'NKT';
 
         $row = $this->select('proforma_number')
             ->like('proforma_number', $prefix, 'after')
@@ -79,6 +77,6 @@ class ProformaModel extends Model
             }
         }
 
-        return $prefix . str_pad((string) $next, 4, '0', STR_PAD_LEFT);
+        return $prefix . str_pad((string) $next, 3, '0', STR_PAD_LEFT);
     }
 }

@@ -30,6 +30,11 @@
                             <input class="form-control" name="phone" id="client_phone" placeholder="Optional">
                             <div class="invalid-feedback" data-err="phone">Phone must be 50 characters or less.</div>
                         </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">GST No</label>
+                            <input class="form-control" name="gst_no" id="client_gst_no" placeholder="Optional">
+                            <div class="invalid-feedback" data-err="gst_no"></div>
+                        </div>
 
                         <div class="col-12">
                             <div class="border rounded-3 p-3 bg-body-tertiary bg-opacity-50">

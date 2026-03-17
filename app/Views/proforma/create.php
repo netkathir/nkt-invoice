@@ -27,19 +27,20 @@
 	                        <label class="form-label mb-0 text-md-end fw-semibold">Invoice No <span class="text-danger">*</span></label>
 	                    </div>
 	                    <div class="col-12 col-md-8">
-	                        <input type="text" class="form-control" id="pf_invoice_no" value="" placeholder="Enter invoice no" required>
+	                        <input type="text" class="form-control" id="pf_invoice_no" value="<?= esc((string) ($nextInvoiceNo ?? '')) ?>" readonly required>
+                            <div class="invalid-feedback">Invoice No is required.</div>
 	                    </div>
 
                     <div class="col-12 col-md-4">
-                        <label class="form-label mb-0 text-md-end fw-semibold">Customer Name <span class="text-danger">*</span></label>
+                        <label class="form-label mb-0 text-md-end fw-semibold">Client Name <span class="text-danger">*</span></label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <select class="form-select" id="pf_client_id" required>
-                            <option value="">Select</option>
+                        <input class="form-control" id="pf_client_name" list="pf_client_list" placeholder="Type to search" autocomplete="off" required>
+                        <datalist id="pf_client_list">
                             <?php foreach ($clients as $c): ?>
                                 <?php
-                                    $customer = $c['contact_person'] ?: ($c['name'] ?: ($c['email'] ?: ($c['phone'] ?: ('Client #' . $c['id']))));
-                                    $company = $c['name'] ?: $customer;
+                                    $clientLabel = $c['name'] ?: ($c['contact_person'] ?: ($c['email'] ?: ($c['phone'] ?: ('Client #' . $c['id']))));
+                                    $company = $c['name'] ?: $clientLabel;
                                     $gst = $c['gst_no'] ?? ($c['gst'] ?? '');
                                     $addr1 = $c['address'] ?? '';
                                     $addr2 = $c['billing_address'] ?? '';
@@ -48,26 +49,28 @@
                                     $pincode = $c['postal_code'] ?? ($c['pincode'] ?? '');
                                 ?>
                                 <option
-                                    value="<?= esc((string) $c['id']) ?>"
+                                    value="<?= esc($clientLabel) ?>"
+                                    data-id="<?= esc((string) $c['id']) ?>"
                                     data-company="<?= esc((string) $company) ?>"
-                                    data-customer="<?= esc((string) $customer) ?>"
                                     data-gst="<?= esc((string) $gst) ?>"
                                     data-addr1="<?= esc((string) $addr1) ?>"
                                     data-addr2="<?= esc((string) $addr2) ?>"
                                     data-city="<?= esc((string) $city) ?>"
                                     data-state="<?= esc((string) $state) ?>"
                                     data-pincode="<?= esc((string) $pincode) ?>"
-                                ><?= esc($customer) ?></option>
+                                ></option>
                             <?php endforeach; ?>
-                        </select>
+                        </datalist>
+                        <input type="hidden" id="pf_client_id" value="">
+                        <div class="invalid-feedback">Client Name is required.</div>
                         <input type="hidden" id="pf_from" value="">
                     </div>
 
-                    <div class="col-12 col-md-4">
+                    <div class="col-12 col-md-4" id="pf_gst_row">
                         <label class="form-label mb-0 text-md-end fw-semibold">GST NO</label>
                     </div>
-                    <div class="col-12 col-md-8">
-                        <input type="text" class="form-control" id="pf_gst" value="">
+                    <div class="col-12 col-md-8" id="pf_gst_col">
+                        <input type="text" class="form-control" id="pf_gst" value="" readonly>
                     </div>
 
                     <div class="col-12 col-md-4">
@@ -95,6 +98,7 @@
                             <option value="EUR">EUR</option>
                             <option value="GBP">GBP</option>
                         </select>
+                        <div class="invalid-feedback">Currency is required.</div>
                     </div>
                 </div>
             </div>
@@ -109,13 +113,14 @@
                             <option value="GST Invoice" selected>GST Invoice</option>
                             <option value="Export Invoice">Export Invoice</option>
                         </select>
+                        <div class="invalid-feedback">Invoice Type is required.</div>
                     </div>
 
                     <div class="col-12 col-md-4">
                         <label class="form-label mb-0 text-md-end fw-semibold">Company Name</label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <input type="text" class="form-control" id="pf_company" value="">
+                        <input type="text" class="form-control" id="pf_company" value="" readonly>
                     </div>
 
                     <div class="col-12 col-md-4">
@@ -129,6 +134,7 @@
                             </button>
                             <input type="date" class="bms-native-date" id="pf_date_native" value="<?= esc(date('Y-m-d')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
+                        <div class="invalid-feedback">Date Of Issue is required.</div>
                     </div>
 
                     <div class="col-12 col-md-4">
@@ -180,10 +186,7 @@
                 <div class="row g-2 align-items-center">
                     <div class="col-4 text-end fw-semibold">Total</div>
                     <div class="col-8">
-                        <div class="input-group">
-                            <span class="input-group-text">₹</span>
-                            <input type="text" class="form-control" id="pf_total_input" value="0.00" readonly>
-                        </div>
+                        <input type="text" class="form-control" id="pf_total_input" value="0.00" readonly>
                         <span id="pf_total" class="d-none">0.00</span>
                     </div>
                 </div>
@@ -263,6 +266,7 @@
                             </button>
                             <input type="date" class="bms-native-date" id="pf_due_native" tabindex="-1" aria-hidden="true">
                         </div>
+                        <div class="invalid-feedback">Due Date is required.</div>
                     </div>
                 </div>
             </div>

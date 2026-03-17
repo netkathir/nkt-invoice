@@ -55,10 +55,12 @@ class ProformaController extends BaseController
     public function create()
     {
         $clients = (new ClientModel())->orderBy('name', 'ASC')->findAll();
+        $nextInvoiceNo = (new ProformaModel())->nextProformaNumber();
 
         return view('proforma/create', [
             'active'  => 'proforma',
             'clients' => $clients,
+            'nextInvoiceNo' => $nextInvoiceNo,
         ]);
     }
 
@@ -164,7 +166,7 @@ class ProformaController extends BaseController
         $itemIds = [];
 
         if ($proformaNumber === '') {
-            return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Invoice No is required.']);
+            $proformaNumber = '';
         }
         if ($clientId <= 0) {
             return $this->response->setStatusCode(422)->setJSON(['success' => false, 'message' => 'Client is required.']);
@@ -412,7 +414,7 @@ class ProformaController extends BaseController
     public function show(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -440,7 +442,7 @@ class ProformaController extends BaseController
         $autoprint = (string) $this->request->getGet('autoprint') === '1';
 
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -467,7 +469,7 @@ class ProformaController extends BaseController
     public function pdf(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();

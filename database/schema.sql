@@ -7,6 +7,7 @@ CREATE TABLE `clients` (
   `contact_person` varchar(191) DEFAULT NULL,
   `email` varchar(191) DEFAULT NULL,
   `phone` varchar(50) DEFAULT NULL,
+  `gst_no` varchar(50) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'Active',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,

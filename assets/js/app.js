@@ -595,6 +595,7 @@
             $('#clientForm')[0].reset();
             $('#clientForm').removeClass('was-validated');
             $('#client_id').val('');
+            $('#client_gst_no').val('');
             lastManualBilling = '';
             $('#client_same_as_address').prop('checked', false);
             $('#client_billing_line1,#client_billing_line2').prop('disabled', false);
@@ -614,6 +615,7 @@
             $('#client_contact_person').val(row.contact_person || '');
             $('#client_email').val(row.email || '');
             $('#client_phone').val(row.phone || '');
+            $('#client_gst_no').val(row.gst_no || '');
             (function () {
                 const a = splitLines(row.address || '');
                 $('#client_address_line1').val(a.line1);
@@ -646,6 +648,7 @@
             $('#client_contact_person').val(row.contact_person || '');
             $('#client_email').val(row.email || '');
             $('#client_phone').val(row.phone || '');
+            $('#client_gst_no').val(row.gst_no || '');
             (function () {
                 const a = splitLines(row.address || '');
                 $('#client_address_line1').val(a.line1);
@@ -1645,14 +1648,14 @@
                     return billableStatusBadge(d);
                 }},
                 { data: null, orderable: false, render: function (row) {
-                    const billedDisabled = row.status !== 'Pending' ? 'disabled' : '';
+                    const isPending = row.status === 'Pending';
                     return '' +
                         '<div class="d-flex align-items-center gap-1 flex-wrap">' +
                             actionGroup(
                                 actionBtn('edit', 'btn-outline-primary', 'Edit') +
                                 actionBtn('del', 'btn-outline-danger', 'Delete')
                             ) +
-                            '<button class="btn btn-sm btn-outline-success btn-billed" type="button" ' + billedDisabled + '>Mark as Billed</button>' +
+                            (isPending ? '<button class="btn btn-sm btn-outline-success btn-billed" type="button">Mark as Billed</button>' : '') +
                         '</div>';
                 }},
             ],
@@ -2746,11 +2749,21 @@
 	            return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
 	        }
 
+	        function toggleGstNo() {
+	            const show = gstEnabled();
+	            $('#pf_gst_row, #pf_gst_col').toggleClass('d-none', !show);
+	            if (!show) {
+	                $('#pf_gst').val('');
+	            }
+	        }
+
 	        function recalcGst() {
 	            const total = parseMoney($('#pf_total').text());
 	            const enabled = gstEnabled();
 	            const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
 	            const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+
+	            toggleGstNo();
 
 	            if (!enabled) {
 	                $('#pf_gst_box').addClass('d-none');
@@ -2797,12 +2810,44 @@
 
 	        function rowHasAnyInput($tr) {
 	            const item = String($tr.find('.pf-item-name').val() || '').trim();
-	            const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	            const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
 	            const qty = String($tr.find('.pf-item-qty').val() || '').trim();
 	            const uom = String($tr.find('.pf-item-uom').val() || '').trim();
 	            const price = String($tr.find('.pf-item-price').val() || '').trim();
 	            const amt = String($tr.find('.pf-item-amt').val() || '').trim();
 	            return (item + desc + qty + uom + price + amt) !== '';
+	        }
+
+	        function escapeHtml(s) {
+	            return String(s || '')
+	                .replace(/&/g, '&amp;')
+	                .replace(/</g, '&lt;')
+	                .replace(/>/g, '&gt;')
+	                .replace(/"/g, '&quot;')
+	                .replace(/'/g, '&#39;');
+	        }
+
+	        function stripBulletPrefix(line) {
+	            return String(line || '').replace(/^[\s\u2022\u00B7\-\*]+/, '').trim();
+	        }
+
+	        function normalizeBulletText(text) {
+	            return String(text || '')
+	                .split(/\r?\n/)
+	                .map(stripBulletPrefix)
+	                .filter(function (l) { return l !== ''; })
+	                .join("\n");
+	        }
+
+	        function ensureBulletList($el) {
+	            const text = normalizeBulletText($el.text());
+	            if (!text) {
+	                $el.html('<ul><li><br></li></ul>');
+	                return;
+	            }
+	            const lines = text.split("\n");
+	            const html = '<ul>' + lines.map(function (l) { return '<li>' + escapeHtml(l) + '</li>'; }).join('') + '</ul>';
+	            $el.html(html);
 	        }
 
 	        function recalcTotal() {
@@ -2814,7 +2859,7 @@
 	                const amt = parseMoney($tr.find('.pf-item-amt').val());
 	                total += amt;
 	                const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
 	                if (item || desc) hasItems = true;
 	            });
 	            setTotal(total, hasItems);
@@ -2839,7 +2884,7 @@
 	            return '' +
 	                '<tr>' +
 	                    '<td><input type="text" class="form-control form-control-sm pf-item-name" placeholder="Item"></td>' +
-	                    '<td><textarea rows="1" class="form-control form-control-sm pf-item-desc" placeholder="Description (one bullet per line)"></textarea></td>' +
+	                    '<td><div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;"></div></td>' +
 	                    '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="1"></td>' +
 	                    '<td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>' +
 	                    '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-price" value="0.00"></td>' +
@@ -2860,6 +2905,8 @@
 	            } else {
 	                $('#pfItemsTable tbody').append($row);
 	            }
+	            const $desc = $row.find('.pf-item-desc-editor');
+	            if ($desc.length) ensureBulletList($desc);
 	            recalcTotal();
 	            return $row;
 	        }
@@ -2874,7 +2921,7 @@
 	            $('#pfItemsTable tbody tr').each(function () {
 	                const $tr = $(this);
 	                const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                const desc = normalizeBulletText($tr.find('.pf-item-desc-editor').text());
 	                const qty = parseMoney($tr.find('.pf-item-qty').val());
 	                const price = parseMoney($tr.find('.pf-item-price').val());
 	                const amt = parseMoney($tr.find('.pf-item-amt').val());
@@ -2892,19 +2939,32 @@
 	            return items;
 	        }
 
-	        $('#pf_client_id').on('change', function () {
-	            const $opt = $('#pf_client_id option:selected');
-	            $('#pf_company').val(($opt.data('company') || '').toString().trim());
-	            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
-	            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
-	            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
-	            $('#pf_city').val(($opt.data('city') || '').toString().trim());
-	            $('#pf_state').val(($opt.data('state') || '').toString().trim());
-	            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
-	        });
+	        function findClientOption(value) {
+	            const raw = String(value || '').trim().toLowerCase();
+	            if (!raw) return null;
+	            const options = document.querySelectorAll('#pf_client_list option');
+	            for (let i = 0; i < options.length; i++) {
+	                const opt = options[i];
+	                const v = String(opt.value || '').trim().toLowerCase();
+	                if (v === raw) return opt;
+	            }
+	            return null;
+	        }
 
-	        (function initCompanyField() {
-	            const $opt = $('#pf_client_id option:selected');
+	        function clearClientFields() {
+	            $('#pf_client_id').val('');
+	            $('#pf_company').val('');
+	            $('#pf_gst').val('');
+	            $('#pf_addr1').val('');
+	            $('#pf_addr2').val('');
+	            $('#pf_city').val('');
+	            $('#pf_state').val('');
+	            $('#pf_pincode').val('');
+	        }
+
+	        function applyClientOption(opt) {
+	            const $opt = $(opt);
+	            $('#pf_client_id').val(($opt.data('id') || '').toString().trim());
 	            $('#pf_company').val(($opt.data('company') || '').toString().trim());
 	            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
 	            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
@@ -2912,7 +2972,20 @@
 	            $('#pf_city').val(($opt.data('city') || '').toString().trim());
 	            $('#pf_state').val(($opt.data('state') || '').toString().trim());
 	            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
-	        })();
+	        }
+
+	        function syncClientFromInput() {
+	            const value = $('#pf_client_name').val();
+	            const opt = findClientOption(value);
+	            if (opt) {
+	                applyClientOption(opt);
+	            } else {
+	                clearClientFields();
+	            }
+	        }
+
+	        $('#pf_client_name').on('input change blur', syncClientFromInput);
+	        syncClientFromInput();
 
 	        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
 	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
@@ -2924,6 +2997,33 @@
 
 	        ensureOneRow();
 	        setTotal(0, false);
+
+	        $(document)
+	            .off('focus.bmsPfDesc', '.pf-item-desc-editor')
+            .on('focus.bmsPfDesc', '.pf-item-desc-editor', function () {
+                const $el = $(this);
+                if (!String($el.text() || '').trim()) {
+                    ensureBulletList($el);
+                }
+            });
+
+        $(document)
+            .off('blur.bmsPfDesc', '.pf-item-desc-editor')
+            .on('blur.bmsPfDesc', '.pf-item-desc-editor', function () {
+                ensureBulletList($(this));
+            });
+
+        $(document)
+            .off('keydown.bmsPfDesc', '.pf-item-desc-editor')
+            .on('keydown.bmsPfDesc', '.pf-item-desc-editor', function (e) {
+                if (e.key !== 'Enter') return;
+                const sel = window.getSelection();
+                const li = sel && sel.anchorNode ? $(sel.anchorNode).closest('li') : $();
+                if (!li.length) {
+                    e.preventDefault();
+                    ensureBulletList($(this));
+                }
+            });
 
 	        $('#pfItemsTable')
 	            .off('click', 'button.pf-row-add')
@@ -2959,12 +3059,12 @@
 	            });
 
 	        $('#pfItemsTable')
-	            .off('input', '.pf-item-name,.pf-item-desc,.pf-item-uom')
-	            .on('input', '.pf-item-name,.pf-item-desc,.pf-item-uom', recalcTotal);
+	            .off('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom')
+	            .on('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom', recalcTotal);
 
 	        $('#btnSaveProforma').on('click', function () {
 	            const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
-	            const clientId = $('#pf_client_id').val();
+	            const clientId = String($('#pf_client_id').val() || '').trim();
 	            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
 	            const currency = ($('#pf_currency').val() || '').trim();
 	            const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
@@ -2973,28 +3073,18 @@
 	            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
 	            const items = collectItems();
 
-	            if (!invoiceNo) {
-	                notify('Invoice No is required.', 'danger');
-	                return;
-	            }
-	            if (!clientId) {
-	                notify('Client is required.', 'danger');
-	                return;
-	            }
-	            if (!pfDate) {
-	                notify('Date Of Issue is required.', 'danger');
-	                return;
-	            }
-	            if (!invoiceType) {
-	                notify('Invoice Type is required.', 'danger');
-	                return;
-	            }
-	            if (!currency) {
-	                notify('Currency is required.', 'danger');
-	                return;
-	            }
-	            if (!dueDate) {
-	                notify('Due Date is required.', 'danger');
+	            $('#pf_invoice_no, #pf_client_name, #pf_date, #pf_invoice_type, #pf_currency, #pf_due').removeClass('is-invalid');
+
+	            let hasInvalid = false;
+	            if (!invoiceNo) { $('#pf_invoice_no').addClass('is-invalid'); hasInvalid = true; }
+	            if (!clientId) { $('#pf_client_name').addClass('is-invalid'); hasInvalid = true; }
+	            if (!pfDate) { $('#pf_date').addClass('is-invalid'); hasInvalid = true; }
+	            if (!invoiceType) { $('#pf_invoice_type').addClass('is-invalid'); hasInvalid = true; }
+	            if (!currency) { $('#pf_currency').addClass('is-invalid'); hasInvalid = true; }
+	            if (!dueDate) { $('#pf_due').addClass('is-invalid'); hasInvalid = true; }
+
+	            if (hasInvalid) {
+	                notify('Please fill the required fields.', 'danger');
 	                return;
 	            }
 	            if (!items.length) {
@@ -3016,11 +3106,7 @@
 	            })
 	                .done(function (res) {
 	                    notify(res.message || 'Invoice created.', 'success');
-	                    if (res.proforma && res.proforma.id) {
-	                        window.location.href = base('proforma/show/' + res.proforma.id);
-	                    } else {
-	                        window.location.href = base('proforma');
-	                    }
+	                    window.location.href = base('proforma');
 	                })
 	                .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger'); });
 	        });
@@ -3043,11 +3129,21 @@
 	                return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
 	            }
 
+	            function toggleGstNo() {
+	                const show = gstEnabled();
+	                $('#pf_gst_row, #pf_gst_col').toggleClass('d-none', !show);
+	                if (!show) {
+	                    $('#pf_gst').val('');
+	                }
+	            }
+
 	            function recalcGst() {
 	                const total = parseMoney($('#pf_total').text());
 	                const enabled = gstEnabled();
 	                const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
 	                const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+
+	                toggleGstNo();
 
 	                if (!enabled) {
 	                    $('#pf_gst_box').addClass('d-none');
@@ -3094,12 +3190,44 @@
 
 	            function rowHasAnyInput($tr) {
 	                const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
 	                const qty = String($tr.find('.pf-item-qty').val() || '').trim();
 	                const uom = String($tr.find('.pf-item-uom').val() || '').trim();
 	                const price = String($tr.find('.pf-item-price').val() || '').trim();
 	                const amt = String($tr.find('.pf-item-amt').val() || '').trim();
 	                return (item + desc + qty + uom + price + amt) !== '';
+	            }
+
+	            function escapeHtml(s) {
+	                return String(s || '')
+	                    .replace(/&/g, '&amp;')
+	                    .replace(/</g, '&lt;')
+	                    .replace(/>/g, '&gt;')
+	                    .replace(/"/g, '&quot;')
+	                    .replace(/'/g, '&#39;');
+	            }
+
+	            function stripBulletPrefix(line) {
+	                return String(line || '').replace(/^[\s\u2022\u00B7\-\*]+/, '').trim();
+	            }
+
+	            function normalizeBulletText(text) {
+	                return String(text || '')
+	                    .split(/\r?\n/)
+	                    .map(stripBulletPrefix)
+	                    .filter(function (l) { return l !== ''; })
+	                    .join("\n");
+	            }
+
+	            function ensureBulletList($el) {
+	                const text = normalizeBulletText($el.text());
+	                if (!text) {
+	                    $el.html('<ul><li><br></li></ul>');
+	                    return;
+	                }
+	                const lines = text.split("\n");
+	                const html = '<ul>' + lines.map(function (l) { return '<li>' + escapeHtml(l) + '</li>'; }).join('') + '</ul>';
+	                $el.html(html);
 	            }
 
 	            function recalcTotal() {
@@ -3111,7 +3239,7 @@
 	                    const amt = parseMoney($tr.find('.pf-item-amt').val());
 	                    total += amt;
 	                    const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                    const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                    const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
 	                    if (item || desc) hasItems = true;
 	                });
 	                setTotal(total, hasItems);
@@ -3139,7 +3267,7 @@
 	                            '<input type="hidden" class="pf-item-id" value="0">' +
 	                            '<input type="text" class="form-control form-control-sm pf-item-name" placeholder="Item">' +
 	                        '</td>' +
-	                        '<td><textarea rows="1" class="form-control form-control-sm pf-item-desc" placeholder="Description (one bullet per line)"></textarea></td>' +
+	                        '<td><div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;"></div></td>' +
 	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="1"></td>' +
 	                        '<td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>' +
 	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-price" value="0.00"></td>' +
@@ -3160,6 +3288,8 @@
 	                } else {
 	                    $('#pfItemsTable tbody').append($row);
 	                }
+	                const $desc = $row.find('.pf-item-desc-editor');
+	                if ($desc.length) ensureBulletList($desc);
 	                recalcTotal();
 	                return $row;
 	            }
@@ -3175,7 +3305,7 @@
 	                    const $tr = $(this);
 	                    const id = parseInt($tr.find('.pf-item-id').val() || '0', 10) || 0;
 	                    const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                    const desc = String($tr.find('.pf-item-desc').val() || '').trim();
+	                    const desc = normalizeBulletText($tr.find('.pf-item-desc-editor').text());
 	                    const qty = parseMoney($tr.find('.pf-item-qty').val());
 	                    const price = parseMoney($tr.find('.pf-item-price').val());
 	                    const amt = parseMoney($tr.find('.pf-item-amt').val());
@@ -3217,6 +3347,33 @@
 	            ensureOneRow();
 	            recalcTotal();
 
+	            $(document)
+	                .off('focus.bmsPfDesc', '.pf-item-desc-editor')
+                .on('focus.bmsPfDesc', '.pf-item-desc-editor', function () {
+                    const $el = $(this);
+                    if (!String($el.text() || '').trim()) {
+                        ensureBulletList($el);
+                    }
+                });
+
+            $(document)
+                .off('blur.bmsPfDesc', '.pf-item-desc-editor')
+                .on('blur.bmsPfDesc', '.pf-item-desc-editor', function () {
+                    ensureBulletList($(this));
+                });
+
+            $(document)
+                .off('keydown.bmsPfDesc', '.pf-item-desc-editor')
+                .on('keydown.bmsPfDesc', '.pf-item-desc-editor', function (e) {
+                    if (e.key !== 'Enter') return;
+                    const sel = window.getSelection();
+                    const li = sel && sel.anchorNode ? $(sel.anchorNode).closest('li') : $();
+                    if (!li.length) {
+                        e.preventDefault();
+                        ensureBulletList($(this));
+                    }
+                });
+
 	            $('#pfItemsTable')
 	                .off('click', 'button.pf-row-add')
 	                .on('click', 'button.pf-row-add', function (e) {
@@ -3250,9 +3407,9 @@
 	                    recalcTotal();
 	                });
 
-	            $('#pfItemsTable')
-	                .off('input', '.pf-item-name,.pf-item-desc,.pf-item-uom')
-	                .on('input', '.pf-item-name,.pf-item-desc,.pf-item-uom', recalcTotal);
+	        $('#pfItemsTable')
+	            .off('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom')
+	            .on('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom', recalcTotal);
 
 	            $('#btnUpdateProforma').on('click', function () {
 	                const proformaId = parseInt($('#pf_id').val() || '0', 10) || 0;

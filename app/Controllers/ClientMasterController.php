@@ -31,6 +31,7 @@ class ClientMasterController extends BaseController
             'contact_person' => trim((string) $this->request->getPost('contact_person')),
             'email'          => trim((string) $this->request->getPost('email')),
             'phone'          => trim((string) $this->request->getPost('phone')),
+            'gst_no'         => trim((string) $this->request->getPost('gst_no')),
             'address'        => trim((string) $this->request->getPost('address')),
             'billing_address'=> trim((string) $this->request->getPost('billing_address')),
             'city'           => trim((string) $this->request->getPost('city')),

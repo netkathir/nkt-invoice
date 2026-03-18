@@ -1686,7 +1686,13 @@
                                 actionBtn('edit', 'btn-outline-primary', 'Edit') +
                                 actionBtn('del', 'btn-outline-danger', 'Delete')
                             ) +
-                            (isPending ? '<button class="btn btn-sm btn-outline-success btn-billed" type="button">Mark as Billed</button>' : '') +
+                            (isPending ? '' +
+                                '<button class="btn btn-sm btn-billed-icon btn-billed" type="button" title="Mark as Billed" aria-label="Mark as Billed">' +
+                                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                                        '<path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                                    '</svg>' +
+                                '</button>' :
+                                '') +
                         '</div>';
                 }},
             ],
@@ -2840,13 +2846,12 @@
 	        }
 
 	        function rowHasAnyInput($tr) {
-	            const item = String($tr.find('.pf-item-name').val() || '').trim();
 	            const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
 	            const qty = String($tr.find('.pf-item-qty').val() || '').trim();
 	            const uom = String($tr.find('.pf-item-uom').val() || '').trim();
 	            const price = String($tr.find('.pf-item-price').val() || '').trim();
 	            const amt = String($tr.find('.pf-item-amt').val() || '').trim();
-	            return (item + desc + qty + uom + price + amt) !== '';
+	            return (desc + qty + uom + price + amt) !== '';
 	        }
 
 	        function escapeHtml(s) {
@@ -2889,9 +2894,8 @@
 	                if (!rowHasAnyInput($tr)) return;
 	                const amt = parseMoney($tr.find('.pf-item-amt').val());
 	                total += amt;
-	                const item = String($tr.find('.pf-item-name').val() || '').trim();
 	                const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
-	                if (item || desc) hasItems = true;
+	                if (desc) hasItems = true;
 	            });
 	            setTotal(total, hasItems);
 	        }
@@ -2914,7 +2918,6 @@
 	        function rowHtml() {
 	            return '' +
 	                '<tr>' +
-	                    '<td><input type="text" class="form-control form-control-sm pf-item-name" placeholder="Item"></td>' +
 	                    '<td><div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;"></div></td>' +
 	                    '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="1"></td>' +
 	                    '<td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>' +
@@ -2951,17 +2954,14 @@
 	            const items = [];
 	            $('#pfItemsTable tbody tr').each(function () {
 	                const $tr = $(this);
-	                const item = String($tr.find('.pf-item-name').val() || '').trim();
 	                const desc = normalizeBulletText($tr.find('.pf-item-desc-editor').text());
 	                const qty = parseMoney($tr.find('.pf-item-qty').val());
 	                const price = parseMoney($tr.find('.pf-item-price').val());
 	                const amt = parseMoney($tr.find('.pf-item-amt').val());
 
-	                if (!item && !desc && qty === 0 && price === 0 && amt === 0) return;
-
-	                const fullDesc = item && desc ? (item + "\n" + desc) : (desc || item);
+	                if (!desc && qty === 0 && price === 0 && amt === 0) return;
 	                items.push({
-	                    description: fullDesc,
+	                    description: desc,
 	                    quantity: qty,
 	                    unit_price: price,
 	                    amount: amt
@@ -3133,8 +3133,8 @@
 	            });
 
 	        $('#pfItemsTable')
-	            .off('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom')
-	            .on('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom', recalcTotal);
+	            .off('input', '.pf-item-desc-editor,.pf-item-uom')
+	            .on('input', '.pf-item-desc-editor,.pf-item-uom', recalcTotal);
 
 	        $('#btnSaveProforma').on('click', function () {
 	            const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
@@ -3698,12 +3698,30 @@
         $.fn.dataTable && ($.fn.dataTable.defaults.language = { emptyTable: 'No records found.' });
 
         let sidebarTooltips = [];
+        let sidebarPopovers = [];
 
         function closeSidebarCollapses() {
             document.querySelectorAll('.app-sidebar .collapse.show').forEach(function (el) {
                 try {
                     bootstrap.Collapse.getOrCreateInstance(el, { toggle: false }).hide();
                 } catch (e) {}
+            });
+        }
+
+        function setSidebarCollapsible(enabled) {
+            const links = document.querySelectorAll('.app-sidebar a.nav-parent');
+            links.forEach(function (el) {
+                if (enabled) {
+                    if (!el.hasAttribute('data-bs-toggle')) {
+                        const saved = el.getAttribute('data-bms-toggle') || 'collapse';
+                        el.setAttribute('data-bs-toggle', saved);
+                    }
+                } else {
+                    if (el.hasAttribute('data-bs-toggle')) {
+                        el.setAttribute('data-bms-toggle', el.getAttribute('data-bs-toggle') || 'collapse');
+                        el.removeAttribute('data-bs-toggle');
+                    }
+                }
             });
         }
 
@@ -3714,44 +3732,83 @@
             sidebarTooltips = [];
         }
 
+        function disableSidebarPopovers() {
+            sidebarPopovers.forEach(function (p) {
+                try { p.dispose(); } catch (e) {}
+            });
+            sidebarPopovers = [];
+        }
+
         function enableSidebarTooltips() {
             disableSidebarTooltips();
+            disableSidebarPopovers();
 
             function buildTitle(el) {
                 const main = String(el.getAttribute('data-bms-title') || '').trim();
-                if (!main) return '';
+                return main || '';
+            }
 
-                // If this is a parent with a submenu, include child items in tooltip when sidebar is collapsed.
-                if (document.body.classList.contains('bms-sidebar-collapsed') && el.classList.contains('nav-parent')) {
+            function buildPopoverContent(el) {
+                const isParent = el.classList.contains('nav-parent');
+                if (isParent) {
                     const href = String(el.getAttribute('href') || '').trim();
                     if (href && href.charAt(0) === '#') {
                         const panel = document.querySelector(href);
                         if (panel) {
-                            const subs = Array.from(panel.querySelectorAll('a.nav-link .nav-txt'))
-                                .map(function (n) { return String(n.textContent || '').trim(); })
-                                .filter(function (t) { return !!t; });
-                            if (subs.length) {
-                                return main + '\n' + subs.map(function (t) { return '• ' + t; }).join('\n');
+                            const links = Array.from(panel.querySelectorAll('a.nav-link'));
+                            if (links.length) {
+                                const items = links.map(function (a) {
+                                    const labelEl = a.querySelector('.nav-txt');
+                                    const label = String(labelEl ? labelEl.textContent : a.textContent || '').trim();
+                                    const url = a.getAttribute('href') || '#';
+                                    if (!label) return '';
+                                    return '<li><a class="bms-sidebar-popover-link" href="' + url + '">' + label + '</a></li>';
+                                }).filter(function (v) { return v !== ''; });
+                                if (items.length) {
+                                    return '<ul class="bms-sidebar-popover-list">' + items.join('') + '</ul>';
+                                }
                             }
                         }
                     }
                 }
 
-                return main;
+                const url = el.getAttribute('href') || '#';
+                const label = buildTitle(el);
+                return '<a class="bms-sidebar-popover-link bms-sidebar-popover-single" href="' + url + '">' + label + '</a>';
             }
+
+            const collapsed = document.body.classList.contains('bms-sidebar-collapsed');
 
             document.querySelectorAll('.app-sidebar [data-bms-title]').forEach(function (el) {
                 const title = buildTitle(el);
                 if (!title) return;
-                try {
-                    sidebarTooltips.push(new bootstrap.Tooltip(el, {
-                        title: title,
-                        placement: 'right',
-                        trigger: 'hover focus',
-                        container: document.body,
-                        customClass: 'bms-sidebar-tooltip',
-                    }));
-                } catch (e) {}
+
+                if (collapsed) {
+                    const isParent = el.classList.contains('nav-parent');
+                    const content = buildPopoverContent(el);
+                    try {
+                        sidebarPopovers.push(new bootstrap.Popover(el, {
+                            title: isParent ? title : '',
+                            content: content,
+                            placement: 'right',
+                            trigger: 'manual',
+                            container: document.body,
+                            html: true,
+                            sanitize: false,
+                            customClass: isParent ? 'bms-sidebar-popover' : 'bms-sidebar-popover bms-sidebar-popover-single',
+                        }));
+                    } catch (e) {}
+                } else {
+                    try {
+                        sidebarTooltips.push(new bootstrap.Tooltip(el, {
+                            title: title,
+                            placement: 'right',
+                            trigger: 'hover focus',
+                            container: document.body,
+                            customClass: 'bms-sidebar-tooltip',
+                        }));
+                    } catch (e) {}
+                }
             });
         }
 
@@ -3759,9 +3816,12 @@
             const collapsed = document.body.classList.contains('bms-sidebar-collapsed');
             if (collapsed) {
                 closeSidebarCollapses();
+                setSidebarCollapsible(false);
                 enableSidebarTooltips();
             } else {
+                setSidebarCollapsible(true);
                 disableSidebarTooltips();
+                disableSidebarPopovers();
             }
         }
 
@@ -3785,20 +3845,61 @@
         $(document).on('click', '.app-sidebar a.nav-parent', function (e) {
             if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
             e.preventDefault();
+        });
 
-            // Show tooltip (with submenu items) on click in collapsed mode.
+        function hideSidebarPopovers() {
+            sidebarPopovers.forEach(function (p) {
+                try { p.hide(); } catch (_e) {}
+            });
+        }
+
+        let popoverHideTimer = null;
+        function scheduleHidePopovers() {
+            if (popoverHideTimer) clearTimeout(popoverHideTimer);
+            popoverHideTimer = setTimeout(function () {
+                hideSidebarPopovers();
+            }, 120);
+        }
+
+        $(document).on('mouseenter', '.app-sidebar [data-bms-title]', function () {
+            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
+            if (popoverHideTimer) clearTimeout(popoverHideTimer);
+            // Hide other popovers first
+            sidebarPopovers.forEach(function (p) {
+                try { p.hide(); } catch (_e) {}
+            });
             try {
-                const tip = bootstrap.Tooltip.getOrCreateInstance(this, {
-                    placement: 'right',
+                const pop = bootstrap.Popover.getOrCreateInstance(this, {
                     trigger: 'manual',
+                    placement: 'right',
                     container: document.body,
-                    customClass: 'bms-sidebar-tooltip',
+                    html: true,
+                    sanitize: false,
+                    customClass: 'bms-sidebar-popover',
                 });
-                tip.show();
-                setTimeout(function () {
-                    try { tip.hide(); } catch (_e) {}
-                }, 1800);
+                pop.show();
             } catch (_e) {}
+        });
+
+        $(document).on('mouseleave', '.app-sidebar [data-bms-title]', function () {
+            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
+            scheduleHidePopovers();
+        });
+
+        $(document).on('mouseenter', '.popover', function () {
+            if (popoverHideTimer) clearTimeout(popoverHideTimer);
+        });
+
+        $(document).on('mouseleave', '.popover', function () {
+            scheduleHidePopovers();
+        });
+
+        // Close sidebar popovers when clicking outside.
+        $(document).on('click', function (e) {
+            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
+            if ($(e.target).closest('.popover').length) return;
+            if ($(e.target).closest('.app-sidebar [data-bms-title]').length) return;
+            hideSidebarPopovers();
         });
 
         // Real-time status dropdown updates (all DataTables)

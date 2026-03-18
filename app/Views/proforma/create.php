@@ -172,7 +172,6 @@
 	                <table id="pfItemsTable" class="table table-bordered align-middle nowrap w-100 mb-0">
 	                    <thead class="table-light">
 	                    <tr>
-	                        <th style="width:200px;">Item</th>
 	                        <th>Item Description</th>
 	                        <th class="text-end" style="width:120px;">Quantity</th>
 	                        <th style="width:110px;">UOM</th>

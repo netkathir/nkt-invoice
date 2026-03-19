@@ -1710,6 +1710,7 @@
             $('#bi_id').val('');
             $('#bi_quantity').val('1');
             $('#bi_unit_price').val('0');
+            $('#bi_currency').val('INR');
             (function () {
                 const d = new Date();
                 const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1734,6 +1735,7 @@
             setDescriptionValidity(true);
             $('#bi_quantity').val(row.quantity || '0');
             $('#bi_unit_price').val(row.unit_price || '0');
+            $('#bi_currency').val(row.currency || 'INR');
             $('#bi_billing_month').val(row.billing_month || '');
             $('#bi_status').val(row.status || 'Pending');
             clearBillableErrors();

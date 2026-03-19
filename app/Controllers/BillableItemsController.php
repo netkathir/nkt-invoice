@@ -135,6 +135,7 @@ class BillableItemsController extends BaseController
             'unit_price'    => number_format($unitPrice, 2, '.', ''),
             'amount'        => number_format($amount, 2, '.', ''),
             'billing_month' => $billingMonth,
+            'currency'      => trim((string) $this->request->getPost('currency')) ?: 'INR',
             'status'        => trim((string) $this->request->getPost('status')) ?: BillableItemModel::STATUS_PENDING,
         ];
 

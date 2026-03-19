@@ -26,6 +26,7 @@ class BillableItemModel extends Model
         'unit_price',
         'amount',
         'billing_month',
+        'currency',
         'proforma_id',
         'invoice_id',
         'status',

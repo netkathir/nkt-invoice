@@ -46,11 +46,34 @@
                 <?php $cat = (string) (old('category') ?: ($expense['category'] ?? '')); ?>
                 <select class="form-select" name="category" required>
                     <option value="">-- Select Category --</option>
-                    <option value="Transportation" <?= $cat === 'Transportation' ? 'selected' : '' ?>>Transportation</option>
-                    <option value="Food" <?= $cat === 'Food' ? 'selected' : '' ?>>Food</option>
-                    <option value="Office" <?= $cat === 'Office' ? 'selected' : '' ?>>Office</option>
-                    <option value="Maintenance" <?= $cat === 'Maintenance' ? 'selected' : '' ?>>Maintenance</option>
-                    <option value="Misc" <?= $cat === 'Misc' ? 'selected' : '' ?>>Misc</option>
+                    <optgroup label="Utilities & Office">
+                        <option value="Utilities" <?= $cat === 'Utilities' ? 'selected' : '' ?>>Utilities</option>
+                        <option value="Rent" <?= $cat === 'Rent' ? 'selected' : '' ?>>Rent</option>
+                        <option value="Stationery" <?= $cat === 'Stationery' ? 'selected' : '' ?>>Stationery</option>
+                        <option value="Maintenance" <?= $cat === 'Maintenance' ? 'selected' : '' ?>>Maintenance</option>
+                    </optgroup>
+                    <optgroup label="Technology">
+                        <option value="Software Subscriptions" <?= $cat === 'Software Subscriptions' ? 'selected' : '' ?>>Software Subscriptions</option>
+                        <option value="Hosting / Server Cost" <?= $cat === 'Hosting / Server Cost' ? 'selected' : '' ?>>Hosting / Server Cost</option>
+                        <option value="Third-party Tools" <?= $cat === 'Third-party Tools' ? 'selected' : '' ?>>Third-party Tools</option>
+                        <option value="Cloud Services" <?= $cat === 'Cloud Services' ? 'selected' : '' ?>>Cloud Services</option>
+                        <option value="Domain & Hosting" <?= $cat === 'Domain & Hosting' ? 'selected' : '' ?>>Domain & Hosting</option>
+                        <option value="Hardware Purchase" <?= $cat === 'Hardware Purchase' ? 'selected' : '' ?>>Hardware Purchase</option>
+                        <option value="Laptop / Equipment" <?= $cat === 'Laptop / Equipment' ? 'selected' : '' ?>>Laptop / Equipment</option>
+                    </optgroup>
+                    <optgroup label="Travel & Client">
+                        <option value="Travel Expenses" <?= $cat === 'Travel Expenses' ? 'selected' : '' ?>>Travel Expenses</option>
+                        <option value="Client Visit Expenses" <?= $cat === 'Client Visit Expenses' ? 'selected' : '' ?>>Client Visit Expenses</option>
+                    </optgroup>
+                    <optgroup label="Marketing">
+                        <option value="Advertising" <?= $cat === 'Advertising' ? 'selected' : '' ?>>Advertising</option>
+                        <option value="Social Media Marketing" <?= $cat === 'Social Media Marketing' ? 'selected' : '' ?>>Social Media Marketing</option>
+                        <option value="Promotions" <?= $cat === 'Promotions' ? 'selected' : '' ?>>Promotions</option>
+                        <option value="Events / Campaigns" <?= $cat === 'Events / Campaigns' ? 'selected' : '' ?>>Events / Campaigns</option>
+                    </optgroup>
+                    <optgroup label="Other">
+                        <option value="Misc. Expenses" <?= $cat === 'Misc. Expenses' ? 'selected' : '' ?>>Misc. Expenses</option>
+                    </optgroup>
                 </select>
             </div>
 

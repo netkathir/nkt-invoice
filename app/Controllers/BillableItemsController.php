@@ -73,8 +73,8 @@ class BillableItemsController extends BaseController
 
         $billableItems = new BillableItemModel();
         $builder = $billableItems
-            ->select('billable_items.*, clients.name as client_name')
-            ->join('clients', 'clients.id = billable_items.client_id')
+            ->select("billable_items.*, COALESCE(NULLIF(TRIM(clients.name),''), clients.contact_person, clients.email, CONCAT('Client #', clients.id)) as client_name", false)
+            ->join('clients', 'clients.id = billable_items.client_id', 'left')
             ->orderBy('billable_items.id', 'DESC');
 
         if ($clientId > 0) {

@@ -1667,7 +1667,7 @@
                     d.month = urlMonth;
                 }
             },
-            order: [[1, 'desc']],
+            order: [[0, 'desc']],
             columns: [
                 { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
                 { data: 'entry_date', render: formatUiDate },

@@ -303,6 +303,74 @@ class BillableItemsController extends BaseController
         }
     }
 
+    public function download()
+    {
+        $clientId = (int) $this->request->getGet('client_id');
+        $status = trim((string) $this->request->getGet('status'));
+        $monthParam = trim((string) $this->request->getGet('month'));
+
+        $billableItems = new BillableItemModel();
+        $builder = $billableItems
+            ->select("billable_items.*, COALESCE(NULLIF(TRIM(clients.name),''), clients.contact_person, clients.email, CONCAT('Client #', clients.id)) as client_name", false)
+            ->join('clients', 'clients.id = billable_items.client_id', 'left')
+            ->orderBy('billable_items.id', 'DESC');
+
+        if ($clientId > 0) {
+            $builder->where('billable_items.client_id', $clientId);
+        }
+
+        if ($status !== '') {
+            $builder->where('billable_items.status', $status);
+        }
+
+        if ($monthParam !== '') {
+            $m = $this->normalizeMonth($monthParam);
+            $this->applyMonthFilter($builder, $m['month'], $m['label']);
+        }
+
+        $rows = $builder->findAll();
+
+        $fh = fopen('php://temp', 'w+');
+        fputcsv($fh, ['Entry No', 'Date', 'Client', 'Description', 'Billing Month', 'Currency', 'Quantity', 'Unit Price', 'Amount', 'Status', 'Proforma No']);
+        foreach ($rows as $row) {
+            $entryNo = (string) ($row['entry_no'] ?? ('BI-' . str_pad((string) ($row['id'] ?? ''), 5, '0', STR_PAD_LEFT)));
+            $proformaNo = '';
+            if (!empty($row['proforma_id'])) {
+                $pm = new \App\Models\ProformaModel();
+                $pRow = $pm->select('proforma_number')->find((int) $row['proforma_id']);
+                $proformaNo = (string) ($pRow['proforma_number'] ?? '');
+            }
+            $entryDate = (string) ($row['entry_date'] ?? '');
+            if ($entryDate !== '') {
+                $dt = \DateTime::createFromFormat('Y-m-d', $entryDate);
+                if ($dt) $entryDate = $dt->format('d/m/Y');
+            }
+            fputcsv($fh, [
+                $entryNo,
+                $entryDate,
+                (string) ($row['client_name'] ?? ''),
+                bms_description_to_plain((string) ($row['description'] ?? '')),
+                (string) ($row['billing_month'] ?? ''),
+                (string) ($row['currency'] ?? 'INR'),
+                (string) ($row['quantity'] ?? ''),
+                (string) ($row['unit_price'] ?? ''),
+                (string) ($row['amount'] ?? ''),
+                (string) ($row['status'] ?? ''),
+                $proformaNo,
+            ]);
+        }
+        rewind($fh);
+        $csv = stream_get_contents($fh) ?: '';
+        fclose($fh);
+
+        $filename = 'billable-items-' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=utf-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csv);
+    }
+
     public function markBilled()
     {
         $id = (int) $this->request->getPost('id');

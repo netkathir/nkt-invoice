@@ -1702,6 +1702,18 @@
             table.ajax.reload();
         });
 
+        $('#btnExportBillable').on('click', function () {
+            const params = new URLSearchParams();
+            const clientId = String($('#filterClient').val() || '');
+            const status = String($('#filterStatus').val() || '');
+            const month = urlMonth;
+            if (clientId) params.set('client_id', clientId);
+            if (status) params.set('status', status);
+            if (month) params.set('month', month);
+            const qs = params.toString();
+            window.location.href = base('billable-items/download' + (qs ? '?' + qs : ''));
+        });
+
         function openAdd() {
             showDescError = false;
             $('#billableModalTitle').text('Add Billable Item');
@@ -2013,6 +2025,10 @@
             if (!id) return;
             // Triggers a PDF download (server sets Content-Disposition: attachment).
             window.location.href = base('proforma/pdf/' + id);
+        });
+
+        $('#pfBtnExport').on('click', function () {
+            window.location.href = base('proforma/download');
         });
 
         $('#pfBtnDelete').on('click', function () {

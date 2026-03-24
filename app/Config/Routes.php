@@ -79,6 +79,7 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
     $routes->group('billable-items', static function (RouteCollection $routes): void {
         $routes->get('/', 'BillableItemsController::index');
         $routes->get('list', 'BillableItemsController::list');
+        $routes->get('download', 'BillableItemsController::download');
         $routes->post('save', 'BillableItemsController::save');
         $routes->post('update', 'BillableItemsController::update');
         $routes->post('delete', 'BillableItemsController::delete');
@@ -89,6 +90,7 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
     // Proforma Invoices
     $routes->get('proforma', 'ProformaController::index');
     $routes->get('proforma/list', 'ProformaController::list');
+    $routes->get('proforma/download', 'ProformaController::download');
     $routes->get('proforma/create', 'ProformaController::create');
     $routes->get('proforma/edit/(:num)', 'ProformaController::edit/$1');
     $routes->get('proforma/show/(:num)', 'ProformaController::show/$1');

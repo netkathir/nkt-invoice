@@ -3,7 +3,10 @@
 <?= $this->section('content') ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h5 class="mb-0">Billable Items</h5>
-    <button class="btn btn-primary" id="btnAddBillable" type="button">Add Billable Item</button>
+    <div class="d-flex flex-wrap gap-2 justify-content-end">
+        <button class="btn btn-sm btn-outline-success" id="btnExportBillable" type="button">Export CSV</button>
+        <button class="btn btn-primary" id="btnAddBillable" type="button">Add Billable Item</button>
+    </div>
 </div>
 
 <div class="card mb-3">

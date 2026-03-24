@@ -52,6 +52,56 @@ class ProformaController extends BaseController
         return $this->response->setJSON(['data' => $rows]);
     }
 
+    public function download()
+    {
+        $rows = (new ProformaModel())
+            ->select('proforma_invoices.*, clients.name as company_name, clients.contact_person as customer_name')
+            ->join('clients', 'clients.id = proforma_invoices.client_id')
+            ->orderBy('proforma_invoices.id', 'DESC')
+            ->findAll();
+
+        $fh = fopen('php://temp', 'w+');
+        fputcsv($fh, ['S.No', 'Invoice No', 'Invoice Type', 'Date of Issue', 'Due Date', 'Customer Name', 'Company Name', 'Currency', 'Net Amount', 'Total GST', 'Total Amount', 'Status']);
+        $i = 1;
+        foreach ($rows as $row) {
+            $customerName = (string) (($row['customer_name'] ?? '') ?: ($row['company_name'] ?? ''));
+            $proformaDate = (string) ($row['proforma_date'] ?? '');
+            if ($proformaDate !== '') {
+                $dt = \DateTime::createFromFormat('Y-m-d', $proformaDate);
+                if ($dt) $proformaDate = $dt->format('d/m/Y');
+            }
+            $billingTo = (string) ($row['billing_to'] ?? '');
+            if ($billingTo !== '') {
+                $dt = \DateTime::createFromFormat('Y-m-d', $billingTo);
+                if ($dt) $billingTo = $dt->format('d/m/Y');
+            }
+            fputcsv($fh, [
+                $i++,
+                (string) ($row['proforma_number'] ?? ''),
+                (string) ($row['invoice_type'] ?? 'GST Invoice'),
+                $proformaDate,
+                $billingTo,
+                $customerName,
+                (string) ($row['company_name'] ?? ''),
+                (string) ($row['currency'] ?? 'INR'),
+                (string) ($row['net_amount'] ?? '0.00'),
+                (string) ($row['total_gst'] ?? '0.00'),
+                (string) ($row['total_amount'] ?? '0.00'),
+                (string) ($row['status'] ?? ''),
+            ]);
+        }
+        rewind($fh);
+        $csv = stream_get_contents($fh) ?: '';
+        fclose($fh);
+
+        $filename = 'invoices-' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv; charset=utf-8')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csv);
+    }
+
     public function create()
     {
         $clients = (new ClientModel())->orderBy('name', 'ASC')->findAll();

@@ -4,6 +4,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h5 class="mb-0">Invoices</h5>
     <div class="d-flex flex-wrap gap-2 justify-content-end">
+        <button class="btn btn-sm btn-outline-success" id="pfBtnExport" type="button">Export CSV</button>
         <button class="btn btn-sm btn-outline-primary" id="pfBtnPrint" type="button">Print</button>
         <a class="btn btn-sm btn-primary" href="<?= base_url('proforma/create') ?>">Add</a>
         <button class="btn btn-sm btn-outline-secondary" id="pfBtnEdit" type="button" disabled>Edit</button>

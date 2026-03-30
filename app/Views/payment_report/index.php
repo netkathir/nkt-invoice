@@ -18,8 +18,7 @@
                 </select>
             </div>
             <div class="col-12 col-lg-6 d-flex gap-2 justify-content-lg-end">
-                <button type="button" class="btn btn-info text-white" id="prBtnSearch">Search</button>
-                <button type="button" class="btn btn-success" id="prBtnDownload">Download Report</button>
+                <button type="button" class="btn btn-success" id="prBtnDownload">Export CSV</button>
             </div>
         </div>
 

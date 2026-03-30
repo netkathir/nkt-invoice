@@ -184,6 +184,15 @@
                 <?php endif; ?>
 
                 <?php /* Day Book module hidden from sidebar */ ?>
+
+                <a class="nav-link <?= $isActive('company_information') ?>" href="<?= base_url('company-information') ?>" data-bms-title="Company Information">
+                    <span class="nav-ico" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M4 5h16v14H4V5Zm3 3v8h10V8H7Zm2 2h6v2H9v-2Zm0 4h4v2H9v-2Z" fill="currentColor" opacity=".85"/>
+                        </svg>
+                    </span>
+                    <span class="nav-txt">Company Information</span>
+                </a>
             </div>
         </div>
     </div>

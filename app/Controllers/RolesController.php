@@ -302,6 +302,7 @@ class RolesController extends BaseController
             return redirect()->to(base_url('roles'))->with('error', 'Role not found.');
         }
 
+        $viewMode = strtolower(trim((string) $this->request->getGet('mode'))) === 'view';
         $isSuperRole = (int) ($role['is_super'] ?? 0) === 1 || strtolower((string) ($role['name'] ?? '')) === 'super admin';
 
         $rolesList = $roleModel->orderBy('is_super', 'DESC')->orderBy('name', 'ASC')->findAll();
@@ -437,6 +438,7 @@ class RolesController extends BaseController
             'active'     => 'role_permissions',
             'role'       => $role,
             'isSuperRole'=> $isSuperRole,
+            'viewMode'   => $viewMode,
             'rolesList'  => $rolesList,
             'byModulePages' => $byModulePages,
             'selected'   => $selected,

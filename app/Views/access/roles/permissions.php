@@ -6,6 +6,7 @@
     $roleName = (string) ($role['name'] ?? '');
     $roleDesc = (string) ($role['description'] ?? '');
     $roleLabel = trim($roleName . ($roleDesc !== '' ? (' - ' . $roleDesc) : ''));
+    $viewMode = ! empty($viewMode);
 
     $missingPages = [];
     foreach (($byModulePages ?? []) as $module => $pages) {
@@ -22,14 +23,14 @@
 ?>
 
 <div class="mb-3">
-    <h4 class="mb-1">Assign Permissions to Role</h4>
-    <div class="text-muted small">Select a role and assign permissions</div>
+    <h4 class="mb-1"><?= $viewMode ? 'View Role Permissions' : 'Assign Permissions to Role' ?></h4>
+    <div class="text-muted small"><?= $viewMode ? 'Review permission access in read-only mode' : 'Select a role and assign permissions' ?></div>
 </div>
 
 <div class="card mb-3">
     <div class="card-body">
         <label class="form-label">Select Role <span class="text-danger">*</span></label>
-        <select class="form-select" id="rpRoleSelect" <?= $isSuperRole ? 'disabled' : '' ?>>
+        <select class="form-select" id="rpRoleSelect" <?= ($isSuperRole || $viewMode) ? 'disabled' : '' ?>>
             <?php foreach (($rolesList ?? []) as $r): ?>
                 <?php
                     $rid = (int) ($r['id'] ?? 0);
@@ -48,6 +49,12 @@
         </div>
     </div>
 </div>
+
+<?php if ($viewMode): ?>
+    <div class="alert alert-secondary">
+        Read-only mode is enabled for this role. Use the edit icon if you want to modify permissions.
+    </div>
+<?php endif; ?>
 
 <div class="card mb-3">
     <div class="card-body">
@@ -137,7 +144,7 @@
                                 $writeIds = array_values(array_unique(array_map('intval', (array) ($row['write'] ?? []))));
                                 $deleteIds = array_values(array_unique(array_map('intval', (array) ($row['delete'] ?? []))));
                                 $allIds = array_values(array_unique(array_filter(array_merge($readIds, $writeIds, $deleteIds))));
-                                $rowDisabled = $isSuperRole || ($allIds === []);
+                                $rowDisabled = $isSuperRole || $viewMode || ($allIds === []);
                             ?>
                             <tr data-page="<?= esc((string) $pageKey) ?>">
                                 <td class="fw-medium">
@@ -171,8 +178,11 @@
 </div>
 
 <div class="d-flex flex-wrap gap-2 mt-3">
-    <?php if (! $isSuperRole && can('roles.assign_perms')): ?>
+    <?php if (! $isSuperRole && ! $viewMode && can('roles.assign_perms')): ?>
         <button class="btn btn-success" id="btnSaveRolePerms" type="button">Save Permissions</button>
+    <?php endif; ?>
+    <?php if ($viewMode): ?>
+        <a class="btn btn-primary" href="<?= base_url('roles/' . $roleId . '/permissions') ?>">Edit Permissions</a>
     <?php endif; ?>
     <a class="btn btn-secondary" href="<?= base_url('role-permissions') ?>">Back to List</a>
 </div>
@@ -182,7 +192,7 @@
         window.BMS = window.BMS || {};
         window.BMS.initRolePermissions && window.BMS.initRolePermissions({
             roleId: <?= $roleId ?>,
-            locked: <?= $isSuperRole ? 'true' : 'false' ?>
+            locked: <?= ($isSuperRole || $viewMode) ? 'true' : 'false' ?>
         });
 
         const sel = document.getElementById('rpRoleSelect');

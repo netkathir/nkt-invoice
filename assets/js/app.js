@@ -212,6 +212,15 @@
                 '<path d="M10 11v6M14 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
                 '</svg>';
         }
+        if (n === 'print') {
+            return '' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                '<path d="M7 9V4h10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M6 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M17 12h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>';
+        }
         return '';
     }
 
@@ -230,7 +239,7 @@
         const iconName = a === 'del' ? 'delete' : a;
         const t = String(title || a || '').trim() || 'Action';
         return '' +
-            '<a class="btn btn-sm ' + String(styleClass || '') + ' bms-action-btn" href="' + String(href || '#') + '" title="' + t + '" aria-label="' + t + '">' +
+            '<a class="btn btn-sm ' + String(styleClass || '') + ' bms-action-btn btn-' + a + '" href="' + String(href || '#') + '" title="' + t + '" aria-label="' + t + '">' +
             iconSvg(iconName) +
             '</a>';
     }
@@ -238,7 +247,271 @@
     function actionGroup(innerHtml) {
         const html = String(innerHtml || '');
         if (!html) return '';
-        return '<div class="btn-group bms-actions" role="group" aria-label="Actions">' + html + '</div>';
+        return '<div class="bms-actions" role="group" aria-label="Actions">' + html + '</div>';
+    }
+
+    const INDIA_STATES = [
+        'Andaman and Nicobar Islands',
+        'Andhra Pradesh',
+        'Arunachal Pradesh',
+        'Assam',
+        'Bihar',
+        'Chandigarh',
+        'Chhattisgarh',
+        'Dadra and Nagar Haveli and Daman and Diu',
+        'Delhi',
+        'Goa',
+        'Gujarat',
+        'Haryana',
+        'Himachal Pradesh',
+        'Jammu and Kashmir',
+        'Jharkhand',
+        'Karnataka',
+        'Kerala',
+        'Ladakh',
+        'Lakshadweep',
+        'Madhya Pradesh',
+        'Maharashtra',
+        'Manipur',
+        'Meghalaya',
+        'Mizoram',
+        'Nagaland',
+        'Odisha',
+        'Puducherry',
+        'Punjab',
+        'Rajasthan',
+        'Sikkim',
+        'Tamil Nadu',
+        'Telangana',
+        'Tripura',
+        'Uttar Pradesh',
+        'Uttarakhand',
+        'West Bengal'
+    ];
+
+    const COUNTRY_OPTIONS = [
+        'Afghanistan',
+        'Albania',
+        'Algeria',
+        'Andorra',
+        'Angola',
+        'Antigua and Barbuda',
+        'Argentina',
+        'Armenia',
+        'Australia',
+        'Austria',
+        'Azerbaijan',
+        'Bahamas',
+        'Bahrain',
+        'Bangladesh',
+        'Barbados',
+        'Belarus',
+        'Belgium',
+        'Belize',
+        'Benin',
+        'Bhutan',
+        'Bolivia',
+        'Bosnia and Herzegovina',
+        'Botswana',
+        'Brazil',
+        'Brunei',
+        'Bulgaria',
+        'Burkina Faso',
+        'Burundi',
+        'Cabo Verde',
+        'Cambodia',
+        'Cameroon',
+        'Canada',
+        'Central African Republic',
+        'Chad',
+        'Chile',
+        'China',
+        'Colombia',
+        'Comoros',
+        'Congo',
+        'Costa Rica',
+        'Croatia',
+        'Cuba',
+        'Cyprus',
+        'Czech Republic',
+        'Democratic Republic of the Congo',
+        'Denmark',
+        'Djibouti',
+        'Dominica',
+        'Dominican Republic',
+        'Ecuador',
+        'Egypt',
+        'El Salvador',
+        'Equatorial Guinea',
+        'Eritrea',
+        'Estonia',
+        'Eswatini',
+        'Ethiopia',
+        'Fiji',
+        'Finland',
+        'France',
+        'Gabon',
+        'Gambia',
+        'Georgia',
+        'Germany',
+        'Ghana',
+        'Greece',
+        'Grenada',
+        'Guatemala',
+        'Guinea',
+        'Guinea-Bissau',
+        'Guyana',
+        'Haiti',
+        'Honduras',
+        'Hungary',
+        'Iceland',
+        'India',
+        'Indonesia',
+        'Iran',
+        'Iraq',
+        'Ireland',
+        'Israel',
+        'Italy',
+        'Jamaica',
+        'Japan',
+        'Jordan',
+        'Kazakhstan',
+        'Kenya',
+        'Kiribati',
+        'Kuwait',
+        'Kyrgyzstan',
+        'Laos',
+        'Latvia',
+        'Lebanon',
+        'Lesotho',
+        'Liberia',
+        'Libya',
+        'Liechtenstein',
+        'Lithuania',
+        'Luxembourg',
+        'Madagascar',
+        'Malawi',
+        'Malaysia',
+        'Maldives',
+        'Mali',
+        'Malta',
+        'Marshall Islands',
+        'Mauritania',
+        'Mauritius',
+        'Mexico',
+        'Micronesia',
+        'Moldova',
+        'Monaco',
+        'Mongolia',
+        'Montenegro',
+        'Morocco',
+        'Mozambique',
+        'Myanmar',
+        'Namibia',
+        'Nauru',
+        'Nepal',
+        'Netherlands',
+        'New Zealand',
+        'Nicaragua',
+        'Niger',
+        'Nigeria',
+        'North Korea',
+        'North Macedonia',
+        'Norway',
+        'Oman',
+        'Pakistan',
+        'Palau',
+        'Palestine',
+        'Panama',
+        'Papua New Guinea',
+        'Paraguay',
+        'Peru',
+        'Philippines',
+        'Poland',
+        'Portugal',
+        'Qatar',
+        'Romania',
+        'Russia',
+        'Rwanda',
+        'Saint Kitts and Nevis',
+        'Saint Lucia',
+        'Saint Vincent and the Grenadines',
+        'Samoa',
+        'San Marino',
+        'Sao Tome and Principe',
+        'Saudi Arabia',
+        'Senegal',
+        'Serbia',
+        'Seychelles',
+        'Sierra Leone',
+        'Singapore',
+        'Slovakia',
+        'Slovenia',
+        'Solomon Islands',
+        'Somalia',
+        'South Africa',
+        'South Korea',
+        'South Sudan',
+        'Spain',
+        'Sri Lanka',
+        'Sudan',
+        'Suriname',
+        'Sweden',
+        'Switzerland',
+        'Syria',
+        'Taiwan',
+        'Tajikistan',
+        'Tanzania',
+        'Thailand',
+        'Timor-Leste',
+        'Togo',
+        'Tonga',
+        'Trinidad and Tobago',
+        'Tunisia',
+        'Turkey',
+        'Turkmenistan',
+        'Tuvalu',
+        'Uganda',
+        'Ukraine',
+        'United Arab Emirates',
+        'United Kingdom',
+        'United States',
+        'Uruguay',
+        'Uzbekistan',
+        'Vanuatu',
+        'Vatican City',
+        'Venezuela',
+        'Vietnam',
+        'Yemen',
+        'Zambia',
+        'Zimbabwe'
+    ];
+
+    function populateSelectOptions($select, values, placeholder, currentValue) {
+        const current = String(currentValue || '').trim();
+        const list = Array.isArray(values) ? values : [];
+
+        $select.empty();
+        $select.append($('<option></option>').val('').text(String(placeholder || 'Select')));
+
+        list.forEach(function (value) {
+            $select.append($('<option></option>').val(value).text(value));
+        });
+
+        if (current && list.indexOf(current) === -1) {
+            $select.append($('<option></option>').val(current).text(current));
+        }
+
+        $select.val(current);
+    }
+
+    function isIndiaCountry(country) {
+        const value = String(country || '').trim().toLowerCase();
+        return value === '' || value === 'india' || value === 'in';
+    }
+
+    function resolveInvoiceTypeByCountry(country) {
+        return isIndiaCountry(country) ? 'GST Invoice' : 'Export Invoice';
     }
 
     function descriptionPlainText(value) {
@@ -484,6 +757,8 @@
         const $modal = new bootstrap.Modal(document.getElementById('clientModal'));
         const $saveBtn = $('#btnSaveClient');
         const $form = $('#clientForm');
+        const $state = $('#client_state');
+        const $country = $('#client_country');
         let lastManualBilling = '';
         let lastManualBillingLines = { line1: '', line2: '' };
 
@@ -536,6 +811,11 @@
         function clearErrors() {
             $('#clientForm .is-invalid').removeClass('is-invalid');
             $('#clientForm [data-err]').text('');
+        }
+
+        function setLocationValues(stateValue, countryValue) {
+            populateSelectOptions($state, INDIA_STATES, 'Select State', stateValue);
+            populateSelectOptions($country, COUNTRY_OPTIONS, 'Select Country', countryValue);
         }
 
         function setSameAs(on) {
@@ -612,7 +892,7 @@
                 { data: 'country', render: function (d) { return (String(d || '').trim() || '-'); } },
                 { data: null, orderable: false, render: function (row) {
                     return actionGroup(
-                        actionBtn('view', 'btn-outline-secondary', 'View') +
+                        actionBtn('view', 'btn-outline-dark', 'View') +
                         actionBtn('edit', 'btn-outline-primary', 'Edit') +
                         actionBtn('del', 'btn-outline-danger', 'Delete')
                     );
@@ -632,6 +912,7 @@
             $('#client_billing_line1,#client_billing_line2').prop('disabled', false);
             $('#client_address_line1,#client_address_line2,#client_billing_line1,#client_billing_line2').val('');
             $('#client_address,#client_billing_address').val('');
+            setLocationValues('', '');
             setFormMode('edit');
             $modal.show();
         });
@@ -660,8 +941,7 @@
                 syncHiddenBilling();
             })();
             $('#client_city').val(row.city || '');
-            $('#client_state').val(row.state || '');
-            $('#client_country').val(row.country || '');
+            setLocationValues(row.state || '', row.country || '');
             $('#client_postal_code').val(row.postal_code || '');
             lastManualBillingLines = splitLines(row.billing_address || '');
             $('#client_same_as_address').prop('checked', false);
@@ -693,14 +973,15 @@
                 syncHiddenBilling();
             })();
             $('#client_city').val(row.city || '');
-            $('#client_state').val(row.state || '');
-            $('#client_country').val(row.country || '');
+            setLocationValues(row.state || '', row.country || '');
             $('#client_postal_code').val(row.postal_code || '');
             lastManualBillingLines = splitLines(row.billing_address || '');
             $('#client_same_as_address').prop('checked', false);
             setFormMode('edit');
             $modal.show();
         });
+
+        setLocationValues('', '');
 
         $('#client_same_as_address').on('change', function () {
             setSameAs($(this).is(':checked'));
@@ -777,6 +1058,20 @@
             $('#roleForm [data-err]').text('');
         }
 
+        function openRole(row, mode) {
+            clearErrors();
+            row = row || {};
+            $('#roleModalTitle').text(mode === 'view' ? 'View Role' : 'Edit Role');
+            $('#roleForm').removeClass('was-validated');
+            $('#role_id').val(row.id || '');
+            $('#role_name').val(row.name || '');
+            $('#role_description').val(row.description || '');
+            const $isSuper = $('#role_is_super');
+            if ($isSuper.length) $isSuper.prop('checked', parseInt(row.is_super || 0, 10) === 1);
+            setFormMode(mode);
+            $modal.show();
+        }
+
         const table = $('#dtRoles').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: { url: base('roles/list'), dataSrc: 'data' },
             order: [[1, 'asc']],
@@ -787,7 +1082,7 @@
                 { data: 'name', render: function (d) { return d || '-'; } },
                 { data: 'description', render: function (d) { return d || '-'; } },
                 { data: null, orderable: false, className: 'text-start', render: function (row) {
-                    let html = '';
+                    let html = actionBtn('view', 'btn-outline-dark', 'View');
                     if (opts.canEdit) html += actionBtn('edit', 'btn-outline-primary', 'Edit');
                     if (opts.canDelete) html += actionBtn('del', 'btn-outline-danger', 'Delete');
                     return actionGroup(html);
@@ -807,18 +1102,14 @@
             });
         }
 
-        $('#dtRoles tbody').on('click', 'button.btn-edit', function () {
-            clearErrors();
+        $('#dtRoles tbody').on('click', 'button.btn-view', function () {
             const row = table.row($(this).closest('tr')).data();
-            $('#roleModalTitle').text('Edit Role');
-            $('#roleForm').removeClass('was-validated');
-            $('#role_id').val(row.id);
-            $('#role_name').val(row.name || '');
-            $('#role_description').val(row.description || '');
-            const $isSuper = $('#role_is_super');
-            if ($isSuper.length) $isSuper.prop('checked', parseInt(row.is_super || 0, 10) === 1);
-            setFormMode('edit');
-            $modal.show();
+            openRole(row, 'view');
+        });
+
+        $('#dtRoles tbody').on('click', 'button.btn-edit', function () {
+            const row = table.row($(this).closest('tr')).data();
+            openRole(row, 'edit');
         });
 
         $('#dtRoles tbody').on('click', 'button.btn-del', function () {
@@ -1003,7 +1294,10 @@
                 }},
                 { data: null, orderable: false, className: 'text-center', render: function (row) {
                     if (!row || !row.id) return '';
-                    return '<a class="btn btn-sm btn-warning" href="' + base('roles/' + row.id + '/permissions') + '">Edit</a>';
+                    return actionGroup(
+                        actionLink('view', 'btn-outline-dark', 'View', base('roles/' + row.id + '/permissions?mode=view')) +
+                        actionLink('edit', 'btn-outline-primary', 'Edit', base('roles/' + row.id + '/permissions'))
+                    );
                 }},
             ],
         }));
@@ -1033,6 +1327,20 @@
             $('#permForm [data-err]').text('');
         }
 
+        function openPermission(row, mode) {
+            clearErrors();
+            row = row || {};
+            $('#permModalTitle').text(mode === 'view' ? 'View Permission' : 'Edit Permission');
+            $('#permForm').removeClass('was-validated');
+            $('#perm_id').val(row.id || '');
+            $('#perm_key').val(row.key || '');
+            $('#perm_label').val(row.label || '');
+            $('#perm_module').val(row.module || '');
+            $('#perm_description').val(row.description || '');
+            setFormMode(mode);
+            $modal.show();
+        }
+
         const table = $('#dtPermissions').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: { url: base('permissions/list'), dataSrc: 'data' },
             order: [[1, 'asc']],
@@ -1055,7 +1363,7 @@
                     return cleaned.replace(/\b\w/g, function (m) { return m.toUpperCase(); });
                 }},
                 { data: null, orderable: false, className: 'text-start', render: function () {
-                    let html = '';
+                    let html = actionBtn('view', 'btn-outline-dark', 'View');
                     if (opts.canEdit) html += actionBtn('edit', 'btn-outline-primary', 'Edit');
                     if (opts.canDelete) html += actionBtn('del', 'btn-outline-danger', 'Delete');
                     return actionGroup(html);
@@ -1075,18 +1383,14 @@
             });
         }
 
-        $('#dtPermissions tbody').on('click', 'button.btn-edit', function () {
-            clearErrors();
+        $('#dtPermissions tbody').on('click', 'button.btn-view', function () {
             const row = table.row($(this).closest('tr')).data();
-            $('#permModalTitle').text('Edit Permission');
-            $('#permForm').removeClass('was-validated');
-            $('#perm_id').val(row.id);
-            $('#perm_key').val(row.key || '');
-            $('#perm_label').val(row.label || '');
-            $('#perm_module').val(row.module || '');
-            $('#perm_description').val(row.description || '');
-            setFormMode('edit');
-            $modal.show();
+            openPermission(row, 'view');
+        });
+
+        $('#dtPermissions tbody').on('click', 'button.btn-edit', function () {
+            const row = table.row($(this).closest('tr')).data();
+            openPermission(row, 'edit');
         });
 
         $('#dtPermissions tbody').on('click', 'button.btn-del', function () {
@@ -1234,7 +1538,7 @@
                     return statusBadge(d);
                 }},
                 { data: null, orderable: false, className: 'text-start', render: function (row) {
-                    let html = actionBtn('view', 'btn-outline-secondary', 'View');
+                    let html = actionBtn('view', 'btn-outline-dark', 'View');
                     if (opts.canEdit) html += actionBtn('edit', 'btn-outline-primary', 'Edit');
                     if (opts.canDelete) html += actionBtn('del', 'btn-outline-danger', 'Delete');
                     return actionGroup(html);
@@ -1658,6 +1962,9 @@
         }
 
         const table = $('#dtBillableItems').DataTable($.extend(true, {}, dtDefaults(), {
+            responsive: false,
+            scrollX: false,
+            autoWidth: false,
             ajax: {
                 url: base('billable-items/list'),
                 dataSrc: 'data',
@@ -1669,20 +1976,26 @@
             },
             order: [[0, 'desc']],
             columns: [
-                { data: 'entry_no', render: function (d, t, row) { return d || ('BI-' + String(row.id).padStart(5, '0')); } },
-                { data: 'entry_date', render: formatUiDate },
-                { data: 'client_name' },
-                { data: 'description', orderable: false, render: function (d, t) { return renderTruncatedDescriptionBullets(d, t, 30); } },
-                { data: 'billing_month', render: function (d) { return (String(d || '').trim() || '-'); } },
-                { data: 'amount', className: 'text-end' },
-                { data: 'status', orderable: false, render: function (d, t, row) {
+                { data: 'entry_no', width: '11%', className: 'text-nowrap bms-billable-entry', render: function (d, t, row) {
+                    if (t === 'sort' || t === 'type') return parseInt(row.id || '0', 10) || 0;
+                    return d || ('BI-' + String(row.id).padStart(5, '0'));
+                } },
+                { data: 'entry_date', width: '11%', className: 'text-nowrap bms-billable-date', render: formatUiDate },
+                { data: 'client_name', width: '13%', className: 'text-nowrap bms-billable-client' },
+                { data: 'description', width: '18%', orderable: false, className: 'text-nowrap bms-billable-desc', render: function (d, t) {
+                    return renderTruncatedDescription(d, t, 18);
+                } },
+                { data: 'billing_month', width: '12%', className: 'text-nowrap bms-billable-month', render: function (d) { return (String(d || '').trim() || '-'); } },
+                { data: 'status', width: '10%', orderable: false, className: 'text-nowrap bms-billable-status', render: function (d, t, row) {
                     return billableStatusBadge(d);
                 }},
-                { data: null, orderable: false, render: function (row) {
+                { data: 'amount', width: '10%', className: 'text-start text-nowrap bms-billable-amount' },
+                { data: null, width: '15%', orderable: false, className: 'text-nowrap bms-billable-actions', render: function (row) {
                     const isPending = row.status === 'Pending';
                     return '' +
-                        '<div class="d-flex align-items-center gap-1 flex-wrap">' +
+                        '<div class="d-flex align-items-center gap-1 flex-nowrap">' +
                             actionGroup(
+                                actionBtn('view', 'btn-outline-dark', 'View') +
                                 actionBtn('edit', 'btn-outline-primary', 'Edit') +
                                 actionBtn('del', 'btn-outline-danger', 'Delete')
                             ) +
@@ -1851,6 +2164,11 @@
             openEdit(row);
         });
 
+        $('#dtBillableItems tbody').on('click', 'button.btn-view', function () {
+            const row = table.row($(this).closest('tr')).data();
+            openView(row);
+        });
+
         // Row click -> View
         $('#dtBillableItems tbody').on('click', 'tr', function (e) {
             if ($(e.target).closest('button,a,input,select,textarea,label').length) return;
@@ -1911,40 +2229,43 @@
         if (! $tableEl.length) return;
 
         const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
+            responsive: false,
+            scrollX: false,
+            autoWidth: false,
             ajax: { url: base('proforma/list'), dataSrc: 'data' },
-            order: [[4, 'desc']],
+            order: [[0, 'desc']],
             columns: [
-                { data: null, orderable: false, className: 'text-center', render: function (row) {
-                    return '<input class="form-check-input pf-row-check" type="checkbox" value="' + (row && row.id ? row.id : '') + '">';
-                }},
-                { data: null, orderable: false, render: function (_d, _t, _r, meta) {
+                { data: 'id', width: '5%', className: 'text-nowrap bms-proforma-sno', render: function (d, t, _r, meta) {
+                    if (t === 'sort' || t === 'type') return parseInt(d || '0', 10) || 0;
                     return (meta.row + meta.settings._iDisplayStart + 1);
                 }},
-                { data: 'proforma_number' },
-                { data: 'invoice_type', orderable: false, render: function (d) { return d || 'GST Invoice'; } },
-                { data: 'proforma_date', render: formatUiDate },
-                { data: 'billing_to', render: formatUiDate },
-                { data: null, render: function (_d, _t, row) { return (row && (row.customer_name || row.contact_person || row.client_name)) ? (row.customer_name || row.contact_person || row.client_name) : '-'; } },
-                { data: null, render: function (_d, _t, row) { return (row && (row.company_name || row.client_name)) ? (row.company_name || row.client_name) : '-'; } },
-                { data: null, className: 'text-end', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
+                { data: 'proforma_number', width: '11%', className: 'text-nowrap bms-proforma-number' },
+                { data: 'invoice_type', width: '12%', className: 'text-nowrap bms-proforma-type', orderable: false, render: function (d) { return d || 'GST Invoice'; } },
+                { data: 'proforma_date', width: '10%', className: 'text-nowrap bms-proforma-date', render: formatUiDate },
+                { data: 'billing_to', width: '10%', className: 'text-nowrap bms-proforma-due', render: formatUiDate },
+                { data: null, width: '15%', className: 'text-nowrap bms-proforma-customer', render: function (_d, t, row) {
+                    const value = (row && (row.customer_name || row.contact_person || row.client_name)) ? (row.customer_name || row.contact_person || row.client_name) : '-';
+                    return renderTruncatedDescription(value, t, 16);
+                } },
+                { data: null, width: '17%', className: 'text-nowrap bms-proforma-company', render: function (_d, t, row) {
+                    const value = (row && (row.company_name || row.client_name)) ? (row.company_name || row.client_name) : '-';
+                    return renderTruncatedDescription(value, t, 18);
+                } },
+                { data: null, width: '9%', className: 'text-nowrap bms-proforma-amount', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
+                { data: null, width: '11%', orderable: false, className: 'text-nowrap bms-proforma-actions', render: function (row) {
+                    if (!row || !row.id) return '';
+                    return actionGroup(
+                        actionLink('view', 'btn-outline-dark', 'View', base('proforma/show/' + row.id)) +
+                        actionLink('edit', 'btn-outline-primary', 'Edit', base('proforma/edit/' + row.id)) +
+                        actionBtn('del', 'btn-outline-danger pf-btn-del', 'Delete').replace('type="button"', 'type="button" data-id="' + row.id + '"') +
+                        actionBtn('print', 'btn-outline-dark pf-btn-print', 'Print').replace('type="button"', 'type="button" data-id="' + row.id + '"')
+                    );
+                }},
             ],
             columnDefs: [
-                { targets: [0, 1], searchable: false },
+                { targets: [0, 8], searchable: false },
             ],
         }));
-
-        function selectedId() {
-            const $checked = $tableEl.find('tbody input.pf-row-check:checked').first();
-            return parseInt($checked.val() || '0', 10) || 0;
-        }
-
-        function setToolbarState() {
-            const id = selectedId();
-            $('#pfBtnEdit').prop('disabled', !id);
-            $('#pfBtnDelete').prop('disabled', !id);
-            $('#pfBtnView').prop('disabled', !id);
-            $('#pfBtnPdf').prop('disabled', !id);
-        }
 
         function clearFilters() {
             $tableEl.find('thead input.pf-col-filter').val('');
@@ -1964,96 +2285,41 @@
         });
 
         // Native calendar for issue/due filters
-        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"4\"]'), '#pf_issue_native', function (iso) {
+        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"3\"]'), '#pf_issue_native', function (iso) {
+            table.column(3).search(iso || '').draw();
+        }, isoToDmyText, textToIso);
+        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"4\"]'), '#pf_due_native', function (iso) {
             table.column(4).search(iso || '').draw();
         }, isoToDmyText, textToIso);
-        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"5\"]'), '#pf_due_native', function (iso) {
-            table.column(5).search(iso || '').draw();
-        }, isoToDmyText, textToIso);
 
-        // Single-select checkboxes
-        $tableEl.on('change', 'tbody input.pf-row-check', function () {
-            if (this.checked) {
-                $tableEl.find('tbody input.pf-row-check').not(this).prop('checked', false);
-            }
-            setToolbarState();
-        });
-
-        // Row click toggles selection (ignore input/select/a/button)
-        $tableEl.on('click', 'tbody tr', function (e) {
-            if ($(e.target).closest('button,a,input,select,textarea,label').length) return;
-            let $tr = $(this);
-            if ($tr.hasClass('child')) {
-                $tr = $tr.prev('.parent');
-            }
-            const $chk = $tr.find('input.pf-row-check');
-            if (! $chk.length) return;
-            $chk.prop('checked', true).trigger('change');
-        });
-
-        // Clear button resets filters + selection
+        // Clear button resets filters
         $('#pfBtnClear').on('click', function () {
-            $tableEl.find('tbody input.pf-row-check').prop('checked', false);
             clearFilters();
-            setToolbarState();
-        });
-
-        // Toolbar actions
-        $('#pfBtnPrint').off('click').on('click', function () {
-            const id = selectedId();
-            if (!id) {
-                notify('Select an invoice to print.', 'danger');
-                return;
-            }
-            window.open(base('proforma/print/' + id + '?autoprint=1'), '_blank');
-        });
-
-        $('#pfBtnView').on('click', function () {
-            const id = selectedId();
-            if (!id) return;
-            window.location.href = base('proforma/show/' + id);
-        });
-
-        $('#pfBtnEdit').on('click', function () {
-            const id = selectedId();
-            if (!id) return;
-            window.location.href = base('proforma/edit/' + id);
-        });
-
-        $('#pfBtnPdf').off('click').on('click', function () {
-            const id = selectedId();
-            if (!id) return;
-            // Triggers a PDF download (server sets Content-Disposition: attachment).
-            window.location.href = base('proforma/pdf/' + id);
         });
 
         $('#pfBtnExport').on('click', function () {
             window.location.href = base('proforma/download');
         });
 
-        $('#pfBtnDelete').on('click', function () {
-            const id = selectedId();
+        $tableEl.on('click', 'tbody .pf-btn-print', function () {
+            const id = parseInt($(this).data('id') || '0', 10) || 0;
+            if (!id) return;
+            window.open(base('proforma/print/' + id + '?autoprint=1'), '_blank');
+        });
+
+        $tableEl.on('click', 'tbody .pf-btn-del', function () {
+            const id = parseInt($(this).data('id') || '0', 10) || 0;
             if (!id) return;
             if (!confirm('Delete this invoice?')) return;
             postJson('proforma/delete', { id: id })
                 .done(function (res) {
-                notify(res.message || 'Deleted.', 'success');
-                table.ajax.reload(null, false);
-                $tableEl.find('tbody input.pf-row-check').prop('checked', false);
-                setToolbarState();
-            })
-            .fail(function (xhr) {
-                notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger');
-            });
+                    notify(res.message || 'Deleted.', 'success');
+                    table.ajax.reload(null, false);
+                })
+                .fail(function (xhr) {
+                    notify((xhr.responseJSON && xhr.responseJSON.message) || 'Delete failed.', 'danger');
+                });
         });
-
-        // Reset selection state on reload
-        table.on('draw', function () {
-            $tableEl.find('tbody input.pf-row-check').prop('checked', false);
-            setToolbarState();
-        });
-
-        setToolbarState();
     };
 
     BMS.initPayments = function () {
@@ -2065,65 +2331,43 @@
         try {
             table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
                 ajax: { url: base('payments/list'), dataSrc: 'data' },
-                order: [[2, 'desc']],
+                order: [[0, 'desc']],
                 columns: [
-                    { data: null, orderable: false, className: 'text-center', render: function (row) {
-                        return '<input class="form-check-input pay-row-check" type="checkbox" value="' + (row && row.id ? row.id : '') + '">';
-                    }},
-                    { data: null, orderable: false, render: function (_d, _t, _r, meta) {
+                    { data: 'id', render: function (d, t, _r, meta) {
+                        if (t === 'sort' || t === 'type') return parseInt(d || '0', 10) || 0;
                         return (meta.row + meta.settings._iDisplayStart + 1);
                     }},
                     { data: 'proforma_number', defaultContent: '-' },
                     { data: null, render: function (_d, _t, row) { return (row && (row.customer_name || row.company_name)) ? (row.customer_name || row.company_name) : '-'; } },
-                    { data: 'total_paid', className: 'text-end', defaultContent: '0.00' },
-                    { data: 'remaining_balance', className: 'text-end', defaultContent: '0.00' },
+                    { data: 'total_paid', className: 'text-start', defaultContent: '0.00' },
+                    { data: 'remaining_balance', className: 'text-start', defaultContent: '0.00' },
                     { data: 'payment_status', defaultContent: '-' },
+                    { data: null, orderable: false, className: 'text-nowrap', render: function (row) {
+                        if (!row || !row.id) return '';
+                        return actionGroup(
+                            actionLink('view', 'btn-outline-dark', 'View', base('payments/view/' + row.id)) +
+                            actionLink('edit', 'btn-outline-primary', 'Edit', base('payments?add=1&invoice_id=' + row.id))
+                        );
+                    }},
                 ],
                 columnDefs: [
-                    { targets: [0, 1], searchable: false },
+                    { targets: [0, 6], searchable: false },
                 ],
             }));
         } catch (e) {
             notify('Payments table failed to initialize. Please refresh the page.', 'danger');
         }
 
-        function selectedId() {
-            const $checked = $tableEl.find('tbody input.pay-row-check:checked').first();
-            return parseInt($checked.val() || '0', 10) || 0;
-        }
-
-        function setToolbarState() {
-            const id = selectedId();
-            $('#payBtnEdit').prop('disabled', !id);
-            $('#payBtnView').prop('disabled', !id);
-        }
-
         function showListPanel() {
             $('#payAddPanel').addClass('d-none');
             $('#payListPanel').removeClass('d-none');
-            $('#payBtnSearch').prop('disabled', false);
             $('#payBtnAdd').prop('disabled', false);
-            setToolbarState();
         }
 
         function showAddPanel() {
             $('#payListPanel').addClass('d-none');
             $('#payAddPanel').removeClass('d-none');
-            $('#payBtnSearch').prop('disabled', true);
             $('#payBtnAdd').prop('disabled', true);
-            $('#payBtnView').prop('disabled', true);
-            setAddViewLink(0);
-        }
-
-        function setAddViewLink(invoiceId) {
-            const id = parseInt(invoiceId || '0', 10) || 0;
-            const $btn = $('#payAddViewBtnTop');
-            if (! $btn.length) return;
-            if (!id) {
-                $btn.addClass('disabled').attr('href', '#').attr('tabindex', '-1').attr('aria-disabled', 'true');
-                return;
-            }
-            $btn.removeClass('disabled').attr('href', base('payments/view/' + id)).removeAttr('tabindex').attr('aria-disabled', 'false');
         }
 
         function clearFilters() {
@@ -2133,50 +2377,6 @@
             table.columns().search('');
             table.draw();
         }
-
-        // Column filters (second header row)
-        $tableEl.find('thead').on('input change', 'input.pay-col-filter', function () {
-            if (!table) return;
-            const col = parseInt($(this).data('col') || '0', 10) || 0;
-            const raw = String($(this).val() || '');
-            table.column(col).search(raw).draw();
-        });
-
-        // Single-select checkboxes
-        $tableEl.on('change', 'tbody input.pay-row-check', function () {
-            if (this.checked) {
-                $tableEl.find('tbody input.pay-row-check').not(this).prop('checked', false);
-            }
-            setToolbarState();
-        });
-
-        // Row click toggles selection (ignore input/select/a/button)
-        $tableEl.on('click', 'tbody tr', function (e) {
-            if ($(e.target).closest('button,a,input,select,textarea,label').length) return;
-            let $tr = $(this);
-            if ($tr.hasClass('child')) {
-                $tr = $tr.prev('.parent');
-            }
-            const $chk = $tr.find('input.pay-row-check');
-            if (! $chk.length) return;
-            $chk.prop('checked', true).trigger('change');
-        });
-
-        // Clear button resets filters + selection
-        $(document).off('click.pay', '#payBtnClear').on('click.pay', '#payBtnClear', function () {
-            if (!table) return;
-            $tableEl.find('tbody input.pay-row-check').prop('checked', false);
-            clearFilters();
-            setToolbarState();
-        });
-
-        // Toolbar actions
-        $(document).off('click.pay', '#payBtnSearch').on('click.pay', '#payBtnSearch', function () {
-            const $global = $('.dataTables_wrapper .dataTables_filter input').first();
-            if ($global.length) {
-                $global.trigger('focus');
-            }
-        });
 
         let customersLoaded = false;
         let customersCache = [];
@@ -2280,14 +2480,7 @@
         $(document).off('click.pay', '#payBtnAdd').on('click.pay', '#payBtnAdd', function (e) {
             // If JS is working, stay on the same page; if not, the link navigates to ?add=1 as fallback.
             e.preventDefault();
-            const selected = selectedId();
-            openAddFlow(selected);
-        });
-
-        $(document).off('click.pay', '#payBtnEdit').on('click.pay', '#payBtnEdit', function () {
-            const id = selectedId();
-            if (!id) return;
-            openAddFlow(id);
+            openAddFlow(0);
         });
 
         $(document).off('change.pay', '#payCustomer').on('change.pay', '#payCustomer', function () {
@@ -2401,7 +2594,6 @@
 
         $(document).off('change.pay', '#payInvoice').on('change.pay', '#payInvoice', function () {
             const invoiceId = parseInt($(this).val() || '0', 10) || 0;
-            setAddViewLink(invoiceId);
             if (!invoiceId) {
                 renderHistory(null);
                 return;
@@ -2458,22 +2650,6 @@
             if (table) table.ajax.reload(null, false);
         });
 
-        $(document).off('click.pay', '#payBtnView').on('click.pay', '#payBtnView', function () {
-            const id = selectedId();
-            if (!id) return;
-            window.location.href = base('payments/view/' + id);
-        });
-
-        // Reset selection state on reload
-        if (table) {
-            table.on('draw', function () {
-                $tableEl.find('tbody input.pay-row-check').prop('checked', false);
-                setToolbarState();
-            });
-        }
-
-        setToolbarState();
-
         // If server rendered the Add panel (payments?add=1), hydrate it on load.
         if (!$('#payAddPanel').hasClass('d-none')) {
             let invId = 0;
@@ -2513,7 +2689,7 @@
             ],
         }));
 
-        $(document).off('click.pr', '#prBtnSearch').on('click.pr', '#prBtnSearch', function () {
+        $(document).off('change.pr', '#prPaymentStatus').on('change.pr', '#prPaymentStatus', function () {
             table.ajax.url(ajaxUrl()).load();
         });
 
@@ -2545,20 +2721,11 @@
                 { data: 'paid_to', defaultContent: '-' },
                 { data: null, orderable: false, render: function (_d, _t, row) {
                     const id = row && row.id ? row.id : 0;
-                    const viewBtn =
-                        '<button class=\"btn btn-sm btn-outline-info de-btn-view\" type=\"button\" data-id=\"' + id + '\" title=\"View\" aria-label=\"View\">' +
-                        iconSvg('view') +
-                        '</button>';
-                    const editLink =
-                        '<a class=\"btn btn-sm btn-outline-primary\" href=\"' + base('day-book/daily-expense-form/edit/' + id) + '\" title=\"Edit\" aria-label=\"Edit\">' +
-                        iconSvg('edit') +
-                        '</a>';
-                    const delBtn =
-                        '<button class=\"btn btn-sm btn-outline-danger de-btn-del\" type=\"button\" data-id=\"' + id + '\" title=\"Delete\" aria-label=\"Delete\">' +
-                        iconSvg('delete') +
-                        '</button>';
-
-                    return actionGroup(viewBtn + editLink + delBtn);
+                    return actionGroup(
+                        actionBtn('view', 'btn-outline-dark de-btn-view', 'View').replace('type="button"', 'type="button" data-id="' + id + '"') +
+                        actionLink('edit', 'btn-outline-primary', 'Edit', base('day-book/daily-expense-form/edit/' + id)) +
+                        actionBtn('del', 'btn-outline-danger de-btn-del', 'Delete').replace('type="button"', 'type="button" data-id="' + id + '"')
+                    );
                 }},
             ],
         }));
@@ -2864,7 +3031,7 @@
 	        }
 
 	        function rowHasAnyInput($tr) {
-	            const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
+	            const desc = getBulletEditorText($tr.find('.pf-item-desc-editor'));
 	            const qty = String($tr.find('.pf-item-qty').val() || '').trim();
 	            const uom = String($tr.find('.pf-item-uom').val() || '').trim();
 	            const price = String($tr.find('.pf-item-price').val() || '').trim();
@@ -2893,8 +3060,25 @@
 	                .join("\n");
 	        }
 
+	        function getBulletEditorText($el) {
+	            const el = $el && $el.length ? $el[0] : null;
+	            if (!el) return '';
+
+	            const liNodes = el.querySelectorAll('li');
+	            if (liNodes && liNodes.length) {
+	                return Array.from(liNodes)
+	                    .map(function (li) {
+	                        return stripBulletPrefix(String(li.innerText || li.textContent || '').replace(/\u00A0/g, ' ').trim());
+	                    })
+	                    .filter(function (l) { return l !== ''; })
+	                    .join("\n");
+	            }
+
+	            return normalizeBulletText($el.text());
+	        }
+
 	        function ensureBulletList($el) {
-	            const text = normalizeBulletText($el.text());
+	            const text = getBulletEditorText($el);
 	            if (!text) {
 	                $el.html('<ul><li><br></li></ul>');
 	                return;
@@ -2912,7 +3096,7 @@
 	                if (!rowHasAnyInput($tr)) return;
 	                const amt = parseMoney($tr.find('.pf-item-amt').val());
 	                total += amt;
-	                const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
+	                const desc = getBulletEditorText($tr.find('.pf-item-desc-editor'));
 	                if (desc) hasItems = true;
 	            });
 	            setTotal(total, hasItems);
@@ -2972,7 +3156,7 @@
 	            const items = [];
 	            $('#pfItemsTable tbody tr').each(function () {
 	                const $tr = $(this);
-	                const desc = normalizeBulletText($tr.find('.pf-item-desc-editor').text());
+	                const desc = getBulletEditorText($tr.find('.pf-item-desc-editor'));
 	                const qty = parseMoney($tr.find('.pf-item-qty').val());
 	                const price = parseMoney($tr.find('.pf-item-price').val());
 	                const amt = parseMoney($tr.find('.pf-item-amt').val());
@@ -2993,29 +3177,38 @@
 	        const $clientMenu = $('#pf_client_menu');
 	        const $clientItems = $clientMenu.find('.bms-combobox-item');
 	        const $clientEmpty = $clientMenu.find('.bms-combobox-empty');
+        let currentClientCountry = '';
 
-	        function clearClientFields() {
-	            $('#pf_client_id').val('');
-	            $('#pf_company').val('');
-	            $('#pf_gst').val('');
-	            $('#pf_addr1').val('');
-	            $('#pf_addr2').val('');
-	            $('#pf_city').val('');
-	            $('#pf_state').val('');
-	            $('#pf_pincode').val('');
-	        }
+        function syncInvoiceTypeFromCountry() {
+            $('#pf_invoice_type').val(resolveInvoiceTypeByCountry(currentClientCountry));
+            recalcGst();
+        }
 
-	        function applyClientOption($opt) {
-	            $('#pf_client_id').val(($opt.data('id') || '').toString().trim());
-	            $('#pf_company').val(($opt.data('company') || '').toString().trim());
-	            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
-	            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
-	            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
-	            $('#pf_city').val(($opt.data('city') || '').toString().trim());
-	            $('#pf_state').val(($opt.data('state') || '').toString().trim());
-	            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
-	        }
+        function clearClientFields() {
+            currentClientCountry = '';
+            $('#pf_client_id').val('');
+            $('#pf_company').val('');
+            $('#pf_gst').val('');
+            $('#pf_addr1').val('');
+            $('#pf_addr2').val('');
+            $('#pf_city').val('');
+            $('#pf_state').val('');
+            $('#pf_pincode').val('');
+            syncInvoiceTypeFromCountry();
+        }
 
+        function applyClientOption($opt) {
+            currentClientCountry = ($opt.data('country') || '').toString().trim();
+            $('#pf_client_id').val(($opt.data('id') || '').toString().trim());
+            $('#pf_company').val(($opt.data('company') || '').toString().trim());
+            $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
+            $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
+            $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
+            $('#pf_city').val(($opt.data('city') || '').toString().trim());
+            $('#pf_state').val(($opt.data('state') || '').toString().trim());
+            $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
+            syncInvoiceTypeFromCountry();
+        }
 	        function filterClientList(query) {
 	            const q = String(query || '').trim().toLowerCase();
 	            let shown = 0;
@@ -3078,6 +3271,7 @@
 	        });
 
 	        filterClientList('');
+        syncInvoiceTypeFromCountry();
 
 	        attachNativeCalendar('#pf_date', '#pf_date_native', function () {}, isoToDmyText, textToIso);
 	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {}, isoToDmyText, textToIso);
@@ -3159,8 +3353,9 @@
 	            const clientId = String($('#pf_client_id').val() || '').trim();
 	            const pfDate = textToIso(($('#pf_date').val() || '').trim());
 	            const currency = ($('#pf_currency').val() || '').trim();
-	            const dueDate = textToIso(($('#pf_due').val() || '').trim());
-	            const invoiceType = ($('#pf_invoice_type').val() || '').trim();
+            const dueDate = textToIso(($('#pf_due').val() || '').trim());
+            const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
+	            const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
 	            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
 	            const items = collectItems();
@@ -3189,8 +3384,8 @@
 	                proforma_number: invoiceNo,
 	                proforma_date: pfDate,
 	                invoice_type: invoiceType,
-	                billing_from: $('#pf_from').val(),
-	                billing_to: dueDate,
+                billing_from: billingFrom,
+                billing_to: dueDate,
 	                currency: currency,
 	                gst_percent: gstEnabled() ? gstPercent : '',
 	                gst_mode: gstEnabled() ? gstMode : '',
@@ -3281,13 +3476,12 @@
 	            }
 
 	            function rowHasAnyInput($tr) {
-	                const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
+	                const desc = getBulletEditorText($tr.find('.pf-item-desc-editor'));
 	                const qty = String($tr.find('.pf-item-qty').val() || '').trim();
 	                const uom = String($tr.find('.pf-item-uom').val() || '').trim();
 	                const price = String($tr.find('.pf-item-price').val() || '').trim();
 	                const amt = String($tr.find('.pf-item-amt').val() || '').trim();
-	                return (item + desc + qty + uom + price + amt) !== '';
+	                return (desc + qty + uom + price + amt) !== '';
 	            }
 
 	            function escapeHtml(s) {
@@ -3311,8 +3505,25 @@
 	                    .join("\n");
 	            }
 
+	            function getBulletEditorText($el) {
+	                const el = $el && $el.length ? $el[0] : null;
+	                if (!el) return '';
+
+	                const liNodes = el.querySelectorAll('li');
+	                if (liNodes && liNodes.length) {
+	                    return Array.from(liNodes)
+	                        .map(function (li) {
+	                            return stripBulletPrefix(String(li.innerText || li.textContent || '').replace(/\u00A0/g, ' ').trim());
+	                        })
+	                        .filter(function (l) { return l !== ''; })
+	                        .join("\n");
+	                }
+
+	                return normalizeBulletText($el.text());
+	            }
+
 	            function ensureBulletList($el) {
-	                const text = normalizeBulletText($el.text());
+	                const text = getBulletEditorText($el);
 	                if (!text) {
 	                    $el.html('<ul><li><br></li></ul>');
 	                    return;
@@ -3330,9 +3541,8 @@
 	                    if (!rowHasAnyInput($tr)) return;
 	                    const amt = parseMoney($tr.find('.pf-item-amt').val());
 	                    total += amt;
-	                    const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                    const desc = String($tr.find('.pf-item-desc-editor').text() || '').trim();
-	                    if (item || desc) hasItems = true;
+	                    const desc = getBulletEditorText($tr.find('.pf-item-desc-editor'));
+	                    if (desc) hasItems = true;
 	                });
 	                setTotal(total, hasItems);
 	            }
@@ -3357,9 +3567,8 @@
 	                    '<tr>' +
 	                        '<td>' +
 	                            '<input type="hidden" class="pf-item-id" value="0">' +
-	                            '<input type="text" class="form-control form-control-sm pf-item-name" placeholder="Item">' +
+	                            '<div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;"></div>' +
 	                        '</td>' +
-	                        '<td><div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;"></div></td>' +
 	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-qty" value="1"></td>' +
 	                        '<td><input type="text" class="form-control form-control-sm pf-item-uom" value="Nos"></td>' +
 	                        '<td><input type="number" min="0" step="0.01" class="form-control form-control-sm text-end pf-item-price" value="0.00"></td>' +
@@ -3396,18 +3605,15 @@
 	                $('#pfItemsTable tbody tr').each(function () {
 	                    const $tr = $(this);
 	                    const id = parseInt($tr.find('.pf-item-id').val() || '0', 10) || 0;
-	                    const item = String($tr.find('.pf-item-name').val() || '').trim();
-	                    const desc = normalizeBulletText($tr.find('.pf-item-desc-editor').text());
+	                    const desc = getBulletEditorText($tr.find('.pf-item-desc-editor'));
 	                    const qty = parseMoney($tr.find('.pf-item-qty').val());
 	                    const price = parseMoney($tr.find('.pf-item-price').val());
 	                    const amt = parseMoney($tr.find('.pf-item-amt').val());
 
-	                    if (!item && !desc && qty === 0 && price === 0 && amt === 0) return;
-
-	                    const fullDesc = item && desc ? (item + "\n" + desc) : (desc || item);
+	                    if (!desc && qty === 0 && price === 0 && amt === 0) return;
 	                    items.push({
 	                        id: id,
-	                        description: fullDesc,
+	                        description: desc,
 	                        quantity: qty,
 	                        unit_price: price,
 	                        amount: amt
@@ -3416,17 +3622,25 @@
 	                return items;
 	            }
 
-	            function initCompanyField() {
-	                const $opt = $('#pf_client_id option:selected');
-	                $('#pf_company').val(($opt.data('company') || '').toString().trim());
-	                $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
-	                $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
-	                $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
-	                $('#pf_city').val(($opt.data('city') || '').toString().trim());
-	                $('#pf_state').val(($opt.data('state') || '').toString().trim());
-	                $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
-	            }
+            let currentClientCountry = '';
 
+            function syncInvoiceTypeFromCountry() {
+                $('#pf_invoice_type').val(resolveInvoiceTypeByCountry(currentClientCountry));
+                recalcGst();
+            }
+
+            function initCompanyField() {
+                const $opt = $('#pf_client_id option:selected');
+                currentClientCountry = ($opt.data('country') || '').toString().trim();
+                $('#pf_company').val(($opt.data('company') || '').toString().trim());
+                $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
+                $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
+                $('#pf_addr2').val(($opt.data('addr2') || '').toString().trim());
+                $('#pf_city').val(($opt.data('city') || '').toString().trim());
+                $('#pf_state').val(($opt.data('state') || '').toString().trim());
+                $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
+                syncInvoiceTypeFromCountry();
+            }
 	            initCompanyField();
 	            $('#pf_client_id').on('change', initCompanyField);
 	            attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
@@ -3500,8 +3714,8 @@
 	                });
 
 	        $('#pfItemsTable')
-	            .off('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom')
-	            .on('input', '.pf-item-name,.pf-item-desc-editor,.pf-item-uom', recalcTotal);
+	            .off('input', '.pf-item-desc-editor,.pf-item-uom')
+	            .on('input', '.pf-item-desc-editor,.pf-item-uom', recalcTotal);
 
 	            $('#btnUpdateProforma').on('click', function () {
 	                const proformaId = parseInt($('#pf_id').val() || '0', 10) || 0;
@@ -3509,8 +3723,9 @@
 	                const clientId = $('#pf_client_id').val();
 	                const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
 	                const currency = ($('#pf_currency').val() || '').trim();
-	                const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
-	                const invoiceType = ($('#pf_invoice_type').val() || '').trim();
+                const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
+                const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
+	                const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	                const gstPercent = ($('#pf_gst_percent').val() || '').trim();
 	                const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
 	                const items = collectItems();
@@ -3551,8 +3766,8 @@
 	                    client_id: clientId,
 	                    proforma_date: pfDate,
 	                    invoice_type: invoiceType,
-	                    billing_from: $('#pf_from').val(),
-	                    billing_to: dueDate,
+                    billing_from: billingFrom,
+                    billing_to: dueDate,
 	                    currency: currency,
 	                    gst_percent: gstEnabled() ? gstPercent : '',
 	                    gst_mode: gstEnabled() ? gstMode : '',
@@ -3560,9 +3775,7 @@
 	                })
 	                    .done(function (res) {
 	                        notify(res.message || 'Updated.', 'success');
-	                        if (res.proforma && res.proforma.id) {
-	                            window.location.href = base('proforma/show/' + res.proforma.id);
-	                        }
+	                        window.location.href = base('proforma');
 	                    })
 	                    .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Update failed.', 'danger'); });
 	            });
@@ -3953,3 +4166,7 @@
         });
     });
 })();
+
+
+
+

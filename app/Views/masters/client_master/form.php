@@ -56,7 +56,9 @@
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <label class="form-label">State</label>
-                                        <input class="form-control" name="state" id="client_state" placeholder="Optional">
+                                        <select class="form-select" name="state" id="client_state">
+                                            <option value="">Select State</option>
+                                        </select>
                                         <div class="invalid-feedback" data-err="state"></div>
                                     </div>
 
@@ -67,7 +69,9 @@
                                     </div>
                                     <div class="col-12 col-md-6">
                                         <label class="form-label">Country</label>
-                                        <input class="form-control" name="country" id="client_country" placeholder="Optional">
+                                        <select class="form-select" name="country" id="client_country">
+                                            <option value="">Select Country</option>
+                                        </select>
                                         <div class="invalid-feedback" data-err="country"></div>
                                     </div>
 

@@ -5,10 +5,7 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h5 class="mb-0">Payment</h5>
     <div class="d-flex flex-wrap gap-2 justify-content-end">
-        <button class="btn btn-sm btn-outline-primary" id="payBtnSearch" type="button">Search</button>
-        <a class="btn btn-sm btn-primary" id="payBtnAdd" href="<?= base_url('payments?add=1') ?>">Add</a>
-        <button class="btn btn-sm btn-outline-primary" id="payBtnEdit" type="button" disabled>Edit</button>
-        <button class="btn btn-sm btn-outline-primary" id="payBtnView" type="button" disabled>View</button>
+        <a class="btn btn-sm btn-primary" id="payBtnAdd" href="<?= base_url('payments?add=1') ?>">Add Payment</a>
     </div>
 </div>
 
@@ -18,24 +15,13 @@
             <table id="dtPayments" class="table table-striped table-bordered nowrap w-100">
                 <thead>
                 <tr>
-                    <th class="text-center" style="width: 44px;">&nbsp;</th>
                     <th style="width: 70px;">S.No</th>
                     <th>Invoice No</th>
                     <th>Customer Name</th>
                     <th>Total Paid</th>
                     <th>Remaining Balance</th>
                     <th>Payment Status</th>
-                </tr>
-                <tr>
-                    <th class="text-center sorting_disabled">
-                        <button type="button" class="btn btn-sm btn-outline-secondary" id="payBtnClear">Clear</button>
-                    </th>
-                    <th class="sorting_disabled"></th>
-                    <th class="sorting_disabled"><input class="form-control form-control-sm pay-col-filter" data-col="2" placeholder="Search"></th>
-                    <th class="sorting_disabled"><input class="form-control form-control-sm pay-col-filter" data-col="3" placeholder="Search"></th>
-                    <th class="sorting_disabled"><input class="form-control form-control-sm pay-col-filter" data-col="4" placeholder="Search"></th>
-                    <th class="sorting_disabled"><input class="form-control form-control-sm pay-col-filter" data-col="5" placeholder="Search"></th>
-                    <th class="sorting_disabled"><input class="form-control form-control-sm pay-col-filter" data-col="6" placeholder="Search"></th>
+                    <th>Actions</th>
                 </tr>
                 </thead>
             </table>
@@ -49,7 +35,6 @@
             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
                 <div class="h5 mb-0">Record Payment</div>
                 <div class="d-flex gap-2">
-                    <a class="btn btn-sm btn-outline-primary disabled" href="#" id="payAddViewBtnTop" tabindex="-1" aria-disabled="true">View</a>
                     <a class="btn btn-sm btn-outline-secondary" href="<?= base_url('payments') ?>" id="payAddBackBtnTop">Back</a>
                 </div>
             </div>

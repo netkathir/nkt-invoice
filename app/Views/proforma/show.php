@@ -34,7 +34,6 @@
             </div>
             <div class="flex-grow-1">
                 <div class="h5 mb-1">Invoice</div>
-                <div class="text-muted small">Invoice</div>
             </div>
         </div>
 
@@ -148,7 +147,6 @@
                 <table class="table table-bordered align-middle nowrap w-100 mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th style="width:200px;">Item</th>
                         <th>Item Description</th>
                         <th class="text-end" style="width:120px;">Quantity</th>
                         <th style="width:110px;">UOM</th>
@@ -161,16 +159,21 @@
                         <?php
                             $desc = (string) ($it['description'] ?? '');
                             $lines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', $desc) ?: [])));
-                            $itemName = $lines[0] ?? '';
-                            $rest = $lines;
-                            if ($rest !== []) {
-                                array_shift($rest);
-                            }
-                            $descText = implode("\n", $rest);
                         ?>
                         <tr>
-                            <td><input type="text" class="form-control form-control-sm" value="<?= esc($itemName) ?>" readonly></td>
-                            <td><textarea rows="1" class="form-control form-control-sm" readonly><?= esc($descText) ?></textarea></td>
+                            <td>
+                                <div class="form-control form-control-sm bg-body" style="min-height:90px;">
+                                    <ul class="mb-0 ps-3">
+                                        <?php if ($lines !== []): ?>
+                                            <?php foreach ($lines as $line): ?>
+                                                <li><?= esc($line) ?></li>
+                                            <?php endforeach; ?>
+                                        <?php else: ?>
+                                            <li>-</li>
+                                        <?php endif; ?>
+                                    </ul>
+                                </div>
+                            </td>
                             <td><input type="text" class="form-control form-control-sm text-end" value="<?= esc(number_format((float) ($it['quantity'] ?? 0), 2, '.', '')) ?>" readonly></td>
                             <td><input type="text" class="form-control form-control-sm" value="Nos" readonly></td>
                             <td><input type="text" class="form-control form-control-sm text-end" value="<?= esc(number_format((float) ($it['unit_price'] ?? 0), 2, '.', '')) ?>" readonly></td>
@@ -178,7 +181,7 @@
                         </tr>
                     <?php endforeach; ?>
                     <?php if (($items ?? []) === []): ?>
-                        <tr><td colspan="6" class="text-center text-muted">No items.</td></tr>
+                        <tr><td colspan="5" class="text-center text-muted">No items.</td></tr>
                     <?php endif; ?>
                     </tbody>
                 </table>

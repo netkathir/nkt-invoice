@@ -539,10 +539,28 @@ class ProformaController extends BaseController
         // Use ASCII prefix for maximum PDF font compatibility (standard Helvetica is WinAnsi).
         $moneyPrefix = $currency . ' ';
 
-        $fromName = (string) (config('Email')->fromName ?? 'Billing Management System');
-        $fromEmail = (string) (config('Email')->fromEmail ?? '');
+        $companyInfo = bms_company_info();
+        $fromName = trim((string) ($companyInfo['company_name'] ?? ''));
+        if ($fromName === '') $fromName = (string) (config('Email')->fromName ?? 'Billing Management System');
+        $fromEmail = trim((string) ($companyInfo['email_id'] ?? ''));
+        if ($fromEmail === '') $fromEmail = (string) (config('Email')->fromEmail ?? '');
+        $fromPhone = trim((string) ($companyInfo['phone_number'] ?? ''));
+        $fromWebsite = trim((string) ($companyInfo['website'] ?? ''));
+        $fromGstin = trim((string) ($companyInfo['gstin_number'] ?? ''));
+        $exportTaxReference = trim((string) ($companyInfo['export_tax_reference'] ?? ''));
+        $currentAccountDetails = trim((string) ($companyInfo['current_account_details'] ?? ''));
+        $paypalAccount = trim((string) ($companyInfo['paypal_account'] ?? ''));
+        $fromAddress1 = trim((string) ($companyInfo['address_line1'] ?? ''));
+        $fromAddress2 = trim((string) ($companyInfo['address_line2'] ?? ''));
+        $fromCity = trim((string) ($companyInfo['city'] ?? ''));
+        $fromState = trim((string) ($companyInfo['state'] ?? ''));
+        $fromPincode = trim((string) ($companyInfo['pincode'] ?? ''));
 
         $invoiceType = (string) (($proforma['invoice_type'] ?? '') ?: 'Invoice');
+        $isExportInvoice = $invoiceType === ProformaModel::TYPE_EXPORT;
+        $taxReferenceLabel = $isExportInvoice ? 'LUT / IGST Ref: ' : 'GSTIN: ';
+        $taxReferenceValue = $isExportInvoice ? $exportTaxReference : $fromGstin;
+        $exportNote = 'Supply meant for export under LUT without payment of IGST.';
         $invoiceNo = (string) (($proforma['proforma_number'] ?? '') ?: '');
         $issueDate = (string) (($proforma['proforma_date'] ?? '') ?: '');
 
@@ -574,16 +592,51 @@ class ProformaController extends BaseController
         $xL = $margin;
         $xR = $pageW - $margin;
         $y = 48.0;
+        $leftY = $y;
 
         // Header (left)
         $pdf->setFont('Helvetica', 'B', 12);
-        $pdf->text($xL, $y, $fromName);
-        $y += 16;
+        $pdf->text($xL, $leftY, $fromName);
+        $leftY += 16;
         if ($fromEmail !== '') {
             $pdf->setFont('Helvetica', '', 10);
             $pdf->setTextColor(80, 80, 80);
-            $pdf->text($xL, $y, $fromEmail);
+            $pdf->text($xL, $leftY, $fromEmail);
             $pdf->setTextColor(0, 0, 0);
+            $leftY += 14;
+        }
+        foreach (array_filter([$fromAddress1, $fromAddress2]) as $line) {
+            foreach ($pdf->wrapText((string) $line, 210.0, 10) as $wrappedLine) {
+                $pdf->setFont('Helvetica', '', 10);
+                $pdf->setTextColor(80, 80, 80);
+                $pdf->text($xL, $leftY, $wrappedLine);
+                $pdf->setTextColor(0, 0, 0);
+                $leftY += 14;
+            }
+        }
+        $fromPlace = trim(implode(', ', array_values(array_filter([$fromCity, $fromState]))));
+        $fromPlaceLine = trim($fromPlace . ($fromPincode !== '' ? (($fromPlace !== '' ? ' - ' : '') . $fromPincode) : ''));
+        if ($fromPlaceLine !== '') {
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->setTextColor(80, 80, 80);
+            $pdf->text($xL, $leftY, $fromPlaceLine);
+            $pdf->setTextColor(0, 0, 0);
+            $leftY += 14;
+        }
+        if ($taxReferenceValue !== '') {
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->setTextColor(80, 80, 80);
+            $pdf->text($xL, $leftY, $taxReferenceLabel . $taxReferenceValue);
+            $pdf->setTextColor(0, 0, 0);
+            $leftY += 14;
+        }
+        $fromContact = trim($fromPhone . ($fromPhone !== '' && $fromWebsite !== '' ? ' / ' : '') . $fromWebsite);
+        if ($fromContact !== '') {
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->setTextColor(80, 80, 80);
+            $pdf->text($xL, $leftY, $fromContact);
+            $pdf->setTextColor(0, 0, 0);
+            $leftY += 14;
         }
 
         // Header (right)
@@ -604,10 +657,11 @@ class ProformaController extends BaseController
         // Divider
         $pdf->setDrawColor(180, 180, 180);
         $pdf->setLineWidth(1.0);
-        $pdf->line($xL, 108.0, $xR, 108.0);
+        $dividerY = max($leftY + 8.0, 108.0);
+        $pdf->line($xL, $dividerY, $xR, $dividerY);
 
         // Bill To
-        $y = 132.0;
+        $y = $dividerY + 24.0;
         $pdf->setFont('Helvetica', '', 9);
         $pdf->setTextColor(90, 90, 90);
         $pdf->text($xL, $y, 'Bill To');
@@ -645,7 +699,7 @@ class ProformaController extends BaseController
         }
 
         // Right meta block (no Status)
-        $yR = 132.0;
+        $yR = $dividerY + 24.0;
 
         $pdf->setFont('Helvetica', '', 9);
         $pdf->setTextColor(90, 90, 90);
@@ -656,8 +710,9 @@ class ProformaController extends BaseController
         $pdf->text($xR - $pdf->estimateTextWidth($currency), $yR, $currency);
         $yR += 22;
 
-        $billingFrom = (string) (($proforma['billing_from'] ?? '') ?: '-');
-        $billingTo = (string) (($proforma['billing_to'] ?? '') ?: '-');
+        $issueDate = (string) (($proforma['proforma_date'] ?? '') ?: '-');
+        $billingFrom = (string) (($proforma['billing_from'] ?? '') ?: $issueDate);
+        $billingTo = (string) (($proforma['billing_to'] ?? '') ?: $issueDate);
         $pdf->setFont('Helvetica', '', 9);
         $pdf->setTextColor(90, 90, 90);
         $pdf->text($xR - $pdf->estimateTextWidth('Billing Period'), $yR, 'Billing Period');
@@ -702,28 +757,21 @@ class ProformaController extends BaseController
 
         $idx = 1;
         foreach ($items as $it) {
-            $descRaw = (string) ($it['description'] ?? '');
+            $descRaw = bms_description_to_plain((string) ($it['description'] ?? ''));
             $lines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', $descRaw) ?: [])));
-            $itemName = $lines[0] ?? '';
-            $rest = $lines;
-            if ($rest !== []) {
-                array_shift($rest);
+            if ($lines === []) {
+                $lines = ['-'];
             }
 
             $descLines = [];
-            if ($itemName !== '') {
-                $descLines[] = [$itemName, true];
-            }
-            foreach ($rest as $b) {
-                $b = trim($b);
-                if ($b === '') continue;
-                $wrapped = $pdf->wrapText('- ' . $b, $wDesc - 12, 9);
-                foreach ($wrapped as $wl) {
-                    $descLines[] = [$wl, false];
+            foreach ($lines as $lineText) {
+                $wrapped = $pdf->wrapText('• ' . $lineText, $wDesc - 12, 9);
+                foreach ($wrapped as $wrappedLine) {
+                    $descLines[] = $wrappedLine;
                 }
             }
             if ($descLines === []) {
-                $descLines[] = ['-', false];
+                $descLines = ['-'];
             }
 
             $descHeight = (count($descLines) * $lineH) + 6.0;
@@ -753,9 +801,8 @@ class ProformaController extends BaseController
             $pdf->text($x0 + 8, $yT + 14, (string) $idx);
 
             $yy = $yT + 14;
-            foreach ($descLines as $dl) {
-                [$txt, $bold] = $dl;
-                $pdf->setFont('Helvetica', $bold ? 'B' : '', $bold ? 10 : 9);
+            foreach ($descLines as $txt) {
+                $pdf->setFont('Helvetica', '', 9);
                 $pdf->text($x0 + $wNo + 6, $yy, (string) $txt);
                 $yy += $lineH;
             }
@@ -811,6 +858,27 @@ class ProformaController extends BaseController
         $netTxt = $moneyPrefix . number_format($netAmount, 2);
         $pdf->text($valX - $pdf->estimateTextWidth($netTxt, 12), $yTotals + 6.0, $netTxt);
         $yTotals += 34.0;
+
+        foreach (array_filter([
+            $currentAccountDetails,
+            $paypalAccount !== '' ? ('Paypal account: ' . $paypalAccount) : '',
+        ]) as $paymentLine) {
+            foreach ($pdf->wrapText((string) $paymentLine, 260.0, 10) as $wrappedLine) {
+                $pdf->setFont('Helvetica', '', 10);
+                $pdf->setTextColor(90, 90, 90);
+                $pdf->text($xL, $yTotals, $wrappedLine);
+                $pdf->setTextColor(0, 0, 0);
+                $yTotals += 14.0;
+            }
+        }
+
+        if ($isExportInvoice) {
+            $pdf->setFont('Helvetica', '', 10);
+            $pdf->setTextColor(90, 90, 90);
+            $pdf->text($xL, $yTotals, $exportNote);
+            $pdf->setTextColor(0, 0, 0);
+            $yTotals += 22.0;
+        }
 
         $pdf->setDrawColor(180, 180, 180);
         $sigW = 200.0;
@@ -876,3 +944,4 @@ class ProformaController extends BaseController
         }
     }
 }
+

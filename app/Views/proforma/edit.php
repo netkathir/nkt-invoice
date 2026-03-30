@@ -16,7 +16,6 @@
             </div>
             <div class="flex-grow-1">
                 <div class="h5 mb-1">Invoice</div>
-                <div class="text-muted small">Invoice</div>
             </div>
         </div>
 

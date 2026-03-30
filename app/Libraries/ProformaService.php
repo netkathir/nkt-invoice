@@ -3,6 +3,7 @@
 namespace App\Libraries;
 
 use App\Models\BillableItemModel;
+use App\Models\ClientModel;
 use App\Models\ProformaItemModel;
 use App\Models\ProformaModel;
 use CodeIgniter\Database\BaseConnection;
@@ -31,6 +32,16 @@ class ProformaService
             throw new RuntimeException('Please select at least one billable item.');
         }
 
+        $client = (new ClientModel())->find($clientId);
+        if (! $client) {
+            throw new RuntimeException('Client not found.');
+        }
+
+        $clientCountry = trim((string) ($client['country'] ?? ''));
+        $isIndiaClient = function_exists('bms_is_india_country')
+            ? bms_is_india_country($clientCountry)
+            : in_array(strtolower($clientCountry), ['', 'india', 'in'], true);
+
         $proformaDate = isset($meta['proforma_date']) && $meta['proforma_date'] !== ''
             ? (string) $meta['proforma_date']
             : date('Y-m-d');
@@ -39,9 +50,7 @@ class ProformaService
             ? (string) $meta['status']
             : ProformaModel::STATUS_DRAFT;
 
-        $invoiceType = isset($meta['invoice_type']) && $meta['invoice_type'] !== ''
-            ? (string) $meta['invoice_type']
-            : ProformaModel::TYPE_GST;
+        $invoiceType = $isIndiaClient ? ProformaModel::TYPE_GST : ProformaModel::TYPE_EXPORT;
 
         $billingFrom = $meta['billing_from'] ?? null;
         $billingTo = $meta['billing_to'] ?? null;
@@ -187,6 +196,7 @@ class ProformaService
             throw new RuntimeException('Please select at least one billable item.');
         }
 
+
         $proforma = $this->proformas->find($proformaId);
         if (! $proforma) {
             throw new RuntimeException('Proforma not found.');
@@ -197,6 +207,16 @@ class ProformaService
             throw new RuntimeException('Invalid proforma client.');
         }
 
+        $client = (new ClientModel())->find($clientId);
+        if (! $client) {
+            throw new RuntimeException('Client not found.');
+        }
+
+        $clientCountry = trim((string) ($client['country'] ?? ''));
+        $isIndiaClient = function_exists('bms_is_india_country')
+            ? bms_is_india_country($clientCountry)
+            : in_array(strtolower($clientCountry), ['', 'india', 'in'], true);
+
         $proformaDate = isset($meta['proforma_date']) && $meta['proforma_date'] !== ''
             ? (string) $meta['proforma_date']
             : (string) ($proforma['proforma_date'] ?? date('Y-m-d'));
@@ -204,10 +224,7 @@ class ProformaService
         $status = isset($meta['status']) && $meta['status'] !== ''
             ? (string) $meta['status']
             : (string) ($proforma['status'] ?? ProformaModel::STATUS_DRAFT);
-
-        $invoiceType = isset($meta['invoice_type']) && $meta['invoice_type'] !== ''
-            ? (string) $meta['invoice_type']
-            : (string) ($proforma['invoice_type'] ?? ProformaModel::TYPE_GST);
+        $invoiceType = $isIndiaClient ? ProformaModel::TYPE_GST : ProformaModel::TYPE_EXPORT;
 
         $billingFrom = $meta['billing_from'] ?? ($proforma['billing_from'] ?? null);
         $billingTo = $meta['billing_to'] ?? ($proforma['billing_to'] ?? null);
@@ -426,3 +443,6 @@ class ProformaService
         }
     }
 }
+
+
+

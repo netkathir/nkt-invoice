@@ -511,16 +511,124 @@ table tbody td{
 }
 
 /* Consistent icon-style actions across modules */
+.bms-actions{
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 14px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
 .bms-actions .bms-action-btn{
-    width: 34px;
-    height: 34px;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
     padding: 0 !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 0 0 auto;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    text-decoration: none;
+    line-height: 1;
+    color: var(--ink);
+    transition: transform .18s ease, opacity .18s ease, box-shadow .18s ease;
 }
 .bms-actions .bms-action-btn svg{
+    width: 18px;
+    height: 18px;
     display: block;
+}
+.bms-actions .btn-view{
+    color: #111111 !important;
+}
+.bms-actions .btn-edit{
+    color: #2563eb !important;
+}
+.bms-actions .btn-del{
+    color: #ef4444 !important;
+}
+.bms-actions .btn-print{
+    color: #111111 !important;
+}
+.bms-actions .bms-action-btn:hover{
+    opacity: .8;
+    transform: translateY(-1px);
+}
+.bms-actions .bms-action-btn:focus-visible{
+    outline: 0;
+    border-radius: 8px !important;
+    box-shadow: 0 0 0 .2rem rgba(15,23,42,.14) !important;
+}
+
+#dtBillableItems{
+    table-layout: fixed;
+}
+#dtBillableItems th,
+#dtBillableItems td{
+    vertical-align: middle;
+}
+#dtBillableItems td.bms-billable-entry,
+#dtBillableItems td.bms-billable-date,
+#dtBillableItems td.bms-billable-client,
+#dtBillableItems td.bms-billable-month,
+#dtBillableItems td.bms-billable-amount{
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#dtBillableItems td.bms-billable-desc span{
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+#dtBillableItems td.bms-billable-status{
+    overflow: visible;
+}
+#dtBillableItems td.bms-billable-actions{
+    overflow: visible;
+}
+#dtBillableItems td.bms-billable-actions .bms-actions{
+    gap: 10px;
+}
+#dtBillableItems td.bms-billable-actions .btn-billed-icon{
+    width: 30px;
+    height: 30px;
+    flex: 0 0 auto;
+}
+
+#dtProformas{
+    table-layout: fixed;
+}
+#dtProformas th,
+#dtProformas td{
+    vertical-align: middle;
+}
+#dtProformas td.bms-proforma-number,
+#dtProformas td.bms-proforma-type,
+#dtProformas td.bms-proforma-date,
+#dtProformas td.bms-proforma-due,
+#dtProformas td.bms-proforma-amount{
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#dtProformas td.bms-proforma-customer span,
+#dtProformas td.bms-proforma-company span{
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+#dtProformas td.bms-proforma-actions{
+    overflow: visible;
+}
+#dtProformas td.bms-proforma-actions .bms-actions{
+    gap: 10px;
 }
 
 .tox-tinymce{
@@ -823,4 +931,13 @@ body.bms-sidebar-collapsed .btn-sidebar-toggle{
 #dtPayments thead tr:nth-child(2) th .dt-column-order,
 #dtPayments thead tr:nth-child(2) th span.dt-column-order{
     display: none !important;
+}
+
+/* Payment Report: keep all headers left-aligned */
+#dtPaymentReport thead th{
+    text-align: left !important;
+}
+#dtPaymentReport thead th .dt-column-header,
+#dtPaymentReport thead td .dt-column-header{
+    justify-content: flex-start !important;
 }

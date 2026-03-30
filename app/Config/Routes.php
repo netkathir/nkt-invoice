@@ -66,7 +66,12 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
             $routes->post('save', 'ClientMasterController::save');
             $routes->post('delete', 'ClientMasterController::delete');
         });
+        $routes->get('company-information', 'CompanyInformationController::index');
+        $routes->post('company-information/save', 'CompanyInformationController::save');
     });
+
+    $routes->get('company-information', 'CompanyInformationController::index');
+    $routes->post('company-information/save', 'CompanyInformationController::save');
 
     // Backward-compatible routes (old Clients module URLs)
     $routes->group('clients', static function (RouteCollection $routes): void {

@@ -30,7 +30,7 @@
 
 <div class="card">
     <div class="card-body">
-        <table id="dtBillableItems" class="table table-striped table-bordered nowrap w-100">
+        <table id="dtBillableItems" class="table table-striped table-bordered w-100 bms-billable-table">
             <thead>
             <tr>
                 <th>Entry No</th>
@@ -38,8 +38,8 @@
                 <th>Client</th>
                 <th>Description</th>
                 <th>Billing Month</th>
-                <th>Amount</th>
                 <th>Status</th>
+                <th>Amount</th>
                 <th>Actions</th>
             </tr>
             </thead>

@@ -16,7 +16,6 @@
             </div>
             <div class="flex-grow-1">
                 <div class="h5 mb-1">Invoice</div>
-                <div class="text-muted small">Invoice</div>
             </div>
         </div>
 
@@ -59,6 +58,7 @@
                                     data-addr2="<?= esc((string) $addr2) ?>"
                                     data-city="<?= esc((string) $city) ?>"
                                     data-state="<?= esc((string) $state) ?>"
+                                    data-country="<?= esc((string) ($c['country'] ?? '')) ?>"
                                     data-pincode="<?= esc((string) $pincode) ?>"
                                     <?= $selected ? 'selected' : '' ?>
                                 ><?= esc($customer) ?></option>
@@ -115,6 +115,7 @@
                             <option value="GST Invoice" <?= $invoiceType === 'GST Invoice' ? 'selected' : '' ?>>GST Invoice</option>
                             <option value="Export Invoice" <?= $invoiceType === 'Export Invoice' ? 'selected' : '' ?>>Export Invoice</option>
                         </select>
+                        <div class="form-text">Auto-selected from client country.</div>
                     </div>
 
                     <div class="col-12 col-md-4">
@@ -131,7 +132,19 @@
                         <div class="input-group bms-date-wrap">
                             <input type="text" class="form-control" id="pf_date" placeholder="DD/MM/YYYY" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
-                                <span aria-hidden="true">📅</span>
+                                <span aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
+        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+</span>
                             </button>
                             <input type="date" class="bms-native-date" id="pf_date_native" value="<?= esc((string) ($proforma['proforma_date'] ?? '')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
@@ -167,7 +180,6 @@
                 <table id="pfItemsTable" class="table table-bordered align-middle nowrap w-100 mb-0">
                     <thead class="table-light">
                     <tr>
-                        <th style="width:200px;">Item</th>
                         <th>Item Description</th>
                         <th class="text-end" style="width:120px;">Quantity</th>
                         <th style="width:110px;">UOM</th>
@@ -181,24 +193,14 @@
                         <?php
                             $desc = (string) ($it['description'] ?? '');
                             $lines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', $desc) ?: [])));
-                            $itemName = $lines[0] ?? '';
-                            $rest = $lines;
-                            if ($rest !== []) {
-                                array_shift($rest);
-                            }
-                            $descText = implode("\n", $rest);
                         ?>
                         <tr>
                             <td>
                                 <input type="hidden" class="pf-item-id" value="<?= esc((string) ($it['id'] ?? '0')) ?>">
-                                <input type="text" class="form-control form-control-sm pf-item-name" value="<?= esc($itemName) ?>" placeholder="Item">
-                            </td>
-                            <td>
-                                <?php $descLines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', (string) $descText) ?: []))); ?>
                                 <div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;">
                                     <ul>
-                                        <?php if ($descLines !== []): ?>
-                                            <?php foreach ($descLines as $line): ?>
+                                        <?php if ($lines !== []): ?>
+                                            <?php foreach ($lines as $line): ?>
                                                 <li><?= esc($line) ?></li>
                                             <?php endforeach; ?>
                                         <?php else: ?>
@@ -307,7 +309,19 @@
                         <div class="input-group bms-date-wrap">
                             <input type="text" class="form-control" id="pf_due" placeholder="DD/MM/YYYY" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
-                                <span aria-hidden="true">📅</span>
+                                <span aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
+        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+</span>
                             </button>
                             <input type="date" class="bms-native-date" id="pf_due_native" value="<?= esc((string) ($proforma['billing_to'] ?? '')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
@@ -329,3 +343,4 @@
     });
 </script>
 <?= $this->endSection() ?>
+

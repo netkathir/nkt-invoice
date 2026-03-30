@@ -1,4 +1,4 @@
-﻿<?= $this->extend('layouts/app') ?>
+<?= $this->extend('layouts/app') ?>
 
 <?= $this->section('content') ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
@@ -14,7 +14,6 @@
             </div>
             <div class="flex-grow-1">
                 <div class="h5 mb-1">Invoice</div>
-                <div class="text-muted small">Invoice</div>
             </div>
         </div>
 
@@ -60,6 +59,7 @@
                                         data-addr2="<?= esc((string) $addr2) ?>"
                                         data-city="<?= esc((string) $city) ?>"
                                         data-state="<?= esc((string) $state) ?>"
+                                        data-country="<?= esc((string) ($c['country'] ?? '')) ?>"
                                         data-pincode="<?= esc((string) $pincode) ?>"
                                     ><?= esc($clientLabel) ?></button>
                                 <?php endforeach; ?>
@@ -114,10 +114,11 @@
                         <label class="form-label mb-0 text-md-end fw-semibold">Invoice Type <span class="text-danger">*</span></label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <select class="form-select" id="pf_invoice_type" required>
+                        <select class="form-select" id="pf_invoice_type" required disabled>
                             <option value="GST Invoice" selected>GST Invoice</option>
                             <option value="Export Invoice">Export Invoice</option>
                         </select>
+                        <div class="form-text">Auto-selected from client country.</div>
                         <div class="invalid-feedback">Invoice Type is required.</div>
                     </div>
 
@@ -135,7 +136,19 @@
                         <div class="input-group bms-date-wrap">
                             <input type="text" class="form-control" id="pf_date" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
-                                <span aria-hidden="true">📅</span>
+                                <span aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
+                                        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
                             </button>
                             <input type="date" class="bms-native-date" id="pf_date_native" value="<?= esc(date('Y-m-d')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
@@ -266,7 +279,19 @@
                         <div class="input-group bms-date-wrap">
                             <input type="text" class="form-control" id="pf_due" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
-                                <span aria-hidden="true">📅</span>
+                                <span aria-hidden="true">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
+                                        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
                             </button>
                             <input type="date" class="bms-native-date" id="pf_due_native" tabindex="-1" aria-hidden="true">
                         </div>

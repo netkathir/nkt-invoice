@@ -15,6 +15,27 @@ CREATE TABLE `clients` (
   KEY `clients_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `company_information` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `company_name` varchar(191) NOT NULL,
+  `logo_path` varchar(255) DEFAULT NULL,
+  `address_line1` varchar(255) NOT NULL,
+  `address_line2` varchar(255) DEFAULT NULL,
+  `city` varchar(100) NOT NULL,
+  `state` varchar(100) NOT NULL,
+  `pincode` varchar(20) NOT NULL,
+  `gstin_number` varchar(15) NOT NULL,
+  `export_tax_reference` varchar(191) DEFAULT NULL,
+  `email_id` varchar(191) DEFAULT NULL,
+  `website` varchar(191) DEFAULT NULL,
+  `phone_number` varchar(20) DEFAULT NULL,
+  `current_account_details` varchar(255) DEFAULT NULL,
+  `paypal_account` varchar(191) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `proforma_invoices` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `proforma_number` varchar(50) NOT NULL,
@@ -226,3 +247,5 @@ CREATE TABLE `password_reset_tokens` (
   KEY `password_reset_tokens_expires_at` (`expires_at`),
   CONSTRAINT `fk_password_reset_tokens_admin` FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+

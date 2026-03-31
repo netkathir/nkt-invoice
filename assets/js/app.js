@@ -696,6 +696,16 @@
     BMS.initDashboard = function (opts) {
         opts = opts || {};
         const $month = $('#dashMonth');
+        const $monthPicker = $('#dashMonthPicker');
+        const $monthTrigger = $('#dashMonthTrigger');
+        const $monthTriggerLabel = $('#dashMonthTriggerLabel');
+        const $monthPanel = $('#dashMonthPanel');
+        const $monthYear = $('#dashMonthYear');
+        const $monthPrevYear = $('#dashMonthPrevYear');
+        const $monthNextYear = $('#dashMonthNextYear');
+        const $monthToday = $('#dashMonthToday');
+        const $monthClose = $('#dashMonthClose');
+        const $dashHero = $month.closest('.dash-hero');
         if (!$month.length) return;
 
         let currentMonth = String($month.val() || opts.defaultMonth || '').trim();
@@ -704,6 +714,8 @@
             currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
             $month.val(currentMonth);
         }
+        let pickerYear = parseInt(String(currentMonth).slice(0, 4), 10) || new Date().getFullYear();
+        const monthLabelsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
         function fmtMoney(v) {
             const n = parseFloat(v || 0) || 0;
@@ -712,6 +724,81 @@
             } catch (e) {
                 return n.toFixed(2);
             }
+        }
+
+        function formatMonthLabel(ym) {
+            const raw = String(ym || '').trim();
+            const m = /^(\d{4})-(\d{2})$/.exec(raw);
+            if (!m) return raw || 'Current Month';
+            const dt = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, 1);
+            try {
+                return dt.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+            } catch (e) {
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                return (months[dt.getMonth()] || raw) + ' ' + dt.getFullYear();
+            }
+        }
+
+        function syncDashboardMonthLabels() {
+            const label = formatMonthLabel(currentMonth);
+            $('#dashMonthLabel').text(label);
+            $('#dashWindowTitle').text(label);
+            $monthTriggerLabel.text(label);
+        }
+
+        function parseMonthValue(ym) {
+            const raw = String(ym || '').trim();
+            const m = /^(\d{4})-(\d{2})$/.exec(raw);
+            if (!m) return null;
+            return {
+                year: parseInt(m[1], 10),
+                month: parseInt(m[2], 10)
+            };
+        }
+
+        function renderDashboardMonthPicker() {
+            if (!$monthPanel.length) return;
+            $monthYear.text(String(pickerYear));
+            const currentParts = parseMonthValue(currentMonth);
+            const now = new Date();
+            const realYear = now.getFullYear();
+            const realMonth = now.getMonth() + 1;
+
+            $monthPanel.find('.dash-month-chip').each(function (idx) {
+                const monthNum = idx + 1;
+                const isSelected = !!currentParts && currentParts.year === pickerYear && currentParts.month === monthNum;
+                const isCurrent = pickerYear === realYear && realMonth === monthNum;
+                $(this)
+                    .toggleClass('is-selected', isSelected)
+                    .toggleClass('is-current', isCurrent)
+                    .attr('aria-pressed', isSelected ? 'true' : 'false')
+                    .text(monthLabelsShort[idx]);
+            });
+        }
+
+        function openDashboardMonthPicker() {
+            const currentParts = parseMonthValue(currentMonth);
+            pickerYear = currentParts ? currentParts.year : pickerYear;
+            renderDashboardMonthPicker();
+            $monthPanel.removeClass('d-none');
+            $monthTrigger.attr('aria-expanded', 'true');
+            $dashHero.addClass('is-month-open');
+        }
+
+        function closeDashboardMonthPicker() {
+            $monthPanel.addClass('d-none');
+            $monthTrigger.attr('aria-expanded', 'false');
+            $dashHero.removeClass('is-month-open');
+        }
+
+        function updateDashboardMonth(nextMonth) {
+            currentMonth = String(nextMonth || '').trim();
+            if (!currentMonth) return;
+            $month.val(currentMonth);
+            syncDashboardMonthLabels();
+            renderDashboardMonthPicker();
+            loadMetrics();
+            summaryTable.ajax.reload();
         }
 
         function setMetric(id, value, isMoney) {
@@ -724,11 +811,25 @@
             getJson('dashboard/metrics', { month: currentMonth })
                 .done(function (res) {
                     const d = (res && res.data) ? res.data : {};
+                    const totalItems = parseInt(d.total_items || 0, 10) || 0;
+                    const pendingItems = parseInt(d.pending_items || 0, 10) || 0;
+                    const billedItems = parseInt(d.billed_items || 0, 10) || 0;
+                    const pendingAmount = parseFloat(d.pending_amount || 0) || 0;
+                    const billedAmount = parseFloat(d.billed_amount || 0) || 0;
                     setMetric('#mTotalItems', d.total_items, false);
                     setMetric('#mPendingItems', d.pending_items, false);
                     setMetric('#mBilledItems', d.billed_items, false);
                     setMetric('#mPendingAmount', d.pending_amount, true);
                     setMetric('#mBilledAmount', d.billed_amount, true);
+
+                    const label = formatMonthLabel(currentMonth);
+                    let insight = 'Tracking billing activity for ' + label + '.';
+                    if (totalItems > 0) {
+                        insight = billedItems + ' of ' + totalItems + ' items are already billed for ' + label + ', with ' + fmtMoney(pendingAmount) + ' still pending and ' + fmtMoney(billedAmount) + ' already billed.';
+                    } else if (pendingItems > 0 || billedItems > 0) {
+                        insight = 'Billing movement is available for ' + label + ', including ' + pendingItems + ' pending items and ' + billedItems + ' billed items.';
+                    }
+                    $('#dashInsight').text(insight);
                 })
                 .fail(function (xhr) {
                     notify((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to load dashboard metrics.', 'danger');
@@ -761,12 +862,51 @@
             if (json && json.success === false && json.message) notify(json.message, 'danger');
         });
 
-        $month.on('change', function () {
-            currentMonth = String($month.val() || '').trim();
-            loadMetrics();
-            summaryTable.ajax.reload();
+        $monthTrigger.on('click', function (e) {
+            e.preventDefault();
+            if ($monthPanel.hasClass('d-none')) {
+                openDashboardMonthPicker();
+            } else {
+                closeDashboardMonthPicker();
+            }
         });
 
+        $monthPrevYear.on('click', function () {
+            pickerYear -= 1;
+            renderDashboardMonthPicker();
+        });
+
+        $monthNextYear.on('click', function () {
+            pickerYear += 1;
+            renderDashboardMonthPicker();
+        });
+
+        $monthPanel.on('click', '.dash-month-chip', function () {
+            const month = String($(this).data('month') || '').padStart(2, '0');
+            if (!month) return;
+            updateDashboardMonth(String(pickerYear) + '-' + month);
+            closeDashboardMonthPicker();
+        });
+
+        $monthToday.on('click', function () {
+            const now = new Date();
+            pickerYear = now.getFullYear();
+            updateDashboardMonth(now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0'));
+            closeDashboardMonthPicker();
+        });
+
+        $monthClose.on('click', function () {
+            closeDashboardMonthPicker();
+        });
+
+        $(document).off('mousedown.dashMonth').on('mousedown.dashMonth', function (e) {
+            if (!$monthPicker.length) return;
+            if ($(e.target).closest('#dashMonthPicker').length) return;
+            closeDashboardMonthPicker();
+        });
+
+        syncDashboardMonthLabels();
+        renderDashboardMonthPicker();
         loadMetrics();
     };
 

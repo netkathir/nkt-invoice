@@ -16,6 +16,18 @@
     };
 
     $issueDate = trim((string) ($proforma['proforma_date'] ?? ''));
+    $formatPrintDate = static function (string $value): string {
+        $raw = trim($value);
+        if ($raw === '') {
+            return '-';
+        }
+        try {
+            return (new DateTime($raw))->format('d M Y');
+        } catch (Throwable $e) {
+            return $raw;
+        }
+    };
+    $issueDateDisplay = $formatPrintDate($issueDate);
     $invoiceNo = trim((string) ($proforma['proforma_number'] ?? ''));
     $invoiceType = (string) (($proforma['invoice_type'] ?? '') ?: 'GST Invoice');
     $isExportInvoice = $invoiceType === 'Export Invoice';
@@ -79,7 +91,6 @@
     $billingTo = trim((string) (($proforma['billing_to'] ?? '') ?: ''));
     $billingFromDisplay = $billingFrom !== '' ? $billingFrom : ($issueDate !== '' ? $issueDate : '-');
     $billingToDisplay = $billingTo !== '' ? $billingTo : ($issueDate !== '' ? $issueDate : '-');
-
     $exportNote = 'Supply meant for export under LUT without payment of IGST.';
 ?>
 
@@ -108,7 +119,7 @@
     }
     .inv-band {
         display: grid;
-        grid-template-columns: minmax(0, 1.08fr) 28px minmax(0, 0.92fr);
+        grid-template-columns: minmax(0, 1.08fr) 1px minmax(0, 0.92fr);
         border-top: 3px solid #87aeb2;
         border-bottom: 3px solid #87aeb2;
         align-items: stretch;
@@ -122,43 +133,46 @@
         justify-content: flex-start;
     }
     .inv-band-divider {
-        background: #c9c9c9;
+        background: #b7c7cb;
     }
     .inv-brand-row {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 10px;
-        margin-bottom: 14px;
+        gap: 12px;
+        margin-bottom: 8px;
+        width: 100%;
     }
     .inv-logo {
-        width: 82px;
-        height: 82px;
+        width: 170px;
+        max-width: 100%;
+        height: auto;
+        max-height: 82px;
         object-fit: contain;
+        object-position: left center;
         margin: 0;
         flex: 0 0 auto;
     }
     .inv-company-stack {
-        min-width: 0;
         display: flex;
         flex-direction: column;
-        justify-content: center;
         width: 100%;
         align-items: flex-start;
+        gap: 6px;
+        min-width: 0;
     }
     .inv-company-name {
-        font-family: Arial, Helvetica, sans-serif;
-        font-size: 16px;
+        font-family: Cambria, "Times New Roman", Times, serif;
+        font-size: 17px;
         font-weight: 700;
-        letter-spacing: 0;
-        font-stretch: normal;
         line-height: 1.2;
+        letter-spacing: .04em;
         margin: 0;
         white-space: normal;
         display: block;
         max-width: 100%;
-        padding: 4px 0;
-        background: #d9e6eb;
+        padding: 0;
+        background: transparent;
         color: #1d4f6d;
         box-sizing: border-box;
         overflow-wrap: anywhere;
@@ -166,8 +180,9 @@
     }
     .inv-company-details {
         display: grid;
-        gap: 4px;
+        gap: 5px;
         justify-items: start;
+        width: 100%;
     }
     .inv-company-line,
     .inv-meta-row,
@@ -176,45 +191,69 @@
     }
     .inv-meta-grid {
         display: grid;
-        grid-template-columns: 132px minmax(0, 1fr);
-        gap: 6px 16px;
+        grid-template-columns: 104px minmax(0, 1fr);
+        gap: 8px 14px;
         align-content: start;
+        align-items: start;
     }
     .inv-meta-label {
         font-weight: 700;
         line-height: 1.45;
+        white-space: nowrap;
+        padding-top: 1px;
+    }
+    .inv-meta-row {
+        min-width: 0;
+    }
+    .inv-party-line {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
     }
     .inv-items {
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
+        margin-top: 0;
     }
     .inv-items th,
     .inv-items td {
         border: 1px solid #87aeb2;
-        padding: 4px 6px;
+        padding: 8px 10px;
         vertical-align: top;
+        word-break: break-word;
+        overflow-wrap: anywhere;
     }
     .inv-items th {
         background: #eef4f4;
         font-weight: 700;
-        text-align: center;
+        text-align: left;
+        white-space: nowrap;
     }
-    .inv-items .col-desc { width: 56%; }
+    .inv-items .col-desc { width: 60%; }
     .inv-items .col-unit { width: 8%; }
     .inv-items .col-price { width: 12%; }
-    .inv-items .col-qty { width: 12%; }
-    .inv-items .col-amt { width: 12%; }
+    .inv-items .col-qty { width: 10%; }
+    .inv-items .col-amt { width: 10%; }
     .inv-desc-main {
         font-weight: 700;
         margin-bottom: 3px;
     }
     .inv-desc-extra {
-        padding-left: 12px;
-        font-size: 11px;
+        padding-left: 14px;
+        text-indent: -10px;
+        line-height: 1.55;
+        font-size: 12px;
     }
-    .inv-row-empty td {
-        height: 28px;
+    .inv-items tbody td {
+        line-height: 1.45;
+    }
+    .inv-items tbody td:first-child {
+        vertical-align: top;
+    }
+    .inv-items tbody td:not(:first-child) {
+        vertical-align: middle;
     }
     .inv-right,
     .inv-center {
@@ -228,24 +267,28 @@
         justify-content: flex-end;
     }
     .inv-summary {
-        width: 360px;
+        width: 40%;
+        min-width: 0;
         border-left: 1px solid #87aeb2;
         border-right: 1px solid #87aeb2;
         border-bottom: 1px solid #87aeb2;
         border-collapse: collapse;
+        margin-top: -1px;
     }
     .inv-summary td {
         border-top: 1px solid #87aeb2;
-        padding: 6px 8px;
+        padding: 8px 10px;
+        vertical-align: top;
     }
     .inv-summary .label {
-        text-align: right;
-        width: 65%;
+        text-align: left;
+        width: 62%;
     }
     .inv-summary .value {
         text-align: right;
-        width: 35%;
+        width: 38%;
         font-weight: 700;
+        line-height: 1.45;
     }
     .inv-total-row td {
         background: #e7f0ef;
@@ -271,18 +314,20 @@
     .inv-thanks {
         text-align: center;
         font-weight: 700;
-        margin-top: 10px;
+        margin-top: 14px;
+        grid-column: 1 / -1;
+        width: 100%;
     }
     .inv-sign-block {
         text-align: center;
     }
     .inv-sign-company {
-        margin-bottom: 46px;
+        margin-bottom: 18px;
     }
     .inv-sign-line {
-        border-top: 1px solid #000;
-        padding-top: 6px;
+        padding-top: 0;
         font-size: 11px;
+        line-height: 1.5;
     }
     .inv-link {
         color: #0b76b7;
@@ -316,16 +361,16 @@
                 <img src="<?= esc($logoUrl) ?>" alt="Company Logo" class="inv-logo">
                 <div class="inv-company-stack">
                     <div class="inv-company-name"><?= esc($fromNamePrint) ?></div>
+                    <div class="inv-company-details">
+                        <?php if ($fromAddress1 !== ''): ?><div class="inv-company-line"><?= esc($fromAddress1) ?></div><?php endif; ?>
+                        <?php if ($fromAddress2 !== ''): ?><div class="inv-company-line"><?= esc($fromAddress2) ?></div><?php endif; ?>
+                        <?php if ($fromPlace !== ''): ?><div class="inv-company-line"><?= esc($fromPlace) ?></div><?php endif; ?>
+                        <?php if ($taxReferenceValue !== ''): ?><div class="inv-company-line"><?= esc($taxReferenceLabel) ?>: <?= esc($taxReferenceValue) ?></div><?php endif; ?>
+                        <?php if ($fromWebsite !== ''): ?><div class="inv-company-line"><a class="inv-link" href="<?= esc($fromWebsiteUrl) ?>" target="_blank" rel="noopener"><?= esc($fromWebsite) ?></a></div><?php endif; ?>
+                        <?php if ($fromEmail !== ''): ?><div class="inv-company-line"><a class="inv-link" href="mailto:<?= esc($fromEmail) ?>"><?= esc($fromEmail) ?></a></div><?php endif; ?>
+                        <?php if ($fromPhone !== ''): ?><div class="inv-company-line"><?= esc($fromPhone) ?></div><?php endif; ?>
+                    </div>
                 </div>
-            </div>
-            <div class="inv-company-details">
-                <?php if ($fromAddress1 !== ''): ?><div class="inv-company-line"><?= esc($fromAddress1) ?></div><?php endif; ?>
-                <?php if ($fromAddress2 !== ''): ?><div class="inv-company-line"><?= esc($fromAddress2) ?></div><?php endif; ?>
-                <?php if ($fromPlace !== ''): ?><div class="inv-company-line"><?= esc($fromPlace) ?></div><?php endif; ?>
-                <?php if ($taxReferenceValue !== ''): ?><div class="inv-company-line"><?= esc($taxReferenceLabel) ?>: <?= esc($taxReferenceValue) ?></div><?php endif; ?>
-                <?php if ($fromWebsite !== ''): ?><div class="inv-company-line"><a class="inv-link" href="<?= esc($fromWebsiteUrl) ?>" target="_blank" rel="noopener"><?= esc($fromWebsite) ?></a></div><?php endif; ?>
-                <?php if ($fromEmail !== ''): ?><div class="inv-company-line"><a class="inv-link" href="mailto:<?= esc($fromEmail) ?>"><?= esc($fromEmail) ?></a></div><?php endif; ?>
-                <?php if ($fromPhone !== ''): ?><div class="inv-company-line"><?= esc($fromPhone) ?></div><?php endif; ?>
             </div>
         </div>
 
@@ -337,7 +382,7 @@
                 <div class="inv-meta-row"><?= esc($invoiceNo !== '' ? $invoiceNo : '-') ?></div>
 
                 <div class="inv-meta-label">Inv Date:</div>
-                <div class="inv-meta-row"><?= esc($issueDate !== '' ? $issueDate : '-') ?></div>
+                <div class="inv-meta-row"><?= esc($issueDateDisplay) ?></div>
 
                 <div class="inv-meta-label">Bill To:</div>
                 <div class="inv-meta-row"><?= esc($billToName !== '' ? $billToName : $billToCompany) ?></div>
@@ -453,13 +498,14 @@
             <?php if ($billingFrom !== '' || $billingTo !== ''): ?>
                 <div>Billing Period: <?= esc($billingFromDisplay) ?> to <?= esc($billingToDisplay) ?></div>
             <?php endif; ?>
-            <div class="inv-thanks">Thank you for your business.!</div>
         </div>
 
         <div class="inv-sign-block">
             <div class="inv-sign-company">For <?= esc($fromName) ?></div>
-            <div class="inv-sign-line">Authorized Signature</div>
+            <div class="inv-sign-line">This is a computer-generated bill and does not require a signature.</div>
         </div>
+
+        <div class="inv-thanks">Thank you for your business.!</div>
     </div>
 </div>
 

@@ -123,6 +123,23 @@
         return yyyy + '-' + mm + '-' + dd;
     }
 
+    function addDaysToIso(iso, days) {
+        const raw = String(iso || '').trim().slice(0, 10);
+        const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+        if (!m) return '';
+        const year = parseInt(m[1], 10);
+        const month = parseInt(m[2], 10) - 1;
+        const day = parseInt(m[3], 10);
+        const delta = parseInt(days, 10);
+        if (!isFinite(year) || !isFinite(month) || !isFinite(day) || !isFinite(delta)) return '';
+        const dt = new Date(year, month, day);
+        dt.setDate(dt.getDate() + delta);
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth() + 1).padStart(2, '0');
+        const dd = String(dt.getDate()).padStart(2, '0');
+        return yyyy + '-' + mm + '-' + dd;
+    }
+
     function formatUiDateDmy(value, type) {
         const raw = String(value || '').trim();
         if (!raw) return type === 'display' ? '-' : '';
@@ -2243,16 +2260,16 @@
                 { data: 'invoice_type', width: '12%', className: 'text-nowrap bms-proforma-type', orderable: false, render: function (d) { return d || 'GST Invoice'; } },
                 { data: 'proforma_date', width: '10%', className: 'text-nowrap bms-proforma-date', render: formatUiDate },
                 { data: 'billing_to', width: '10%', className: 'text-nowrap bms-proforma-due', render: formatUiDate },
-                { data: null, width: '15%', className: 'text-nowrap bms-proforma-customer', render: function (_d, t, row) {
+                { data: null, width: '14%', className: 'bms-proforma-customer', render: function (_d, t, row) {
                     const value = (row && (row.customer_name || row.contact_person || row.client_name)) ? (row.customer_name || row.contact_person || row.client_name) : '-';
                     return renderTruncatedDescription(value, t, 16);
                 } },
-                { data: null, width: '17%', className: 'text-nowrap bms-proforma-company', render: function (_d, t, row) {
+                { data: null, width: '16%', className: 'bms-proforma-company', render: function (_d, t, row) {
                     const value = (row && (row.company_name || row.client_name)) ? (row.company_name || row.client_name) : '-';
                     return renderTruncatedDescription(value, t, 18);
                 } },
-                { data: null, width: '9%', className: 'text-nowrap bms-proforma-amount', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
-                { data: null, width: '11%', orderable: false, className: 'text-nowrap bms-proforma-actions', render: function (row) {
+                { data: null, width: '10%', className: 'text-nowrap bms-proforma-amount', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
+                { data: null, width: '12%', orderable: false, className: 'text-nowrap bms-proforma-actions', render: function (row) {
                     if (!row || !row.id) return '';
                     return actionGroup(
                         actionLink('view', 'btn-outline-dark', 'View', base('proforma/show/' + row.id)) +
@@ -3273,8 +3290,17 @@
 	        filterClientList('');
         syncInvoiceTypeFromCountry();
 
-	        attachNativeCalendar('#pf_date', '#pf_date_native', function () {}, isoToDmyText, textToIso);
+	        function syncDueDateFromIssue(iso) {
+	            const dueIso = addDaysToIso(iso, 30);
+	            $('#pf_due_native').val(dueIso);
+	            $('#pf_due').val(dueIso ? isoToDmyText(dueIso) : '');
+	        }
+
+	        attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
+	            syncDueDateFromIssue(iso);
+	        }, isoToDmyText, textToIso);
 	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {}, isoToDmyText, textToIso);
+	        syncDueDateFromIssue($('#pf_date_native').val() || textToIso($('#pf_date').val()));
 
 	        $('#pf_invoice_type').on('change', recalcGst);
 	        $('#pf_gst_percent').on('input', recalcGst);
@@ -3643,8 +3669,17 @@
             }
 	            initCompanyField();
 	            $('#pf_client_id').on('change', initCompanyField);
-	            attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
+	            function syncDueDateFromIssue(iso) {
+	                const dueIso = addDaysToIso(iso, 30);
+	                $('#pf_due_native').val(dueIso);
+	                $('#pf_due').val(dueIso ? isoToDmy(dueIso) : '');
+	            }
+
+	            attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
+	                syncDueDateFromIssue(iso);
+	            });
 	            attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+	            syncDueDateFromIssue($('#pf_date_native').val() || dmyToIso($('#pf_date').val()));
 
 	            $('#pf_invoice_type').on('change', recalcGst);
 	            $('#pf_gst_percent').on('input', recalcGst);
@@ -3812,9 +3847,18 @@
         const proformaId = parseInt($('#pf_id').val(), 10) || 0;
         const clientId = $('#pf_client_id').val();
 
-        attachNativeCalendar('#pf_date', '#pf_date_native', function () {});
+        function syncLegacyDueDateFromIssue(iso) {
+            const dueIso = addDaysToIso(iso, 30);
+            $('#pf_to_native').val(dueIso);
+            $('#pf_to').val(dueIso ? isoToDmy(dueIso) : '');
+        }
+
+        attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
+            syncLegacyDueDateFromIssue(iso);
+        });
         attachNativeCalendar('#pf_from', '#pf_from_native', function () {});
         attachNativeCalendar('#pf_to', '#pf_to_native', function () {});
+        syncLegacyDueDateFromIssue($('#pf_date_native').val() || dmyToIso($('#pf_date').val()));
 
 	        table = $('#dtProformaItems').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: function (_data, callback) {

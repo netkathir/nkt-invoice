@@ -469,7 +469,7 @@ table tbody td{
     display: flex !important;
     width: 100% !important;
     justify-content: flex-start !important;
-    align-items: left !important;
+    align-items: center !important;
     gap: .35rem;
 }
 .dataTables_wrapper table.dataTable thead th .dt-column-order,
@@ -603,10 +603,22 @@ table tbody td{
 
 #dtProformas{
     table-layout: fixed;
+    width: 100% !important;
 }
 #dtProformas th,
 #dtProformas td{
     vertical-align: middle;
+}
+#dtProformas th{
+    white-space: nowrap !important;
+    line-height: 1.2;
+}
+#dtProformas thead th .dt-column-header,
+#dtProformas thead td .dt-column-header{
+    width: 100% !important;
+    min-width: 0;
+    max-width: 100%;
+    gap: .2rem;
 }
 #dtProformas td.bms-proforma-number,
 #dtProformas td.bms-proforma-type,
@@ -626,9 +638,20 @@ table tbody td{
 }
 #dtProformas td.bms-proforma-actions{
     overflow: visible;
+    padding-left: .75rem;
+    padding-right: .75rem;
 }
 #dtProformas td.bms-proforma-actions .bms-actions{
-    gap: 10px;
+    width: 100%;
+    gap: 6px;
+}
+#dtProformas th:nth-child(8),
+#dtProformas td.bms-proforma-amount{
+    padding-right: 1rem;
+}
+#dtProformas th:nth-child(9),
+#dtProformas td.bms-proforma-actions{
+    white-space: nowrap;
 }
 
 .tox-tinymce{

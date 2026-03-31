@@ -11,7 +11,7 @@
 
 <div class="card">
     <div class="card-body">
-        <table id="dtProformas" class="table table-striped table-bordered nowrap w-100">
+        <table id="dtProformas" class="table table-striped table-bordered w-100">
             <thead>
             <tr>
                 <th style="width: 70px;">S.No</th>

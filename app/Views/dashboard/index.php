@@ -200,14 +200,15 @@
         </div>
     </div>
 
-    <div class="card dash-summary-card border-0">
-        <div class="dash-summary-head">
+    <div class="card dash-summary-card bms-list-panel border-0">
+        <div class="bms-list-panel-head dash-summary-head">
             <div>
-                <h3 class="dash-summary-title">Client Billing Summary</h3>
+                <div class="bms-list-panel-title dash-summary-title">Client Billing Summary</div>
+                <div class="bms-list-panel-text">Review pending and billed client totals from the same structured list-view model used across the system.</div>
             </div>
         </div>
         <div class="card-body pt-0">
-            <table id="dtClientBillingSummary" class="table table-striped table-bordered nowrap w-100">
+            <table id="dtClientBillingSummary" class="table table-striped table-bordered w-100">
                 <thead>
                 <tr>
                     <th>Client</th>
@@ -231,3 +232,5 @@
     });
 </script>
 <?= $this->endSection() ?>
+
+

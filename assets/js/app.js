@@ -1,6 +1,6 @@
 (function () {
     window.BMS = window.BMS || {};
-    const SIDEBAR_KEY = 'bms_sidebar_collapsed';
+    const SIDEBAR_KEY = 'bms_sidebar_closed';
 
     function base(path) {
         return (window.APP_BASE_URL || '/') + String(path || '').replace(/^\/+/, '');
@@ -265,6 +265,24 @@
         const html = String(innerHtml || '');
         if (!html) return '';
         return '<div class="bms-actions" role="group" aria-label="Actions">' + html + '</div>';
+    }
+
+    function escapeHtml(s) {
+        return String(s || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/\"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function formatMoneyValue(v) {
+        const n = parseFloat(String(v || '0').replace(/,/g, '')) || 0;
+        try {
+            return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        } catch (e) {
+            return n.toFixed(2);
+        }
     }
 
     const INDIA_STATES = [
@@ -853,7 +871,7 @@
                 { data: null, orderable: false, className: 'text-center', render: function (row) {
                     if (!row || !row.client_id) return '';
                     const href = base('billable-items?client_id=' + row.client_id + '&month=' + encodeURIComponent(currentMonth) + '&status=all');
-                    return '<a class="btn btn-sm btn-outline-primary" href="' + href + '">View</a>';
+                    return '<div class="bms-actions justify-content-center"><a class="btn btn-sm bms-action-btn btn-view" href="' + href + '" title="View Client Billing" aria-label="View Client Billing"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12C2.73 7.61 7 4.5 12 4.5s9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></a></div>';
                 }},
             ],
         }));
@@ -1022,16 +1040,19 @@
         }
 
         const table = $('#dtClients').DataTable($.extend(true, {}, dtDefaults(), {
+            responsive: false,
+            scrollX: false,
+            autoWidth: false,
             ajax: { url: base('masters/client-master/list'), dataSrc: 'data' },
             order: [[0, 'asc']],
             columns: [
-                { data: 'name', render: function (d, type, row) {
+                { data: 'name', width: '18%', render: function (d, type, row) {
                     const v = String(d || '').trim();
                     if (type === 'sort' || type === 'type') return v || String(row.contact_person || '').trim();
                     return v || '-';
                 }},
-                { data: 'email', render: function (d) { return (String(d || '').trim() || '-'); } },
-                { data: 'address', orderable: false, render: function (d) {
+                { data: 'email', width: '23%', render: function (d) { return (String(d || '').trim() || '-'); } },
+                { data: 'address', width: '29%', orderable: false, render: function (d) {
                     const raw = String(d || '').replace(/\s+/g, ' ').trim();
                     if (!raw) return '-';
                     const short = raw.length > 60 ? (raw.slice(0, 60) + '…') : raw;
@@ -1045,9 +1066,9 @@
                     };
                     return '<span title="' + esc(raw) + '">' + esc(short) + '</span>';
                 }},
-                { data: 'city', render: function (d) { return (String(d || '').trim() || '-'); } },
-                { data: 'country', render: function (d) { return (String(d || '').trim() || '-'); } },
-                { data: null, orderable: false, render: function (row) {
+                { data: 'city', width: '10%', render: function (d) { return (String(d || '').trim() || '-'); } },
+                { data: 'country', width: '10%', className: 'text-nowrap', render: function (d) { return (String(d || '').trim() || '-'); } },
+                { data: null, width: '10%', className: 'text-nowrap', orderable: false, render: function (row) {
                     return actionGroup(
                         actionBtn('view', 'btn-outline-dark', 'View') +
                         actionBtn('edit', 'btn-outline-primary', 'Edit') +
@@ -1450,11 +1471,9 @@
                     return '<span class="badge text-bg-secondary">' + n + '</span>';
                 }},
                 { data: null, orderable: false, className: 'text-center', render: function (row) {
-                    if (!row || !row.id) return '';
-                    return actionGroup(
-                        actionLink('view', 'btn-outline-dark', 'View', base('roles/' + row.id + '/permissions?mode=view')) +
-                        actionLink('edit', 'btn-outline-primary', 'Edit', base('roles/' + row.id + '/permissions'))
-                    );
+                    if (!row || !row.client_id) return '';
+                    const href = base('billable-items?client_id=' + row.client_id + '&month=' + encodeURIComponent(currentMonth) + '&status=all');
+                    return '<div class="bms-actions justify-content-center"><a class="btn btn-sm bms-action-btn btn-view" href="' + href + '" title="View Client Billing" aria-label="View Client Billing"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12C2.73 7.61 7 4.5 12 4.5s9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></a></div>';
                 }},
             ],
         }));
@@ -2384,6 +2403,88 @@
     BMS.initProformas = function () {
         const $tableEl = $('#dtProformas');
         if (! $tableEl.length) return;
+        const $statTotal = $('#pfStatTotal');
+        const $statVisible = $('#pfStatVisible');
+        const $statExport = $('#pfStatExport');
+        const $statGst = $('#pfStatGst');
+        const $statAmount = $('#pfStatAmount');
+
+        function parseIsoDateValue(value) {
+            const raw = String(value || '').trim().slice(0, 10);
+            const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+            if (!m) return null;
+            return new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+        }
+
+        function renderIssueDate(value, type) {
+            const raw = String(value || '').trim().slice(0, 10);
+            const label = formatUiDate(value, 'display');
+            if (type === 'sort' || type === 'type' || type === 'filter') return raw;
+            return '<div class="bms-proforma-date-stack">' +
+                '<span class="bms-proforma-date-main">' + escapeHtml(label) + '</span>' +
+                '<span class="bms-proforma-date-meta">Issued</span>' +
+            '</div>';
+        }
+
+        function renderDueDate(value, type) {
+            const raw = String(value || '').trim().slice(0, 10);
+            const label = formatUiDate(value, 'display');
+            if (type === 'sort' || type === 'type' || type === 'filter') return raw;
+
+            let statusText = 'Scheduled';
+            let statusClass = 'is-scheduled';
+            const dueDate = parseIsoDateValue(value);
+            if (dueDate) {
+                const today = new Date();
+                const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                if (dueDate.getTime() < todayStart.getTime()) {
+                    statusText = 'Overdue';
+                    statusClass = 'is-overdue';
+                } else if (dueDate.getTime() === todayStart.getTime()) {
+                    statusText = 'Due Today';
+                    statusClass = 'is-today';
+                } else {
+                    statusText = 'Upcoming';
+                    statusClass = 'is-upcoming';
+                }
+            }
+
+            return '<div class="bms-proforma-date-stack">' +
+                '<span class="bms-proforma-date-main">' + escapeHtml(label) + '</span>' +
+                '<span class="bms-proforma-date-meta ' + statusClass + '">' + statusText + '</span>' +
+            '</div>';
+        }
+
+        function renderNameStack(value, type, hint) {
+            const text = descriptionPlainText(value);
+            if (type === 'sort' || type === 'type' || type === 'filter') return text || '-';
+            const display = renderTruncatedDescription(text || '-', 'display', hint === 'Customer' ? 16 : 18);
+            return '<div class="bms-proforma-name-stack">' +
+                display +
+                '<span class="bms-proforma-name-hint">' + escapeHtml(hint) + '</span>' +
+            '</div>';
+        }
+
+        function updateProformaSummary() {
+            const allRows = table.rows().data().toArray();
+            const visibleCount = table.rows({ search: 'applied' }).count();
+            let exportCount = 0;
+            let gstCount = 0;
+            let totalAmount = 0;
+
+            allRows.forEach(function (row) {
+                const invoiceType = String((row && row.invoice_type) || 'GST Invoice').toLowerCase();
+                if (invoiceType.indexOf('export') !== -1) exportCount += 1;
+                else if (invoiceType.indexOf('gst') !== -1) gstCount += 1;
+                totalAmount += parseFloat(String((row && (row.net_amount != null && row.net_amount !== '')) ? row.net_amount : (row && row.total_amount) || '0').replace(/,/g, '')) || 0;
+            });
+
+            $statTotal.text(String(allRows.length));
+            $statVisible.text(String(visibleCount) + ' in current view');
+            $statExport.text(String(exportCount));
+            $statGst.text(String(gstCount));
+            $statAmount.text(formatMoneyValue(totalAmount));
+        }
 
         const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
             responsive: false,
@@ -2396,19 +2497,37 @@
                     if (t === 'sort' || t === 'type') return parseInt(d || '0', 10) || 0;
                     return (meta.row + meta.settings._iDisplayStart + 1);
                 }},
-                { data: 'proforma_number', width: '11%', className: 'text-nowrap bms-proforma-number' },
-                { data: 'invoice_type', width: '12%', className: 'text-nowrap bms-proforma-type', orderable: false, render: function (d) { return d || 'GST Invoice'; } },
-                { data: 'proforma_date', width: '10%', className: 'text-nowrap bms-proforma-date', render: formatUiDate },
-                { data: 'billing_to', width: '10%', className: 'text-nowrap bms-proforma-due', render: formatUiDate },
+                { data: 'proforma_number', width: '11%', className: 'text-nowrap bms-proforma-number', render: function (d, t) {
+                    const value = String(d || '-').trim() || '-';
+                    if (t === 'sort' || t === 'type' || t === 'filter') return value;
+                    return '<span class="bms-proforma-code">' + escapeHtml(value) + '</span>';
+                }},
+                { data: 'invoice_type', width: '12%', className: 'text-nowrap bms-proforma-type', orderable: false, render: function (d, t) {
+                    const value = String(d || 'GST Invoice').trim() || 'GST Invoice';
+                    if (t === 'sort' || t === 'type' || t === 'filter') return value;
+                    let tone = 'is-default';
+                    const key = value.toLowerCase();
+                    if (key.indexOf('export') !== -1) tone = 'is-export';
+                    else if (key.indexOf('gst') !== -1) tone = 'is-gst';
+                    return '<span class="bms-proforma-pill ' + tone + '">' + escapeHtml(value) + '</span>';
+                } },
+                { data: 'proforma_date', width: '10%', className: 'text-nowrap bms-proforma-date', render: renderIssueDate },
+                { data: 'billing_to', width: '10%', className: 'text-nowrap bms-proforma-due', render: renderDueDate },
                 { data: null, width: '14%', className: 'bms-proforma-customer', render: function (_d, t, row) {
                     const value = (row && (row.customer_name || row.contact_person || row.client_name)) ? (row.customer_name || row.contact_person || row.client_name) : '-';
-                    return renderTruncatedDescription(value, t, 16);
+                    return renderNameStack(value, t, 'Customer');
                 } },
                 { data: null, width: '16%', className: 'bms-proforma-company', render: function (_d, t, row) {
                     const value = (row && (row.company_name || row.client_name)) ? (row.company_name || row.client_name) : '-';
-                    return renderTruncatedDescription(value, t, 18);
+                    return renderNameStack(value, t, 'Company');
                 } },
-                { data: null, width: '10%', className: 'text-nowrap bms-proforma-amount', render: function (_d, _t, row) { return (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00'); } },
+                { data: null, width: '10%', className: 'text-nowrap bms-proforma-amount', render: function (_d, t, row) {
+                    const raw = (row && row.net_amount != null && row.net_amount !== '') ? row.net_amount : (row.total_amount || '0.00');
+                    const amount = parseFloat(String(raw || '0').replace(/,/g, '')) || 0;
+                    if (t === 'sort' || t === 'type') return amount;
+                    if (t === 'filter') return String(raw || '0.00');
+                    return '<span class="bms-proforma-amount-value">' + formatMoneyValue(amount) + '</span>';
+                } },
                 { data: null, width: '12%', orderable: false, className: 'text-nowrap bms-proforma-actions', render: function (row) {
                     if (!row || !row.id) return '';
                     return actionGroup(
@@ -2423,6 +2542,8 @@
                 { targets: [0, 8], searchable: false },
             ],
         }));
+
+        table.on('draw.dt', updateProformaSummary);
 
         function clearFilters() {
             $tableEl.find('thead input.pf-col-filter').val('');
@@ -4112,209 +4233,77 @@
     $(function () {
         $.fn.dataTable && ($.fn.dataTable.defaults.language = { emptyTable: 'No records found.' });
 
-        let sidebarTooltips = [];
-        let sidebarPopovers = [];
+        const sidebarBreakpoint = window.matchMedia('(max-width: 991.98px)');
+        document.body.classList.remove('bms-sidebar-collapsed');
 
-        function closeSidebarCollapses() {
-            document.querySelectorAll('.app-sidebar .collapse.show').forEach(function (el) {
+        function setSidebarState(open, persist) {
+            document.body.classList.toggle('bms-sidebar-open', open);
+            document.body.classList.toggle('bms-sidebar-closed', !open);
+
+            const overlay = document.getElementById('appSidebarOverlay');
+            if (overlay) {
+                overlay.hidden = !open;
+                overlay.setAttribute('aria-hidden', open ? 'false' : 'true');
+            }
+
+            const openBtn = document.getElementById('btnOpenSidebar');
+            if (openBtn) {
+                openBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            }
+
+            const toggleBtn = document.getElementById('btnToggleSidebar');
+            if (toggleBtn) {
+                toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            }
+
+            if (persist) {
                 try {
-                    bootstrap.Collapse.getOrCreateInstance(el, { toggle: false }).hide();
+                    localStorage.setItem(SIDEBAR_KEY, open ? '0' : '1');
                 } catch (e) {}
-            });
-        }
-
-        function setSidebarCollapsible(enabled) {
-            const links = document.querySelectorAll('.app-sidebar a.nav-parent');
-            links.forEach(function (el) {
-                if (enabled) {
-                    if (!el.hasAttribute('data-bs-toggle')) {
-                        const saved = el.getAttribute('data-bms-toggle') || 'collapse';
-                        el.setAttribute('data-bs-toggle', saved);
-                    }
-                } else {
-                    if (el.hasAttribute('data-bs-toggle')) {
-                        el.setAttribute('data-bms-toggle', el.getAttribute('data-bs-toggle') || 'collapse');
-                        el.removeAttribute('data-bs-toggle');
-                    }
-                }
-            });
-        }
-
-        function disableSidebarTooltips() {
-            sidebarTooltips.forEach(function (t) {
-                try { t.dispose(); } catch (e) {}
-            });
-            sidebarTooltips = [];
-        }
-
-        function disableSidebarPopovers() {
-            sidebarPopovers.forEach(function (p) {
-                try { p.dispose(); } catch (e) {}
-            });
-            sidebarPopovers = [];
-        }
-
-        function enableSidebarTooltips() {
-            disableSidebarTooltips();
-            disableSidebarPopovers();
-
-            function buildTitle(el) {
-                const main = String(el.getAttribute('data-bms-title') || '').trim();
-                return main || '';
-            }
-
-            function buildPopoverContent(el) {
-                const isParent = el.classList.contains('nav-parent');
-                if (isParent) {
-                    const href = String(el.getAttribute('href') || '').trim();
-                    if (href && href.charAt(0) === '#') {
-                        const panel = document.querySelector(href);
-                        if (panel) {
-                            const links = Array.from(panel.querySelectorAll('a.nav-link'));
-                            if (links.length) {
-                                const items = links.map(function (a) {
-                                    const labelEl = a.querySelector('.nav-txt');
-                                    const label = String(labelEl ? labelEl.textContent : a.textContent || '').trim();
-                                    const url = a.getAttribute('href') || '#';
-                                    if (!label) return '';
-                                    return '<li><a class="bms-sidebar-popover-link" href="' + url + '">' + label + '</a></li>';
-                                }).filter(function (v) { return v !== ''; });
-                                if (items.length) {
-                                    return '<ul class="bms-sidebar-popover-list">' + items.join('') + '</ul>';
-                                }
-                            }
-                        }
-                    }
-                }
-
-                const url = el.getAttribute('href') || '#';
-                const label = buildTitle(el);
-                return '<a class="bms-sidebar-popover-link bms-sidebar-popover-single" href="' + url + '">' + label + '</a>';
-            }
-
-            const collapsed = document.body.classList.contains('bms-sidebar-collapsed');
-
-            document.querySelectorAll('.app-sidebar [data-bms-title]').forEach(function (el) {
-                const title = buildTitle(el);
-                if (!title) return;
-
-                if (collapsed) {
-                    const isParent = el.classList.contains('nav-parent');
-                    const content = buildPopoverContent(el);
-                    try {
-                        sidebarPopovers.push(new bootstrap.Popover(el, {
-                            title: isParent ? title : '',
-                            content: content,
-                            placement: 'right',
-                            trigger: 'manual',
-                            container: document.body,
-                            html: true,
-                            sanitize: false,
-                            customClass: isParent ? 'bms-sidebar-popover' : 'bms-sidebar-popover bms-sidebar-popover-single',
-                        }));
-                    } catch (e) {}
-                } else {
-                    try {
-                        sidebarTooltips.push(new bootstrap.Tooltip(el, {
-                            title: title,
-                            placement: 'right',
-                            trigger: 'hover focus',
-                            container: document.body,
-                            customClass: 'bms-sidebar-tooltip',
-                        }));
-                    } catch (e) {}
-                }
-            });
-        }
-
-        function syncSidebarUI() {
-            const collapsed = document.body.classList.contains('bms-sidebar-collapsed');
-            if (collapsed) {
-                closeSidebarCollapses();
-                setSidebarCollapsible(false);
-                enableSidebarTooltips();
-            } else {
-                setSidebarCollapsible(true);
-                disableSidebarTooltips();
-                disableSidebarPopovers();
             }
         }
 
-        try {
-            const collapsed = localStorage.getItem(SIDEBAR_KEY) === '1';
-            if (collapsed) {
-                document.body.classList.add('bms-sidebar-collapsed');
-                syncSidebarUI();
-            }
-        } catch (e) {}
+        function toggleSidebarState() {
+            setSidebarState(document.body.classList.contains('bms-sidebar-closed'), true);
+        }
 
-        $('#btnToggleSidebar').on('click', function () {
-            document.body.classList.toggle('bms-sidebar-collapsed');
+        function resolveInitialSidebarOpen() {
             try {
-                localStorage.setItem(SIDEBAR_KEY, document.body.classList.contains('bms-sidebar-collapsed') ? '1' : '0');
+                const saved = localStorage.getItem(SIDEBAR_KEY);
+                if (saved === '1' || saved === '0') {
+                    return saved !== '1';
+                }
+
+                const legacy = localStorage.getItem('bms_sidebar_collapsed');
+                if (legacy === '1' || legacy === '0') {
+                    return legacy !== '1';
+                }
             } catch (e) {}
-            syncSidebarUI();
-        });
 
-        // Prevent submenu toggles while collapsed (icons-only mode).
-        $(document).on('click', '.app-sidebar a.nav-parent', function (e) {
-            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
+            return !sidebarBreakpoint.matches;
+        }
+
+        setSidebarState(resolveInitialSidebarOpen(), false);
+
+        $('#btnToggleSidebar, #btnOpenSidebar').on('click', function (e) {
             e.preventDefault();
+            e.stopPropagation();
+            toggleSidebarState();
         });
 
-        function hideSidebarPopovers() {
-            sidebarPopovers.forEach(function (p) {
-                try { p.hide(); } catch (_e) {}
-            });
-        }
-
-        let popoverHideTimer = null;
-        function scheduleHidePopovers() {
-            if (popoverHideTimer) clearTimeout(popoverHideTimer);
-            popoverHideTimer = setTimeout(function () {
-                hideSidebarPopovers();
-            }, 120);
-        }
-
-        $(document).on('mouseenter', '.app-sidebar [data-bms-title]', function () {
-            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
-            if (popoverHideTimer) clearTimeout(popoverHideTimer);
-            // Hide other popovers first
-            sidebarPopovers.forEach(function (p) {
-                try { p.hide(); } catch (_e) {}
-            });
-            try {
-                const pop = bootstrap.Popover.getOrCreateInstance(this, {
-                    trigger: 'manual',
-                    placement: 'right',
-                    container: document.body,
-                    html: true,
-                    sanitize: false,
-                    customClass: 'bms-sidebar-popover',
-                });
-                pop.show();
-            } catch (_e) {}
+        $('#appSidebarOverlay').on('click', function () {
+            setSidebarState(false, true);
         });
 
-        $(document).on('mouseleave', '.app-sidebar [data-bms-title]', function () {
-            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
-            scheduleHidePopovers();
+        $(document).on('keydown', function (e) {
+            if (e.key === 'Escape' && document.body.classList.contains('bms-sidebar-open')) {
+                setSidebarState(false, true);
+            }
         });
 
-        $(document).on('mouseenter', '.popover', function () {
-            if (popoverHideTimer) clearTimeout(popoverHideTimer);
-        });
-
-        $(document).on('mouseleave', '.popover', function () {
-            scheduleHidePopovers();
-        });
-
-        // Close sidebar popovers when clicking outside.
-        $(document).on('click', function (e) {
-            if (!document.body.classList.contains('bms-sidebar-collapsed')) return;
-            if ($(e.target).closest('.popover').length) return;
-            if ($(e.target).closest('.app-sidebar [data-bms-title]').length) return;
-            hideSidebarPopovers();
+        $(document).on('click', '.app-sidebar a[href]:not(.nav-parent)', function () {
+            if (!sidebarBreakpoint.matches) return;
+            setSidebarState(false, true);
         });
 
         // Real-time status dropdown updates (all DataTables)
@@ -4350,6 +4339,8 @@
         });
     });
 })();
+
+
 
 
 

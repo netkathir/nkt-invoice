@@ -2,25 +2,42 @@
 
 <?= $this->section('content') ?>
 <?php $isSuper = authz()->isSuperAdmin(); ?>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h5 class="mb-0">Roles</h5>
-    <?php if (can('roles.create')): ?>
-        <button class="btn btn-primary" id="btnAddRole" type="button">Add Role</button>
-    <?php endif; ?>
-</div>
+<div class="bms-list-page">
+    <section class="card bms-list-hero border-0">
+        <div class="card-body p-4 p-xl-4">
+            <div class="bms-list-hero-row">
+                <div class="bms-list-copy">
+                    <h5 class="bms-list-title mb-0">Roles</h5>
+                    <p class="bms-list-subtitle mb-0">Organize role definitions and permission ownership from a consistent role management list.</p>
+                </div>
+                <div class="bms-list-actions">
+                    <?php if (can('roles.create')): ?>
+                        <button class="btn btn-primary" id="btnAddRole" type="button">Add Role</button>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<div class="card">
-    <div class="card-body">
-        <table id="dtRoles" class="table table-striped table-bordered nowrap w-100">
-            <thead>
-            <tr>
-                <th>S.No</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th class="text-end" style="text-align: left !important">Actions</th>
-            </tr>
-            </thead>
-        </table>
+    <div class="card bms-list-panel border-0">
+        <div class="bms-list-panel-head">
+            <div>
+                <div class="bms-list-panel-title">Listing View</div>
+                <div class="bms-list-panel-text">Browse defined roles and manage their descriptions and access rules.</div>
+            </div>
+        </div>
+        <div class="card-body pt-0">
+            <table id="dtRoles" class="table table-striped table-bordered nowrap w-100">
+                <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th class="text-end" style="text-align: left !important">Actions</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -41,4 +58,5 @@
 <?= $this->section('modals') ?>
 <?= $this->include('access/roles/form') ?>
 <?= $this->endSection() ?>
+
 

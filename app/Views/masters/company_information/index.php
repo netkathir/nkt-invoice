@@ -11,6 +11,22 @@
         }
         return (string) ($company[$key] ?? $fallback);
     };
+    $currentAccountRaw = trim((string) ($company['current_account_details'] ?? ''));
+    $currentAccountIfsc = '';
+    if (preg_match('/IFSC\s*:?\s*([A-Z0-9]+)/i', $currentAccountRaw, $ifscMatch) === 1) {
+        $currentAccountIfsc = strtoupper((string) ($ifscMatch[1] ?? ''));
+    }
+    $currentAccountValue = preg_replace('/\s*IFSC\s*:?\s*[A-Z0-9]+/i', '', $currentAccountRaw) ?? $currentAccountRaw;
+    $currentAccountValue = preg_replace('/^Current\s*A\/C\s*[-:]?\s*/i', '', trim($currentAccountValue)) ?? trim($currentAccountValue);
+    $currentAccountValue = trim($currentAccountValue);
+    $currentAccountValueInput = old('current_account_value');
+    if ($currentAccountValueInput === null || $currentAccountValueInput === '') {
+        $currentAccountValueInput = $currentAccountValue !== '' ? $currentAccountValue : '623305034567';
+    }
+    $currentAccountIfscInput = old('current_account_ifsc');
+    if ($currentAccountIfscInput === null || $currentAccountIfscInput === '') {
+        $currentAccountIfscInput = $currentAccountIfsc !== '' ? $currentAccountIfsc : 'ICIC0006233';
+    }
     $logoUrl = bms_company_logo_url($company);
 ?>
 
@@ -105,9 +121,14 @@
                         </div>
 
                         <div class="col-12 col-md-6">
-                            <label class="form-label">Current A/C Details</label>
-                            <input type="text" class="form-control<?= isset($errors['current_account_details']) ? ' is-invalid' : '' ?>" name="current_account_details" value="<?= esc($oldOr('current_account_details', 'Current A/C - 623305034567 IFSC: ICIC0006233')) ?>">
-                            <?php if (isset($errors['current_account_details'])): ?><div class="invalid-feedback"><?= esc((string) $errors['current_account_details']) ?></div><?php endif; ?>
+                            <label class="form-label">Account Details</label>
+                            <input type="text" class="form-control<?= isset($errors['current_account_details']) ? ' is-invalid' : '' ?>" name="current_account_value" value="<?= esc((string) $currentAccountValueInput) ?>" placeholder="623305034567">
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label">IFSC Code</label>
+                            <input type="text" class="form-control<?= isset($errors['current_account_details']) ? ' is-invalid' : '' ?>" name="current_account_ifsc" value="<?= esc((string) $currentAccountIfscInput) ?>" placeholder="ICIC0006233">
+                            <?php if (isset($errors['current_account_details'])): ?><div class="invalid-feedback d-block"><?= esc((string) $errors['current_account_details']) ?></div><?php endif; ?>
                         </div>
 
                         <div class="col-12 col-md-6">
@@ -136,4 +157,3 @@
     </div>
 </div>
 <?= $this->endSection() ?>
-

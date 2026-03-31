@@ -1,49 +1,64 @@
 <?= $this->extend('layouts/app') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h5 class="mb-0">Billable Items</h5>
-    <div class="d-flex flex-wrap gap-2 justify-content-end">
-        <button class="btn btn-sm btn-outline-success" id="btnExportBillable" type="button">Export CSV</button>
-        <button class="btn btn-primary" id="btnAddBillable" type="button">Add Billable Item</button>
-    </div>
-</div>
-
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label">Client</label>
-                <select class="form-select" id="filterClient"></select>
+<div class="bms-list-page">
+    <section class="card bms-list-hero border-0">
+        <div class="card-body p-4 p-xl-4">
+            <div class="bms-list-hero-row">
+                <div class="bms-list-copy">
+                    <h5 class="bms-list-title mb-0">Billable Items</h5>
+                    <p class="bms-list-subtitle mb-0">Track monthly billable work, filter by client and status, and move entries into invoices from one workspace.</p>
+                </div>
+                <div class="bms-list-actions">
+                    <button class="btn btn-outline-success" id="btnExportBillable" type="button">Export CSV</button>
+                    <button class="btn btn-primary" id="btnAddBillable" type="button">Add Billable Item</button>
+                </div>
             </div>
-            <div class="col-12 col-md-3">
-                <label class="form-label">Status</label>
-                <select class="form-select" id="filterStatus">
-                    <option value="Pending" selected>Pending</option>
-                    <option value="Billed">Billed</option>
-                    <option value="">All</option>
-                </select>
+        </div>
+    </section>
+
+    <div class="card bms-list-filter-card border-0">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-4">
+                    <label class="form-label">Client</label>
+                    <select class="form-select" id="filterClient"></select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label">Status</label>
+                    <select class="form-select" id="filterStatus">
+                        <option value="Pending" selected>Pending</option>
+                        <option value="Billed">Billed</option>
+                        <option value="">All</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="card">
-    <div class="card-body">
-        <table id="dtBillableItems" class="table table-striped table-bordered w-100 bms-billable-table">
-            <thead>
-            <tr>
-                <th>Entry No</th>
-                <th>Date</th>
-                <th>Client</th>
-                <th>Description</th>
-                <th>Billing Month</th>
-                <th>Status</th>
-                <th>Amount</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-        </table>
+    <div class="card bms-list-panel border-0">
+        <div class="bms-list-panel-head">
+            <div>
+                <div class="bms-list-panel-title">Listing View</div>
+                <div class="bms-list-panel-text">Search, review, and convert billable entries using the same unified list style.</div>
+            </div>
+        </div>
+        <div class="card-body pt-0">
+            <table id="dtBillableItems" class="table table-striped table-bordered w-100 bms-billable-table">
+                <thead>
+                <tr>
+                    <th>Entry No</th>
+                    <th>Date</th>
+                    <th>Client</th>
+                    <th>Description</th>
+                    <th>Billing Month</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+            </table>
+        </div>
     </div>
 </div>
 
@@ -60,3 +75,4 @@
 <?= $this->include('billable_items/form') ?>
 <?= $this->include('billable_items/view_modal') ?>
 <?= $this->endSection() ?>
+

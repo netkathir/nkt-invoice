@@ -2,16 +2,30 @@
 
 <?= $this->section('content') ?>
 <?php $isAdd = (string) (service('request')->getGet('add') ?? '') === '1'; ?>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-    <h5 class="mb-0">Payment</h5>
-    <div class="d-flex flex-wrap gap-2 justify-content-end">
-        <a class="btn btn-sm btn-primary" id="payBtnAdd" href="<?= base_url('payments?add=1') ?>">Add Payment</a>
+<div class="bms-list-page">
+<section class="card bms-list-hero border-0">
+    <div class="card-body p-4 p-xl-4">
+        <div class="bms-list-hero-row">
+            <div class="bms-list-copy">
+                <h5 class="bms-list-title mb-0">Payment</h5>
+                <p class="bms-list-subtitle mb-0">Track invoice payments, review balances, and record collections from one cleaner payment register.</p>
+            </div>
+            <div class="bms-list-actions">
+                <a class="btn btn-primary" id="payBtnAdd" href="<?= base_url('payments?add=1') ?>">Add Payment</a>
+            </div>
+        </div>
     </div>
-</div>
+</section>
 
 <div id="payListPanel" class="<?= $isAdd ? 'd-none' : '' ?>">
-    <div class="card">
-        <div class="card-body">
+    <div class="card bms-list-panel border-0">
+        <div class="bms-list-panel-head">
+            <div>
+                <div class="bms-list-panel-title">Listing View</div>
+                <div class="bms-list-panel-text">Review received payments, remaining balances, and payment status from one operating table.</div>
+            </div>
+        </div>
+        <div class="card-body pt-0">
             <table id="dtPayments" class="table table-striped table-bordered nowrap w-100">
                 <thead>
                 <tr>
@@ -183,3 +197,6 @@
     });
 </script>
 <?= $this->endSection() ?>
+
+
+

@@ -40,6 +40,15 @@ class CompanyInformationController extends BaseController
         $model = new CompanyInformationModel();
         $existing = $model->orderBy('id', 'ASC')->first() ?: [];
         $id = (int) ($existing['id'] ?? 0);
+        $accountValue = trim((string) $this->request->getPost('current_account_value'));
+        $accountIfsc = strtoupper(trim((string) $this->request->getPost('current_account_ifsc')));
+        $currentAccountDetails = '';
+        if ($accountValue !== '') {
+            $currentAccountDetails = 'Current A/C - ' . $accountValue;
+        }
+        if ($accountIfsc !== '') {
+            $currentAccountDetails = trim($currentAccountDetails . ' IFSC: ' . $accountIfsc);
+        }
 
         $payload = [
             'company_name' => trim((string) $this->request->getPost('company_name')),
@@ -53,7 +62,7 @@ class CompanyInformationController extends BaseController
             'email_id' => trim((string) $this->request->getPost('email_id')),
             'website' => trim((string) $this->request->getPost('website')),
             'phone_number' => trim((string) $this->request->getPost('phone_number')),
-            'current_account_details' => trim((string) $this->request->getPost('current_account_details')),
+            'current_account_details' => $currentAccountDetails,
             'paypal_account' => trim((string) $this->request->getPost('paypal_account')),
             'logo_path' => (string) ($existing['logo_path'] ?? ''),
         ];

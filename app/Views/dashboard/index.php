@@ -40,7 +40,6 @@
                             <div>
                                 <div class="dash-control-value" id="dashWindowTitle"><?= esc($defaultMonthLabel) ?></div>
                             </div>
-                            <div class="dash-control-orb" aria-hidden="true"></div>
                         </div>
 
                         <div class="dash-control-body">

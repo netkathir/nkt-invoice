@@ -147,17 +147,102 @@
         return raw;
     }
 
+    function readDateFieldIso(selector, parseUi) {
+        const $el = $(selector);
+        if (!$el.length) return '';
+        const raw = String($el.val() || '').trim();
+        if (!raw) return '';
+        if (String($el.attr('type') || '').toLowerCase() === 'date') {
+            return raw.slice(0, 10);
+        }
+        const toIso = typeof parseUi === 'function' ? parseUi : dmyToIso;
+        return toIso(raw);
+    }
+
+    function setDateFieldValue(selector, iso, formatUi) {
+        const $el = $(selector);
+        if (!$el.length) return;
+        const value = String(iso || '').trim().slice(0, 10);
+        if (String($el.attr('type') || '').toLowerCase() === 'date') {
+            $el.val(value);
+            return;
+        }
+        const toUi = typeof formatUi === 'function' ? formatUi : isoToDmy;
+        $el.val(value ? toUi(value) : '');
+    }
+
     // Attach native calendar to a text input (DD/MM/YYYY) using a hidden <input type="date">
     function attachNativeCalendar(textEl, nativeEl, onIsoChange, formatUi, parseUi) {
         const $txt = $(textEl);
-        const $nat = $(nativeEl);
-        if (!$txt.length || !$nat.length) return;
+        if (!$txt.length) return;
         const toUi = typeof formatUi === 'function' ? formatUi : isoToDmy;
         const toIso = typeof parseUi === 'function' ? parseUi : dmyToIso;
+        let $nat = $(nativeEl);
+        const $btn = $txt.closest('.bms-date-wrap').find('.bms-date-btn');
+
+        if (!$nat.length && typeof nativeEl === 'string' && nativeEl.charAt(0) === '#') {
+            const nativeId = nativeEl.slice(1);
+            const $created = $('<input>', {
+                type: 'date',
+                id: nativeId,
+                class: 'bms-native-date',
+                'aria-label': 'Pick date'
+            }).css({
+                position: 'fixed',
+                top: '-100px',
+                left: '-100px',
+                width: '1px',
+                minWidth: '1px',
+                maxWidth: '1px',
+                height: '1px',
+                minHeight: '1px',
+                opacity: 0,
+                pointerEvents: 'none',
+                zIndex: -1
+            });
+
+            $('body').append($created);
+            $nat = $created;
+        }
+
+        if (!$nat.length) return;
+
+        function placeNativeNearTrigger() {
+            const anchor = ($btn.length ? $btn.get(0) : $txt.get(0));
+            if (!anchor) return;
+            const rect = anchor.getBoundingClientRect();
+            $nat.css({
+                top: Math.max(rect.top + Math.min(rect.height / 2, 12), 0) + 'px',
+                left: Math.max(rect.left + rect.width - 2, 0) + 'px',
+                zIndex: 1055
+            });
+        }
+
+        function hideNative() {
+            $nat.css({
+                top: '-100px',
+                left: '-100px',
+                zIndex: -1
+            });
+        }
+
+        function currentIsoValue() {
+            return String($nat.val() || '').trim().slice(0, 10);
+        }
+
+        function syncNativeFromText() {
+            const iso = toIso($txt.val()) || currentIsoValue();
+            if (iso) {
+                $nat.val(iso);
+            }
+            return iso;
+        }
 
         function openPicker() {
             const el = $nat.get(0);
             if (!el) return;
+            placeNativeNearTrigger();
+            syncNativeFromText();
             try {
                 if (typeof el.showPicker === 'function') {
                     el.showPicker();
@@ -175,9 +260,9 @@
             $nat.val(v);
             $txt.val(v ? toUi(v) : '');
             onIsoChange && onIsoChange(v);
+            hideNative();
         }
 
-        const $btn = $txt.closest('.bms-date-wrap').find('.bms-date-btn');
         if ($btn.length) {
             $btn.off('click.bmsDate').on('click.bmsDate', function (e) {
                 e.preventDefault();
@@ -185,8 +270,16 @@
             });
         }
 
+        $nat.off('pointerdown.bmsDate mousedown.bmsDate focus.bmsDate').on('pointerdown.bmsDate mousedown.bmsDate focus.bmsDate', function () {
+            syncNativeFromText();
+        });
+
         $nat.off('change.bmsDate').on('change.bmsDate', function () {
             applyIso($nat.val());
+        });
+
+        $nat.off('blur.bmsDate').on('blur.bmsDate', function () {
+            window.setTimeout(hideNative, 0);
         });
 
         $txt.off('input.bmsDate blur.bmsDate').on('input.bmsDate blur.bmsDate', function () {
@@ -199,9 +292,11 @@
             }
         });
 
-        if ($nat.val()) {
-            $txt.val(toUi($nat.val()));
+        const initialIso = syncNativeFromText();
+        if (initialIso) {
+            $txt.val(toUi(initialIso));
         }
+        hideNative();
     }
 
     function iconSvg(name) {
@@ -1451,7 +1546,12 @@
             const roleId = parseInt(opts.roleId || 0, 10);
             if (!roleId) return;
             postJson('roles/' + roleId + '/permissions', $('#rolePermsForm').serialize())
-                .done(function (res) { notify(res.message || 'Saved.', 'success'); })
+                .done(function (res) {
+                    notify(res.message || 'Saved.', 'success');
+                    window.setTimeout(function () {
+                        window.location.href = base('role-permissions');
+                    }, 500);
+                })
                 .fail(function (xhr) { notify((xhr.responseJSON && xhr.responseJSON.message) || 'Save failed.', 'danger'); });
         });
     };
@@ -1471,9 +1571,13 @@
                     return '<span class="badge text-bg-secondary">' + n + '</span>';
                 }},
                 { data: null, orderable: false, className: 'text-center', render: function (row) {
-                    if (!row || !row.client_id) return '';
-                    const href = base('billable-items?client_id=' + row.client_id + '&month=' + encodeURIComponent(currentMonth) + '&status=all');
-                    return '<div class="bms-actions justify-content-center"><a class="btn btn-sm bms-action-btn btn-view" href="' + href + '" title="View Client Billing" aria-label="View Client Billing"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M1 12C2.73 7.61 7 4.5 12 4.5s9.27 3.11 11 7.5c-1.73 4.39-6 7.5-11 7.5S2.73 16.39 1 12Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg></a></div>';
+                    const roleId = parseInt((row && row.id) || 0, 10);
+                    if (!roleId) return '';
+                    let html = actionLink('view', 'btn-outline-dark', 'View Permissions', base('roles/' + roleId + '/permissions?mode=view'));
+                    if (!(parseInt((row && row.is_super) || 0, 10) === 1 || String((row && row.name) || '').trim().toLowerCase() === 'super admin')) {
+                        html += actionLink('edit', 'btn-outline-primary', 'Edit Permissions', base('roles/' + roleId + '/permissions'));
+                    }
+                    return actionGroup(html);
                 }},
             ],
         }));
@@ -3450,11 +3554,7 @@
 	            return items;
 	        }
 
-	        const $clientCombo = $('#pf_client_combo');
-	        const $clientInput = $('#pf_client_name');
-	        const $clientMenu = $('#pf_client_menu');
-	        const $clientItems = $clientMenu.find('.bms-combobox-item');
-	        const $clientEmpty = $clientMenu.find('.bms-combobox-empty');
+	        const $clientSelect = $('#pf_client_id');
         let currentClientCountry = '';
 
         function syncInvoiceTypeFromCountry() {
@@ -3464,7 +3564,7 @@
 
         function clearClientFields() {
             currentClientCountry = '';
-            $('#pf_client_id').val('');
+            if ($clientSelect.length) $clientSelect.val('');
             $('#pf_company').val('');
             $('#pf_gst').val('');
             $('#pf_addr1').val('');
@@ -3477,7 +3577,6 @@
 
         function applyClientOption($opt) {
             currentClientCountry = ($opt.data('country') || '').toString().trim();
-            $('#pf_client_id').val(($opt.data('id') || '').toString().trim());
             $('#pf_company').val(($opt.data('company') || '').toString().trim());
             $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
             $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
@@ -3487,81 +3586,31 @@
             $('#pf_pincode').val(($opt.data('pincode') || '').toString().trim());
             syncInvoiceTypeFromCountry();
         }
-	        function filterClientList(query) {
-	            const q = String(query || '').trim().toLowerCase();
-	            let shown = 0;
-	            $clientItems.each(function () {
-	                const $item = $(this);
-	                const label = String($item.data('label') || '').toLowerCase();
-	                const match = !q || label.indexOf(q) !== -1;
-	                $item.toggleClass('d-none', !match);
-	                if (match) shown += 1;
+	        if ($clientSelect.length) {
+	            $clientSelect.on('change', function () {
+	                const $opt = $(this).find('option:selected');
+	                if (!$opt.length || !String($opt.val() || '').trim()) {
+	                    clearClientFields();
+	                    return;
+	                }
+	                applyClientOption($opt);
 	            });
-	            $clientEmpty.toggleClass('d-none', shown > 0);
 	        }
-
-	        function openClientMenu() {
-	            if ($clientMenu.length) $clientMenu.removeClass('d-none');
-	        }
-
-	        function closeClientMenu() {
-	            if ($clientMenu.length) $clientMenu.addClass('d-none');
-	        }
-
-	        $clientInput.on('focus', function () {
-	            openClientMenu();
-	            filterClientList($clientInput.val());
-	        });
-
-	        $clientInput.on('input', function () {
-	            openClientMenu();
-	            filterClientList($clientInput.val());
-	            $('#pf_client_id').val('');
-	            clearClientFields();
-	        });
-
-	        $clientInput.on('keydown', function (e) {
-	            if (e.key === 'Escape') {
-	                closeClientMenu();
-	                return;
-	            }
-	            if (e.key !== 'Enter') return;
-	            const $first = $clientItems.filter(':not(.d-none)').first();
-	            if ($first.length) {
-	                e.preventDefault();
-	                $clientInput.val(($first.data('label') || '').toString().trim());
-	                applyClientOption($first);
-	                closeClientMenu();
-	            }
-	        });
-
-	        $clientMenu.on('click', '.bms-combobox-item', function () {
-	            const $opt = $(this);
-	            $clientInput.val(($opt.data('label') || '').toString().trim());
-	            applyClientOption($opt);
-	            closeClientMenu();
-	        });
-
-	        $(document).on('click', function (e) {
-	            if (!$clientCombo.length) return;
-	            if ($(e.target).closest('#pf_client_combo').length) return;
-	            closeClientMenu();
-	        });
-
-	        filterClientList('');
         syncInvoiceTypeFromCountry();
 
 	        function syncDueDateFromIssue(iso) {
 	            const dueIso = addDaysToIso(iso, 30);
-	            $('#pf_due_native').val(dueIso);
-	            $('#pf_due').val(dueIso ? isoToDmyText(dueIso) : '');
+	            setDateFieldValue('#pf_due', dueIso);
 	        }
 
 	        attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
 	            syncDueDateFromIssue(iso);
-	        }, isoToDmyText, textToIso);
-	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {}, isoToDmyText, textToIso);
-	        syncDueDateFromIssue($('#pf_date_native').val() || textToIso($('#pf_date').val()));
+	        });
+	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+	        $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
+	            syncDueDateFromIssue(readDateFieldIso('#pf_date', textToIso));
+	        });
+	        syncDueDateFromIssue(readDateFieldIso('#pf_date', textToIso));
 
 	        $('#pf_invoice_type').on('change', recalcGst);
 	        $('#pf_gst_percent').on('input', recalcGst);
@@ -3638,20 +3687,20 @@
 	        $('#btnSaveProforma').on('click', function () {
 	            const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
 	            const clientId = String($('#pf_client_id').val() || '').trim();
-	            const pfDate = textToIso(($('#pf_date').val() || '').trim());
+	            const pfDate = readDateFieldIso('#pf_date', textToIso);
 	            const currency = ($('#pf_currency').val() || '').trim();
-            const dueDate = textToIso(($('#pf_due').val() || '').trim());
+            const dueDate = readDateFieldIso('#pf_due', textToIso);
             const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
 	            const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
 	            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
 	            const items = collectItems();
 
-	            $('#pf_invoice_no, #pf_client_name, #pf_date, #pf_invoice_type, #pf_currency, #pf_due').removeClass('is-invalid');
+	            $('#pf_invoice_no, #pf_client_id, #pf_date, #pf_invoice_type, #pf_currency, #pf_due').removeClass('is-invalid');
 
 	            let hasInvalid = false;
 	            if (!invoiceNo) { $('#pf_invoice_no').addClass('is-invalid'); hasInvalid = true; }
-	            if (!clientId) { $('#pf_client_name').addClass('is-invalid'); hasInvalid = true; }
+	            if (!clientId) { $('#pf_client_id').addClass('is-invalid'); hasInvalid = true; }
 	            if (!pfDate) { $('#pf_date').addClass('is-invalid'); hasInvalid = true; }
 	            if (!invoiceType) { $('#pf_invoice_type').addClass('is-invalid'); hasInvalid = true; }
 	            if (!currency) { $('#pf_currency').addClass('is-invalid'); hasInvalid = true; }
@@ -3932,15 +3981,17 @@
 	            $('#pf_client_id').on('change', initCompanyField);
 	            function syncDueDateFromIssue(iso) {
 	                const dueIso = addDaysToIso(iso, 30);
-	                $('#pf_due_native').val(dueIso);
-	                $('#pf_due').val(dueIso ? isoToDmy(dueIso) : '');
+	                setDateFieldValue('#pf_due', dueIso);
 	            }
 
 	            attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
 	                syncDueDateFromIssue(iso);
 	            });
 	            attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
-	            syncDueDateFromIssue($('#pf_date_native').val() || dmyToIso($('#pf_date').val()));
+	            $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
+	                syncDueDateFromIssue(readDateFieldIso('#pf_date'));
+	            });
+	            syncDueDateFromIssue(readDateFieldIso('#pf_date'));
 
 	            $('#pf_invoice_type').on('change', recalcGst);
 	            $('#pf_gst_percent').on('input', recalcGst);
@@ -4017,9 +4068,9 @@
 	                const proformaId = parseInt($('#pf_id').val() || '0', 10) || 0;
 	                const invoiceNo = String($('#pf_invoice_no').val() || '').trim();
 	                const clientId = $('#pf_client_id').val();
-	                const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+	                const pfDate = readDateFieldIso('#pf_date');
 	                const currency = ($('#pf_currency').val() || '').trim();
-                const dueDate = dmyToIso(($('#pf_due').val() || '').trim());
+                const dueDate = readDateFieldIso('#pf_due');
                 const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
 	                const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	                const gstPercent = ($('#pf_gst_percent').val() || '').trim();
@@ -4110,8 +4161,7 @@
 
         function syncLegacyDueDateFromIssue(iso) {
             const dueIso = addDaysToIso(iso, 30);
-            $('#pf_to_native').val(dueIso);
-            $('#pf_to').val(dueIso ? isoToDmy(dueIso) : '');
+            setDateFieldValue('#pf_to', dueIso);
         }
 
         attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
@@ -4119,7 +4169,10 @@
         });
         attachNativeCalendar('#pf_from', '#pf_from_native', function () {});
         attachNativeCalendar('#pf_to', '#pf_to_native', function () {});
-        syncLegacyDueDateFromIssue($('#pf_date_native').val() || dmyToIso($('#pf_date').val()));
+        $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
+            syncLegacyDueDateFromIssue(readDateFieldIso('#pf_date'));
+        });
+        syncLegacyDueDateFromIssue(readDateFieldIso('#pf_date'));
 
 	        table = $('#dtProformaItems').DataTable($.extend(true, {}, dtDefaults(), {
             ajax: function (_data, callback) {
@@ -4200,25 +4253,18 @@
 	                notify('Invoice No is required.', 'danger');
 	                return;
 	            }
-	            const pfDate = dmyToIso(($('#pf_date').val() || '').trim());
+	            const pfDate = readDateFieldIso('#pf_date');
 	            if (!pfDate) {
 	                notify('Date Of Issue is required.', 'danger');
 	                return;
 	            }
-            const pfStatus = ($('#pf_status').val() || '').trim();
-            if (!pfStatus) {
-                notify('Status is required.', 'danger');
-                return;
-            }
-
 	            postJson('proforma/update', {
 	                proforma_id: proformaId,
 	                proforma_number: invoiceNo,
 	                item_ids: ids,
 	                proforma_date: pfDate,
-	                billing_from: dmyToIso(($('#pf_from').val() || '').trim()),
-	                billing_to: dmyToIso(($('#pf_due').val() || $('#pf_to').val() || '').trim()),
-	                status: pfStatus,
+	                billing_from: readDateFieldIso('#pf_from'),
+	                billing_to: readDateFieldIso('#pf_due') || readDateFieldIso('#pf_to'),
 	            })
                 .done(function (res) {
                     notify(res.message || 'Updated.', 'success');

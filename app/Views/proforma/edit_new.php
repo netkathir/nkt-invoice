@@ -1,6 +1,10 @@
 <?= $this->extend('layouts/app') ?>
 
 <?= $this->section('content') ?>
+<?php
+    $editIssueDate = !empty($proforma['proforma_date']) ? date('d/m/Y', strtotime((string) $proforma['proforma_date'])) : '';
+    $editDueDate = !empty($proforma['billing_to']) ? date('d/m/Y', strtotime((string) $proforma['billing_to'])) : '';
+?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h5 class="mb-0">Edit Invoice</h5>
     <a class="btn btn-light" href="<?= base_url('proforma') ?>">Back</a>
@@ -130,23 +134,22 @@
                     </div>
                     <div class="col-12 col-md-8">
                         <div class="input-group bms-date-wrap">
-                            <input type="text" class="form-control" id="pf_date" placeholder="DD/MM/YYYY" autocomplete="off" required>
+                            <input type="text" class="form-control" id="pf_date" value="<?= esc($editIssueDate) ?>" placeholder="DD/MM/YYYY" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                                 <span aria-hidden="true">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
-        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
+                                        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
                             </button>
-                            <input type="date" class="bms-native-date" id="pf_date_native" value="<?= esc((string) ($proforma['proforma_date'] ?? '')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
                     </div>
 
@@ -307,23 +310,22 @@
                     <div class="col-4 text-end fw-semibold">Due Date <span class="text-danger">*</span></div>
                     <div class="col-8">
                         <div class="input-group bms-date-wrap">
-                            <input type="text" class="form-control" id="pf_due" placeholder="DD/MM/YYYY" autocomplete="off" required>
+                            <input type="text" class="form-control" id="pf_due" value="<?= esc($editDueDate) ?>" placeholder="DD/MM/YYYY" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                                 <span aria-hidden="true">
-    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
-        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
-        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-    </svg>
-</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                        <rect x="2" y="3" width="12" height="11" rx="2" stroke="currentColor" stroke-width="1.25"/>
+                                        <path d="M5 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M11 2V5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M2.5 6H13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/>
+                                        <path d="M5.25 8.5H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 8.5H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M10.25 8.5H10.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M5.25 11H5.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                        <path d="M7.75 11H8.25" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    </svg>
+                                </span>
                             </button>
-                            <input type="date" class="bms-native-date" id="pf_due_native" value="<?= esc((string) ($proforma['billing_to'] ?? '')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
                     </div>
                 </div>

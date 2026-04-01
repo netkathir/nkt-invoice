@@ -1,24 +1,14 @@
 <?= $this->extend('layouts/app') ?>
 
 <?= $this->section('content') ?>
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<div class="bms-invoice-create-page">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 bms-invoice-create-toolbar">
     <h5 class="mb-0">Create Invoice</h5>
-    <a class="btn btn-light" href="<?= base_url('proforma') ?>">Back</a>
+    <a class="btn btn-link p-0 text-decoration-none" href="<?= base_url('proforma') ?>">Back</a>
 </div>
 
-<div class="card bms-invoice-card">
+<div class="card bms-invoice-card bms-invoice-create-card">
     <div class="card-body">
-        <div class="d-flex align-items-start gap-3 mb-3">
-            <div class="flex-shrink-0">
-                <img src="<?= base_url('favicon_netk.png') ?>" alt="Company Logo" class="bms-invoice-logo">
-            </div>
-            <div class="flex-grow-1">
-                <div class="h5 mb-1">Invoice</div>
-            </div>
-        </div>
-
-        <hr class="my-3">
-
         <div class="row g-4">
             <div class="col-12 col-lg-6">
                 <div class="row g-3 align-items-center">
@@ -34,39 +24,33 @@
                         <label class="form-label mb-0 text-md-end fw-semibold">Client Name <span class="text-danger">*</span></label>
                     </div>
                     <div class="col-12 col-md-8">
-                        <div class="bms-combobox" id="pf_client_combo">
-                            <input type="text" class="form-control" id="pf_client_name" placeholder="Search client" autocomplete="off">
-                            <div class="bms-combobox-menu d-none" id="pf_client_menu">
-                                <?php foreach ($clients as $c): ?>
-                                    <?php
-                                        $clientLabel = $c['name'] ?: ($c['contact_person'] ?: ($c['email'] ?: ($c['phone'] ?: ('Client #' . $c['id']))));
-                                        $company = $c['name'] ?: $clientLabel;
-                                        $gst = $c['gst_no'] ?? ($c['gst'] ?? '');
-                                        $addr1 = $c['address'] ?? '';
-                                        $addr2 = $c['billing_address'] ?? '';
-                                        $city = $c['city'] ?? '';
-                                        $state = $c['state'] ?? '';
-                                        $pincode = $c['postal_code'] ?? ($c['pincode'] ?? '');
-                                    ?>
-                                    <button
-                                        type="button"
-                                        class="bms-combobox-item"
-                                        data-id="<?= esc((string) $c['id']) ?>"
-                                        data-label="<?= esc((string) $clientLabel) ?>"
-                                        data-company="<?= esc((string) $company) ?>"
-                                        data-gst="<?= esc((string) $gst) ?>"
-                                        data-addr1="<?= esc((string) $addr1) ?>"
-                                        data-addr2="<?= esc((string) $addr2) ?>"
-                                        data-city="<?= esc((string) $city) ?>"
-                                        data-state="<?= esc((string) $state) ?>"
-                                        data-country="<?= esc((string) ($c['country'] ?? '')) ?>"
-                                        data-pincode="<?= esc((string) $pincode) ?>"
-                                    ><?= esc($clientLabel) ?></button>
-                                <?php endforeach; ?>
-                                <div class="bms-combobox-empty d-none">No results</div>
-                            </div>
-                        </div>
-                        <input type="hidden" id="pf_client_id" value="">
+                        <select class="form-select" id="pf_client_id" required>
+                            <option value="">Select client</option>
+                            <?php foreach ($clients as $c): ?>
+                                <?php
+                                    $clientLabel = $c['name'] ?: ($c['contact_person'] ?: ($c['email'] ?: ($c['phone'] ?: ('Client #' . $c['id']))));
+                                    $company = $c['name'] ?: $clientLabel;
+                                    $gst = $c['gst_no'] ?? ($c['gst'] ?? '');
+                                    $addr1 = $c['address'] ?? '';
+                                    $addr2 = $c['billing_address'] ?? '';
+                                    $city = $c['city'] ?? '';
+                                    $state = $c['state'] ?? '';
+                                    $pincode = $c['postal_code'] ?? ($c['pincode'] ?? '');
+                                ?>
+                                <option
+                                    value="<?= esc((string) $c['id']) ?>"
+                                    data-label="<?= esc((string) $clientLabel) ?>"
+                                    data-company="<?= esc((string) $company) ?>"
+                                    data-gst="<?= esc((string) $gst) ?>"
+                                    data-addr1="<?= esc((string) $addr1) ?>"
+                                    data-addr2="<?= esc((string) $addr2) ?>"
+                                    data-city="<?= esc((string) $city) ?>"
+                                    data-state="<?= esc((string) $state) ?>"
+                                    data-country="<?= esc((string) ($c['country'] ?? '')) ?>"
+                                    data-pincode="<?= esc((string) $pincode) ?>"
+                                ><?= esc($clientLabel) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                         <div class="invalid-feedback">Client Name is required.</div>
                         <input type="hidden" id="pf_from" value="">
                     </div>
@@ -134,7 +118,7 @@
                     </div>
                     <div class="col-12 col-md-8">
                         <div class="input-group bms-date-wrap">
-                            <input type="text" class="form-control" id="pf_date" autocomplete="off" required>
+                            <input type="text" class="form-control" id="pf_date" value="<?= esc(date('d/m/Y')) ?>" placeholder="DD/MM/YYYY" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                                 <span aria-hidden="true">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -150,7 +134,6 @@
                                     </svg>
                                 </span>
                             </button>
-                            <input type="date" class="bms-native-date" id="pf_date_native" value="<?= esc(date('Y-m-d')) ?>" tabindex="-1" aria-hidden="true">
                         </div>
                         <div class="invalid-feedback">Date Of Issue is required.</div>
                     </div>
@@ -277,7 +260,7 @@
                     <div class="col-4 text-end fw-semibold">Due Date <span class="text-danger">*</span></div>
                     <div class="col-8">
                         <div class="input-group bms-date-wrap">
-                            <input type="text" class="form-control" id="pf_due" autocomplete="off" required>
+                            <input type="text" class="form-control" id="pf_due" value="<?= esc(date('d/m/Y', strtotime('+30 days'))) ?>" placeholder="DD/MM/YYYY" autocomplete="off" required>
                             <button class="btn btn-outline-secondary bms-date-btn" type="button" aria-label="Pick date">
                                 <span aria-hidden="true">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -293,7 +276,6 @@
                                     </svg>
                                 </span>
                             </button>
-                            <input type="date" class="bms-native-date" id="pf_due_native" tabindex="-1" aria-hidden="true">
                         </div>
                         <div class="invalid-feedback">Due Date is required.</div>
                     </div>
@@ -314,4 +296,5 @@
         window.BMS.initProformaCreate && window.BMS.initProformaCreate();
     });
 </script>
+</div>
 <?= $this->endSection() ?>

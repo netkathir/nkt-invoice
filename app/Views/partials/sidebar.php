@@ -14,11 +14,7 @@
             <div class="brand-logo-wrap flex-grow-1">
                 <img class="brand-logo" src="<?= base_url('assets/img/Netkathir_logo.png') ?>" alt="Netkathir Logo">
             </div>
-            <button type="button" class="btn btn-icon btn-sidebar-toggle flex-shrink-0" id="btnToggleSidebar" aria-label="Toggle menu">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                </svg>
-            </button>
+           
         </div>
 
         <div class="sidebar-menu px-2 pb-2">

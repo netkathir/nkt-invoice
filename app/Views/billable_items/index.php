@@ -241,7 +241,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Unit Price</label>
-                            <input type="number" step="0.01" class="form-control" name="unit_price" id="bi_unit_price" value="0" required>
+                            <input type="text" class="form-control" name="unit_price" id="bi_unit_price" value="0" inputmode="decimal" autocomplete="off" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Amount</label>

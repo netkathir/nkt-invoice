@@ -2165,6 +2165,17 @@ table tbody td{
     transform: translateY(0);
 }
 
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button{
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.no-spinner[type="number"]{
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
 .nav-ico{
     width: 22px;
     height: 22px;

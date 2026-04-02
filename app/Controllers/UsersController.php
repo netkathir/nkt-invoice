@@ -185,7 +185,7 @@ class UsersController extends BaseController
         $rules = [
             'name'   => 'required|min_length[2]|max_length[191]',
             'email'  => 'required|valid_email|max_length[191]|is_unique[admins.email,id,' . $id . ']',
-            'mobile' => 'permit_empty|max_length[20]',
+            'mobile' => 'permit_empty|regex_match[/^\d{0,10}$/]',
             'status' => 'required|in_list[0,1]',
             'role_id'=> 'required|is_not_unique[roles.id]',
         ];

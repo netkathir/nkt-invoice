@@ -206,11 +206,26 @@
         }
 
         if (!$nat.length) return;
+        const isDetachedPicker = !$nat.closest('.bms-date-wrap').length;
 
         function placeNativeNearTrigger() {
             const anchor = ($btn.length ? $btn.get(0) : $txt.get(0));
             if (!anchor) return;
             const rect = anchor.getBoundingClientRect();
+            if (isDetachedPicker) {
+                $nat.css({
+                    top: Math.max(rect.top, 0) + 'px',
+                    left: Math.max(rect.left, 0) + 'px',
+                    width: Math.max(rect.width, 44) + 'px',
+                    minWidth: Math.max(rect.width, 44) + 'px',
+                    maxWidth: Math.max(rect.width, 44) + 'px',
+                    height: Math.max(rect.height, 36) + 'px',
+                    minHeight: Math.max(rect.height, 36) + 'px',
+                    zIndex: 1055
+                });
+                return;
+            }
+
             $nat.css({
                 top: Math.max(rect.top + Math.min(rect.height / 2, 12), 0) + 'px',
                 left: Math.max(rect.left + rect.width - 2, 0) + 'px',
@@ -219,11 +234,21 @@
         }
 
         function hideNative() {
-            $nat.css({
+            const hiddenState = {
                 top: '-100px',
                 left: '-100px',
                 zIndex: -1
-            });
+            };
+
+            if (isDetachedPicker) {
+                hiddenState.width = '1px';
+                hiddenState.minWidth = '1px';
+                hiddenState.maxWidth = '1px';
+                hiddenState.height = '1px';
+                hiddenState.minHeight = '1px';
+            }
+
+            $nat.css(hiddenState);
         }
 
         function currentIsoValue() {
@@ -241,18 +266,30 @@
         function openPicker() {
             const el = $nat.get(0);
             if (!el) return;
-            placeNativeNearTrigger();
             syncNativeFromText();
-            try {
-                if (typeof el.showPicker === 'function') {
-                    el.showPicker();
-                } else {
-                    el.focus();
-                    el.click();
+            placeNativeNearTrigger();
+
+            const launchPicker = function () {
+                try {
+                    if (typeof el.showPicker === 'function') {
+                        el.showPicker();
+                    } else {
+                        el.focus();
+                        el.click();
+                    }
+                } catch (e) {
+                    try { el.focus(); } catch (_e) {}
                 }
-            } catch (e) {
-                try { el.focus(); } catch (_e) {}
+            };
+
+            if (isDetachedPicker && typeof window.requestAnimationFrame === 'function') {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(launchPicker);
+                });
+                return;
             }
+
+            launchPicker();
         }
 
         function applyIso(iso) {
@@ -331,6 +368,12 @@
                 '<path d="M6 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
                 '<path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
                 '<path d="M17 12h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>';
+        }
+        if (n === 'billed') {
+            return '' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                '<path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
                 '</svg>';
         }
         return '';
@@ -1779,6 +1822,11 @@
             syncPasswordToggles();
         }
 
+        $('#user_mobile').on('input', function () {
+            const digitsOnly = String($(this).val() || '').replace(/\D/g, '').slice(0, 10);
+            $(this).val(digitsOnly);
+        });
+
         function roleBadge(roleName, isSuper) {
             const name = String(roleName || '').trim();
             if (!name) {
@@ -2229,7 +2277,23 @@
             $('#bi_amount_preview').val((qty * price).toFixed(2));
         }
 
+        function sanitizeDecimalInput(value) {
+            let clean = String(value || '').replace(/[^0-9.]/g, '');
+            const firstDot = clean.indexOf('.');
+            if (firstDot !== -1) {
+                clean = clean.slice(0, firstDot + 1) + clean.slice(firstDot + 1).replace(/\./g, '');
+            }
+            return clean;
+        }
+
         $('#bi_quantity,#bi_unit_price').on('input', updateAmountPreview);
+        $('#bi_unit_price').on('input', function () {
+            const clean = sanitizeDecimalInput($(this).val());
+            if ($(this).val() !== clean) {
+                $(this).val(clean);
+            }
+            updateAmountPreview();
+        });
 
         // Default to showing Pending items.
         // Must be set before DataTable's initial AJAX call.
@@ -2272,20 +2336,18 @@
                 { data: 'amount', width: '10%', className: 'text-start text-nowrap bms-billable-amount' },
                 { data: null, width: '15%', orderable: false, className: 'text-nowrap bms-billable-actions', render: function (row) {
                     const isPending = row.status === 'Pending';
+                    let actionHtml =
+                        actionBtn('view', 'btn-outline-dark', 'View') +
+                        actionBtn('edit', 'btn-outline-primary', 'Edit') +
+                        actionBtn('del', 'btn-outline-danger', 'Delete');
+
+                    if (isPending) {
+                        actionHtml += actionBtn('billed', '', 'Mark as Billed');
+                    }
+
                     return '' +
                         '<div class="d-flex align-items-center gap-1 flex-nowrap">' +
-                            actionGroup(
-                                actionBtn('view', 'btn-outline-dark', 'View') +
-                                actionBtn('edit', 'btn-outline-primary', 'Edit') +
-                                actionBtn('del', 'btn-outline-danger', 'Delete')
-                            ) +
-                            (isPending ? '' +
-                                '<button class="btn btn-sm btn-billed-icon btn-billed" type="button" title="Mark as Billed" aria-label="Mark as Billed">' +
-                                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
-                                        '<path d="M5 12l4 4 10-10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
-                                    '</svg>' +
-                                '</button>' :
-                                '') +
+                            actionGroup(actionHtml) +
                         '</div>';
                 }},
             ],
@@ -3991,7 +4053,9 @@
 	            $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
 	                syncDueDateFromIssue(readDateFieldIso('#pf_date'));
 	            });
-	            syncDueDateFromIssue(readDateFieldIso('#pf_date'));
+	            if (!readDateFieldIso('#pf_due')) {
+	                syncDueDateFromIssue(readDateFieldIso('#pf_date'));
+	            }
 
 	            $('#pf_invoice_type').on('change', recalcGst);
 	            $('#pf_gst_percent').on('input', recalcGst);

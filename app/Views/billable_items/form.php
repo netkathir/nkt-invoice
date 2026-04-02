@@ -176,7 +176,7 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Unit Price <span class="text-danger">*</span></label>
-                            <input type="number" step="0.01" class="form-control" name="unit_price" id="bi_unit_price" required>
+                            <input type="text" class="form-control" name="unit_price" id="bi_unit_price" inputmode="decimal" autocomplete="off" required>
                             <div class="invalid-feedback" data-err="unit_price">Unit Price is required.</div>
                         </div>
                         <div class="col-md-4">

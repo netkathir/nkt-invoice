@@ -24,7 +24,7 @@
 
                         <div class="col-12 col-md-6">
                             <label class="form-label">Mobile</label>
-                            <input type="text" class="form-control" name="mobile" id="user_mobile" placeholder="Optional">
+                            <input type="text" class="form-control" name="mobile" id="user_mobile" placeholder="Optional" maxlength="10" inputmode="numeric" pattern="[0-9]{10}">
                             <div class="invalid-feedback" data-err="mobile"></div>
                         </div>
 

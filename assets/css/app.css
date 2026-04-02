@@ -759,9 +759,9 @@ body{
 .dash-metric-grid{
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1rem;
-    padding: .9rem;
-    border-radius: 28px;
+    gap: .75rem;
+    padding: .6rem;
+    border-radius: 18px;
     background: linear-gradient(180deg, rgba(255,255,255,.34), rgba(255,255,255,.18));
     border: 1px solid rgba(255,255,255,.48);
     box-shadow: inset 0 1px 0 rgba(255,255,255,.45);
@@ -769,10 +769,10 @@ body{
 
 .dash-metric-card{
     border: 1px solid rgba(255,255,255,.72);
-    border-radius: 24px;
+    border-radius: 14px;
     background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(247,250,255,.80));
-    min-height: 172px;
-    box-shadow: 0 16px 28px rgba(15,23,42,.08);
+    min-height: 142px;
+    box-shadow: 0 10px 18px rgba(15,23,42,.06);
 }
 
 .dash-metric-card .card-body{
@@ -780,16 +780,16 @@ body{
     z-index: 1;
     display: grid;
     grid-template-rows: auto auto 1fr auto;
-    gap: .9rem;
-    padding: 1.15rem 1.15rem 1rem;
+    gap: .6rem;
+    padding: .85rem .95rem .8rem;
 }
 
 .dash-metric-card:after{
     content: "";
     position: absolute;
-    inset: auto 14px 0 14px;
-    height: 4px;
-    border-radius: 999px;
+    inset: auto 10px 0 10px;
+    height: 3px;
+    border-radius: 4px;
     pointer-events: none;
 }
 
@@ -808,37 +808,37 @@ body{
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: .9rem;
+    gap: .6rem;
 }
 
 .dash-metric-label{
     color: rgba(15,23,42,.62);
-    font-size: .87rem;
+    font-size: .78rem;
     text-transform: uppercase;
-    letter-spacing: .12em;
+    letter-spacing: .1em;
     font-weight: 700;
 }
 
 .dash-metric-tag{
-    margin-top: .45rem;
+    margin-top: .35rem;
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: .22rem .62rem;
-    border-radius: 999px;
+    min-height: 24px;
+    padding: .14rem .52rem;
+    border-radius: 8px;
     background: rgba(15,23,42,.05);
     border: 1px solid rgba(15,23,42,.06);
     color: rgba(15,23,42,.58);
-    font-size: .7rem;
+    font-size: .64rem;
     font-weight: 700;
-    letter-spacing: .08em;
+    letter-spacing: .06em;
     text-transform: uppercase;
 }
 
 .dash-metric-icon-badge{
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -850,14 +850,14 @@ body{
 
 .dash-metric-main{
     position: relative;
-    min-height: 56px;
+    min-height: 42px;
     display: flex;
     align-items: center;
 }
 
 .dash-metric-value{
     font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
-    font-size: clamp(2rem, 2.5vw, 2.7rem);
+    font-size: clamp(1.55rem, 2vw, 2.2rem);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -.05em;
@@ -866,8 +866,8 @@ body{
 
 .dash-metric-note{
     color: rgba(15,23,42,.52);
-    font-size: .88rem;
-    line-height: 1.6;
+    font-size: .78rem;
+    line-height: 1.45;
 }
 
 .dash-metric-pending .dash-metric-value,

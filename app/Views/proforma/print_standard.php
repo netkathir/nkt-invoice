@@ -95,6 +95,22 @@
 ?>
 
 <style>
+    .inv-header {
+        position: relative;
+        min-height: 88px;
+        padding: 14px 20px 10px 190px;
+        border-bottom: 1px solid #d9e4e6;
+    }
+    .inv-header-logo {
+        position: absolute;
+        top: 14px;
+        left: 16px;
+        width: 156px;
+        max-width: 156px;
+        height: 58px;
+        object-fit: contain;
+        object-position: left center;
+    }
     .inv-sheet {
         width: 100%;
         max-width: 920px;
@@ -114,7 +130,7 @@
         font-size: 30px;
         font-weight: 700;
         letter-spacing: .04em;
-        padding: 14px 20px 10px;
+        padding: 10px 0 0;
         text-transform: uppercase;
     }
     .inv-band {
@@ -139,8 +155,8 @@
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 12px;
-        margin-bottom: 8px;
+        gap: 8px;
+        margin-bottom: 0;
         width: 100%;
     }
     .inv-logo {
@@ -265,30 +281,38 @@
     .inv-summary-wrap {
         display: flex;
         justify-content: flex-end;
+        padding-top: 2px;
     }
     .inv-summary {
-        width: 40%;
+        width: min(100%, 390px);
         min-width: 0;
         border-left: 1px solid #87aeb2;
         border-right: 1px solid #87aeb2;
         border-bottom: 1px solid #87aeb2;
         border-collapse: collapse;
         margin-top: -1px;
+        table-layout: fixed;
     }
     .inv-summary td {
         border-top: 1px solid #87aeb2;
         padding: 8px 10px;
-        vertical-align: top;
+        vertical-align: middle;
     }
     .inv-summary .label {
         text-align: left;
-        width: 62%;
+        width: 60%;
+        font-weight: 700;
+        background: #f6fbfb;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
     .inv-summary .value {
         text-align: right;
-        width: 38%;
+        width: 40%;
         font-weight: 700;
         line-height: 1.45;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
     .inv-total-row td {
         background: #e7f0ef;
@@ -340,6 +364,9 @@
             border: none;
             max-width: none;
         }
+        .inv-header {
+            padding-top: 10px;
+        }
         .container { max-width: 100% !important; }
         @page { size: A4; margin: 8mm; }
     }
@@ -353,12 +380,14 @@
 </div>
 
 <div class="inv-sheet">
-    <div class="inv-header-title"><?= esc($invoiceType) ?></div>
+    <div class="inv-header">
+        <img src="<?= esc($logoUrl) ?>" alt="Company Logo" class="inv-header-logo">
+        <div class="inv-header-title"><?= esc($invoiceType) ?></div>
+    </div>
 
     <div class="inv-band">
         <div class="inv-band-left">
             <div class="inv-brand-row">
-                <img src="<?= esc($logoUrl) ?>" alt="Company Logo" class="inv-logo">
                 <div class="inv-company-stack">
                     <div class="inv-company-name"><?= esc($fromNamePrint) ?></div>
                     <div class="inv-company-details">

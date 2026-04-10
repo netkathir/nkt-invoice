@@ -12,7 +12,7 @@
     <div class="app-panel app-panel--sidebar">
         <div class="sidebar-top px-3 pt-3 pb-2 d-flex align-items-center justify-content-between gap-2 app-brand">
             <button type="button" class="btn p-0 border-0 btn-sidebar-toggle" id="btnToggleSidebar" 
-                onclick="document.body.classList.toggle('bms-sidebar-hidden'); if(window.BMS && window.BMS.toggleSidebarState) { localStorage.setItem('bms_sidebar_closed', document.body.classList.contains('bms-sidebar-hidden') ? '1' : '0'); }" 
+                onclick="toggleSidebar()" 
                 aria-label="Toggle Sidebar">
                 <span class="nav-ico">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

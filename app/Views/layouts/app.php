@@ -39,6 +39,31 @@
 </div>
 </div>
 
-<?= $this->renderSection('modals') ?>
+    <button type="button" class="btn btn-primary d-none shadow-sm bms-sidebar-reopen-btn" id="btnReopenSidebar" onclick="toggleSidebar()" aria-label="Open Sidebar" style="position: fixed; left: 10px; top: 20px; z-index: 9999; border-radius: 12px; padding: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
+    <script>
+        function toggleSidebar() {
+            document.body.classList.toggle('bms-sidebar-hidden');
+            const isHidden = document.body.classList.contains('bms-sidebar-hidden');
+            const reopenBtn = document.getElementById('btnReopenSidebar');
+            if (reopenBtn) {
+                if (isHidden) {
+                    reopenBtn.classList.remove('d-none');
+                } else {
+                    reopenBtn.classList.add('d-none');
+                }
+            }
+            if (window.BMS && window.BMS.toggleSidebarState) {
+                localStorage.setItem('bms_sidebar_closed', isHidden ? '1' : '0');
+            }
+        }
+    </script>
+    <?= $this->renderSection('modals') ?>
 </body>
 </html>

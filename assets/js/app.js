@@ -4544,7 +4544,7 @@
 
         function setSidebarState(open, persist) {
             document.body.classList.toggle('bms-sidebar-open', open);
-            document.body.classList.toggle('bms-sidebar-closed', !open);
+            document.body.classList.toggle('bms-sidebar-collapsed', !open);
 
             const overlay = document.getElementById('appSidebarOverlay');
             if (overlay) {
@@ -4570,7 +4570,7 @@
         }
 
         function toggleSidebarState() {
-            setSidebarState(document.body.classList.contains('bms-sidebar-closed'), true);
+            setSidebarState(document.body.classList.contains('bms-sidebar-collapsed'), true);
         }
 
         function resolveInitialSidebarOpen() {

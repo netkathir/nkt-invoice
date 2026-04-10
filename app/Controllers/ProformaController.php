@@ -43,22 +43,44 @@ class ProformaController extends BaseController
 
     public function list()
     {
-        $rows = (new ProformaModel())
+        $startDate = trim((string) $this->request->getGet('start_date'));
+        $endDate = trim((string) $this->request->getGet('end_date'));
+
+        $builder = (new ProformaModel())
             ->select('proforma_invoices.*, clients.name as client_name, clients.name as company_name, clients.contact_person as customer_name')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
-            ->orderBy('proforma_invoices.id', 'DESC')
-            ->findAll();
+            ->orderBy('proforma_invoices.id', 'DESC');
+
+        if ($startDate !== '') {
+            $builder->where('proforma_invoices.proforma_date >=', $startDate);
+        }
+        if ($endDate !== '') {
+            $builder->where('proforma_invoices.proforma_date <=', $endDate);
+        }
+
+        $rows = $builder->findAll();
 
         return $this->response->setJSON(['data' => $rows]);
     }
 
     public function download()
     {
-        $rows = (new ProformaModel())
+        $startDate = trim((string) $this->request->getGet('start_date'));
+        $endDate = trim((string) $this->request->getGet('end_date'));
+
+        $builder = (new ProformaModel())
             ->select('proforma_invoices.*, clients.name as company_name, clients.contact_person as customer_name')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
-            ->orderBy('proforma_invoices.id', 'DESC')
-            ->findAll();
+            ->orderBy('proforma_invoices.id', 'DESC');
+
+        if ($startDate !== '') {
+            $builder->where('proforma_invoices.proforma_date >=', $startDate);
+        }
+        if ($endDate !== '') {
+            $builder->where('proforma_invoices.proforma_date <=', $endDate);
+        }
+
+        $rows = $builder->findAll();
 
         $fh = fopen('php://temp', 'w+');
         fputcsv($fh, ['S.No', 'Invoice No', 'Invoice Type', 'Date of Issue', 'Due Date', 'Customer Name', 'Company Name', 'Currency', 'Net Amount', 'Total GST', 'Total Amount', 'Status']);

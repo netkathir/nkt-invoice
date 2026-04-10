@@ -70,6 +70,8 @@ class BillableItemsController extends BaseController
         $clientId = (int) $this->request->getGet('client_id');
         $status = trim((string) $this->request->getGet('status'));
         $monthParam = trim((string) $this->request->getGet('month'));
+        $startDate = trim((string) $this->request->getGet('start_date'));
+        $endDate = trim((string) $this->request->getGet('end_date'));
 
         $billableItems = new BillableItemModel();
         $builder = $billableItems
@@ -88,6 +90,14 @@ class BillableItemsController extends BaseController
         if ($monthParam !== '') {
             $m = $this->normalizeMonth($monthParam);
             $this->applyMonthFilter($builder, $m['month'], $m['label']);
+        }
+
+        if ($startDate !== '') {
+            $builder->where('billable_items.entry_date >=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $builder->where('billable_items.entry_date <=', $endDate);
         }
 
         $rows = $builder->findAll();
@@ -308,6 +318,8 @@ class BillableItemsController extends BaseController
         $clientId = (int) $this->request->getGet('client_id');
         $status = trim((string) $this->request->getGet('status'));
         $monthParam = trim((string) $this->request->getGet('month'));
+        $startDate = trim((string) $this->request->getGet('start_date'));
+        $endDate = trim((string) $this->request->getGet('end_date'));
 
         $billableItems = new BillableItemModel();
         $builder = $billableItems
@@ -326,6 +338,14 @@ class BillableItemsController extends BaseController
         if ($monthParam !== '') {
             $m = $this->normalizeMonth($monthParam);
             $this->applyMonthFilter($builder, $m['month'], $m['label']);
+        }
+
+        if ($startDate !== '') {
+            $builder->where('billable_items.entry_date >=', $startDate);
+        }
+
+        if ($endDate !== '') {
+            $builder->where('billable_items.entry_date <=', $endDate);
         }
 
         $rows = $builder->findAll();

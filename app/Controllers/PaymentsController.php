@@ -61,6 +61,9 @@ class PaymentsController extends BaseController
 
     public function list()
     {
+        $startDate = trim((string) $this->request->getGet('start_date'));
+        $endDate = trim((string) $this->request->getGet('end_date'));
+
         $db = db_connect();
         $builder = $db->table('proforma_invoices pi')
             ->select([
@@ -75,8 +78,16 @@ class PaymentsController extends BaseController
                 'COALESCE(SUM(pp.amount), 0) as total_paid',
             ])
             ->join('clients c', 'c.id = pi.client_id', 'inner')
-            ->join('proforma_payments pp', 'pp.proforma_id = pi.id', 'left')
-            ->groupBy('pi.id')
+            ->join('proforma_payments pp', 'pp.proforma_id = pi.id', 'left');
+
+        if ($startDate !== '') {
+            $builder->where('pi.proforma_date >=', $startDate);
+        }
+        if ($endDate !== '') {
+            $builder->where('pi.proforma_date <=', $endDate);
+        }
+
+        $builder->groupBy('pi.id')
             ->orderBy('pi.id', 'DESC');
 
         $rows = $builder->get()->getResultArray();

@@ -2316,6 +2316,8 @@
                     d.client_id = $('#filterClient').val() || (urlClientId > 0 ? urlClientId : '');
                     d.status = $('#filterStatus').val();
                     d.month = urlMonth;
+                    d.start_date = $('#filterStartDate').val();
+                    d.end_date = $('#filterEndDate').val();
                 }
             },
             order: [[0, 'desc']],
@@ -2353,7 +2355,15 @@
             ],
         }));
 
-        $('#filterClient,#filterStatus').on('change', function () {
+        $('#filterClient,#filterStatus,#filterStartDate,#filterEndDate').on('change', function () {
+            table.ajax.reload();
+        });
+
+        $('#btnResetFilters').on('click', function () {
+            $('#filterClient').val('');
+            $('#filterStatus').val('Pending');
+            $('#filterStartDate').val('');
+            $('#filterEndDate').val('');
             table.ajax.reload();
         });
 
@@ -2361,9 +2371,13 @@
             const params = new URLSearchParams();
             const clientId = String($('#filterClient').val() || '');
             const status = String($('#filterStatus').val() || '');
+            const start = $('#filterStartDate').val();
+            const end = $('#filterEndDate').val();
             const month = urlMonth;
             if (clientId) params.set('client_id', clientId);
             if (status) params.set('status', status);
+            if (start) params.set('start_date', start);
+            if (end) params.set('end_date', end);
             if (month) params.set('month', month);
             const qs = params.toString();
             window.location.href = base('billable-items/download' + (qs ? '?' + qs : ''));
@@ -2656,7 +2670,14 @@
             responsive: false,
             scrollX: false,
             autoWidth: false,
-            ajax: { url: base('proforma/list'), dataSrc: 'data' },
+            ajax: {
+                url: base('proforma/list'),
+                dataSrc: 'data',
+                data: function (d) {
+                    d.start_date = $('#pfFilterStartDate').val();
+                    d.end_date = $('#pfFilterEndDate').val();
+                }
+            },
             order: [[0, 'desc']],
             columns: [
                 { data: 'id', width: '5%', className: 'text-nowrap bms-proforma-sno', render: function (d, t, _r, meta) {
@@ -2709,6 +2730,16 @@
             ],
         }));
 
+        $('#pfFilterStartDate, #pfFilterEndDate').on('change', function () {
+            table.ajax.reload();
+        });
+
+        $('#pfBtnReset').on('click', function () {
+            $('#pfFilterStartDate').val('');
+            $('#pfFilterEndDate').val('');
+            table.ajax.reload();
+        });
+
         table.on('draw.dt', updateProformaSummary);
 
         function clearFilters() {
@@ -2742,7 +2773,14 @@
         });
 
         $('#pfBtnExport').on('click', function () {
-            window.location.href = base('proforma/download');
+            const start = $('#pfFilterStartDate').val();
+            const end = $('#pfFilterEndDate').val();
+            let url = base('proforma/download');
+            const params = [];
+            if (start) params.push('start_date=' + encodeURIComponent(start));
+            if (end) params.push('end_date=' + encodeURIComponent(end));
+            if (params.length) url += '?' + params.join('&');
+            window.location.href = url;
         });
 
         $tableEl.on('click', 'tbody .pf-btn-print', function () {
@@ -2774,7 +2812,14 @@
         let pendingInvoiceId = 0;
         try {
             table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
-                ajax: { url: base('payments/list'), dataSrc: 'data' },
+                ajax: {
+                    url: base('payments/list'),
+                    dataSrc: 'data',
+                    data: function (d) {
+                        d.start_date = $('#payFilterStartDate').val();
+                        d.end_date = $('#payFilterEndDate').val();
+                    }
+                },
                 order: [[0, 'desc']],
                 columns: [
                     { data: 'id', render: function (d, t, _r, meta) {
@@ -2801,6 +2846,16 @@
         } catch (e) {
             notify('Payments table failed to initialize. Please refresh the page.', 'danger');
         }
+
+        $('#payFilterStartDate, #payFilterEndDate').on('change', function () {
+            table.ajax.reload();
+        });
+
+        $('#payBtnReset').on('click', function () {
+            $('#payFilterStartDate').val('');
+            $('#payFilterEndDate').val('');
+            table.ajax.reload();
+        });
 
         function showListPanel() {
             $('#payAddPanel').addClass('d-none');
@@ -3110,14 +3165,16 @@
         const $tableEl = $('#dtPaymentReport');
         if (! $tableEl.length) return;
 
-        const $status = $('#prPaymentStatus');
-        const ajaxUrl = function () {
-            const st = String($status.val() || 'All');
-            return base('payment-report/list?payment_status=' + encodeURIComponent(st));
-        };
-
         const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
-            ajax: { url: ajaxUrl(), dataSrc: 'data' },
+            ajax: {
+                url: base('payment-report/list'),
+                dataSrc: 'data',
+                data: function (d) {
+                    d.payment_status = $('#prPaymentStatus').val();
+                    d.start_date = $('#prFilterStartDate').val();
+                    d.end_date = $('#prFilterEndDate').val();
+                }
+            },
             order: [[1, 'desc']],
             columns: [
                 { data: null, orderable: false, render: function (_d, _t, _r, meta) {
@@ -3133,13 +3190,25 @@
             ],
         }));
 
-        $(document).off('change.pr', '#prPaymentStatus').on('change.pr', '#prPaymentStatus', function () {
-            table.ajax.url(ajaxUrl()).load();
+        $(document).off('change.pr', '#prPaymentStatus, #prFilterStartDate, #prFilterEndDate').on('change.pr', '#prPaymentStatus, #prFilterStartDate, #prFilterEndDate', function () {
+            table.ajax.reload();
+        });
+
+        $(document).off('click.pr', '#prBtnReset').on('click.pr', '#prBtnReset', function () {
+            $('#prPaymentStatus').val('All');
+            $('#prFilterStartDate').val('');
+            $('#prFilterEndDate').val('');
+            table.ajax.reload();
         });
 
         $(document).off('click.pr', '#prBtnDownload').on('click.pr', '#prBtnDownload', function () {
-            const st = String($status.val() || 'All');
-            window.location.href = base('payment-report/download?payment_status=' + encodeURIComponent(st));
+            const st = String($('#prPaymentStatus').val() || 'All');
+            const start = $('#prFilterStartDate').val();
+            const end = $('#prFilterEndDate').val();
+            let url = base('payment-report/download?payment_status=' + encodeURIComponent(st));
+            if (start) url += '&start_date=' + encodeURIComponent(start);
+            if (end) url += '&end_date=' + encodeURIComponent(end);
+            window.location.href = url;
         });
     };
 

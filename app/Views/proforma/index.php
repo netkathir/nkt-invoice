@@ -53,9 +53,22 @@
 
     <div class="card invoice-list-table-card border-0">
         <div class="invoice-list-table-head">
-            <div>
-                <h6 class="invoice-list-card-title mb-1">Listing View</h6>
-                <p class="invoice-list-card-text mb-0">Search, scan, print, edit, and manage every invoice from a clean structured table.</p>
+            <div class="row align-items-end g-3 w-100 mb-3">
+                <div class="col-12 col-md-3">
+                    <h6 class="invoice-list-card-title mb-1">Listing View</h6>
+                    <p class="invoice-list-card-text mb-0">Search, scan, print, and manage invoices.</p>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold">From Date</label>
+                    <input type="date" class="form-control form-control-sm" id="pfFilterStartDate">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold">To Date</label>
+                    <input type="date" class="form-control form-control-sm" id="pfFilterEndDate">
+                </div>
+                <div class="col-12 col-md-3 text-md-end">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pfBtnReset">Reset Filters</button>
+                </div>
             </div>
         </div>
 

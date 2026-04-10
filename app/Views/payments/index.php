@@ -20,9 +20,22 @@
 <div id="payListPanel" class="<?= $isAdd ? 'd-none' : '' ?>">
     <div class="card bms-list-panel border-0">
         <div class="bms-list-panel-head">
-            <div>
-                <div class="bms-list-panel-title">Listing View</div>
-                <div class="bms-list-panel-text">Review received payments, remaining balances, and payment status from one operating table.</div>
+            <div class="row align-items-end g-3 w-100">
+                <div class="col-12 col-md-4">
+                    <div class="bms-list-panel-title">Listing View</div>
+                    <div class="bms-list-panel-text">Review received payments and statuses.</div>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold">From Date</label>
+                    <input type="date" class="form-control form-control-sm" id="payFilterStartDate">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label small fw-bold">To Date</label>
+                    <input type="date" class="form-control form-control-sm" id="payFilterEndDate">
+                </div>
+                <div class="col-12 col-md-2 text-md-end">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="payBtnReset">Reset</button>
+                </div>
             </div>
         </div>
         <div class="card-body pt-0">

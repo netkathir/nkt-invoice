@@ -19,14 +19,25 @@
     <div class="card bms-list-filter-card border-0">
         <div class="card-body">
             <div class="row g-2 align-items-end justify-content-between">
-                <div class="col-12 col-lg-6">
-                    <label class="form-label mb-1 fw-semibold">Payment Status <span class="text-danger">*</span></label>
+                <div class="col-12 col-md-4">
+                    <label class="form-label mb-1 fw-semibold">Payment Status</label>
                     <select class="form-select" id="prPaymentStatus">
                         <option value="All" selected>All</option>
                         <option value="Unpaid">Unpaid</option>
                         <option value="Partially Paid">Partially Paid</option>
                         <option value="Fully Paid">Fully Paid</option>
                     </select>
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label mb-1 fw-semibold">From Date</label>
+                    <input type="date" class="form-control" id="prFilterStartDate">
+                </div>
+                <div class="col-12 col-md-3">
+                    <label class="form-label mb-1 fw-semibold">To Date</label>
+                    <input type="date" class="form-control" id="prFilterEndDate">
+                </div>
+                <div class="col-12 col-md-2 text-md-end">
+                    <button type="button" class="btn btn-outline-secondary w-100" id="prBtnReset">Reset</button>
                 </div>
             </div>
         </div>

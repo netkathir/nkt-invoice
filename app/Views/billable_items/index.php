@@ -21,7 +21,7 @@
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="col-12 col-md-3">
+            <div class="col-12 col-md-2">
                 <label class="form-label">Status</label>
                 <select class="form-select" id="filterStatus">
                     <option value="">All</option>
@@ -29,10 +29,16 @@
                     <option value="Billed">Billed</option>
                 </select>
             </div>
-            <div class="col-12 col-md-5 text-md-end">
-                <div class="small text-muted">
-                    Tip: Click a cell under Description/Quantity/Unit Price to edit (pending items only).
-                </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" class="form-control" id="filterStartDate">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" class="form-control" id="filterEndDate">
+            </div>
+            <div class="col-12 col-md-2 text-md-end">
+                <button type="button" class="btn btn-outline-secondary w-100" id="btnResetFilters">Reset</button>
             </div>
         </div>
     </div>

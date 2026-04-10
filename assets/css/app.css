@@ -2187,106 +2187,6 @@ table tbody td{
     transition: opacity .22s ease, transform .22s ease, max-width .22s ease;
 }
 
-    /* Mini-sidebar implementation for the toggle script */
-    body.bms-sidebar-hidden .app-sidebar {
-        flex: 0 0 88px !important;
-        width: 88px !important;
-        max-width: 88px !important;
-        padding: 10px 10px !important;
-        overflow: visible;
-    }
-
-    body.bms-sidebar-hidden .app-main {
-        flex: 1 1 100% !important;
-        max-width: 100% !important;
-    }
-
-    body.bms-sidebar-hidden .nav-txt {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-
-    body.bms-sidebar-hidden .sidebar-top{
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 0;
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-        padding-top: .9rem !important;
-        padding-bottom: .8rem !important;
-    }
-
-    body.bms-sidebar-hidden .brand-logo-wrap{
-        display: none;
-    }
-
-    body.bms-sidebar-hidden .sidebar-menu{
-        padding-left: 0 !important;
-        padding-right: 0 !important;
-    }
-
-    /* Tooltips for hidden state using data-bms-title */
-    body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title] {
-        position: relative;
-        overflow: visible;
-    }
-    body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title]:hover::after {
-        content: attr(data-bms-title);
-        position: absolute;
-        left: 100%;
-        top: 50%;
-        transform: translateY(-50%);
-        background: var(--ink);
-        color: white;
-        padding: 6px 12px;
-        border-radius: 6px;
-        font-size: 13px;
-        white-space: nowrap;
-        z-index: 1050;
-        margin-left: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        pointer-events: none;
-        opacity: 1;
-    }
-    body.bms-sidebar-hidden .nav-sub{
-    margin-left: 0;
-}
-body.bms-sidebar-hidden .app-sidebar .collapse{
-    display: none !important;
-}
-body.bms-sidebar-hidden .nav-caret{
-    display: none;
-}
-body.bms-sidebar-hidden .nav-pills{
-    gap: 2px;
-}
-body.bms-sidebar-hidden .nav-pills .nav-link{
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-    width: 46px;
-    height: 46px;
-    margin: 6px auto;
-    border-radius: 16px;
-    gap: 0;
-    transform: none;
-}
-body.bms-sidebar-hidden .nav-pills .nav-link:hover,
-body.bms-sidebar-hidden .nav-pills .nav-link.active{
-    transform: none;
-}
-body.bms-sidebar-hidden .nav-ico{
-    width: 22px;
-    height: 22px;
-}
-body.bms-sidebar-hidden .btn-icon{
-    width: 44px;
-    height: 44px;
-    margin: 0 auto;
-}
-
-
 .cell-edit{
     display: inline-block;
     min-width: 60px;
@@ -2850,25 +2750,6 @@ body.bms-sidebar-open{
     overflow: hidden;
 }
 
-.app-sidebar-open-trigger{
-    display: inline-flex;
-    min-width: 44px;
-    align-items: center;
-    justify-content: center;
-}
-.app-sidebar-toggle-icon{
-    font-size: 0;
-    line-height: 1;
-}
-.app-sidebar-toggle-icon::before{
-    content: "\2630";
-    font-size: 1.2rem;
-}
-
-body.bms-sidebar-open .app-sidebar-open-trigger{
-    display: none !important;
-}
-
 /* --- Mobile Adjustments --- */
 @media (max-width: 991.98px){
     .app-main{
@@ -2920,38 +2801,169 @@ body.bms-sidebar-open .app-sidebar-open-trigger{
     transition: all 0.3s ease;
 }
 
-@media (min-width: 992px){
-    body.bms-sidebar-hidden .app-sidebar{
-        flex: 0 0 88px !important;
-        width: 88px !important;
-        max-width: 88px !important;
-        padding: 10px !important;
-        overflow: visible;
-    }
+/* Sidebar collapse: smooth icon rail */
+.app-sidebar,
+.app-sidebar .app-panel--sidebar,
+.brand-logo-wrap,
+.nav-pills .nav-link,
+.nav-txt,
+.nav-ico,
+.nav-caret,
+.bms-sidebar-toggle,
+.sidebar-menu{
+    transition:
+        width .28s cubic-bezier(.2,.8,.2,1),
+        max-width .28s cubic-bezier(.2,.8,.2,1),
+        flex-basis .28s cubic-bezier(.2,.8,.2,1),
+        padding .28s cubic-bezier(.2,.8,.2,1),
+        margin .28s cubic-bezier(.2,.8,.2,1),
+        opacity .18s ease,
+        transform .22s ease,
+        visibility .18s ease,
+        box-shadow .22s ease,
+        border-color .22s ease,
+        background-color .22s ease;
+}
 
-    body.bms-sidebar-hidden .app-panel--sidebar{
-        height: calc(100vh - 20px);
-    }
+.bms-sidebar-toggle{
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    color: rgba(15,23,42,.75);
+    background: rgba(255,255,255,.78);
+    border: 1px solid rgba(148,163,184,.24);
+}
 
-    body.bms-sidebar-hidden .app-main{
-        flex: 1 1 auto !important;
-        max-width: calc(100% - 88px) !important;
-    }
+.bms-sidebar-toggle:hover,
+.bms-sidebar-toggle:focus{
+    color: var(--brand);
+    background: var(--brand-soft);
+    border-color: rgba(13,110,253,.26);
+}
+
+.bms-sidebar-toggle-icon{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bms-sidebar-toggle-closed{
+    display: none;
 }
 
 body.bms-sidebar-hidden .app-sidebar{
     flex: 0 0 88px !important;
+    flex-basis: 88px !important;
     width: 88px !important;
     max-width: 88px !important;
     padding: 10px !important;
-    overflow: visible;
-    transform: none !important;
 }
 
 body.bms-sidebar-hidden .app-panel--sidebar{
-    height: calc(100vh - 20px);
+    overflow: visible;
 }
 
-body.bms-sidebar-hidden .app-main{
-    flex: 1 1 auto !important;
+body.bms-sidebar-hidden .sidebar-top{
+    padding: 10px 0 8px !important;
+    justify-content: center !important;
+}
+
+body.bms-sidebar-hidden .brand-logo-wrap{
+    display: inline-flex !important;
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    opacity: 0;
+    visibility: hidden;
+    padding: 0 !important;
+    border-width: 0;
+    transform: scale(.92);
+}
+
+body.bms-sidebar-hidden .bms-sidebar-toggle{
+    margin: 0 auto;
+}
+
+body.bms-sidebar-hidden .bms-sidebar-toggle-open{
+    display: none;
+}
+
+body.bms-sidebar-hidden .bms-sidebar-toggle-closed{
+    display: block;
+}
+
+body.bms-sidebar-hidden .sidebar-menu{
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow: visible;
+}
+
+body.bms-sidebar-hidden .nav-pills .nav-link{
+    width: 46px;
+    height: 46px;
+    justify-content: center;
+    padding: 0 !important;
+    margin: 6px auto;
+    gap: 0;
+    overflow: visible;
+    transform: none;
+}
+
+body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title]{
+    position: relative;
+}
+
+body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title]:hover::after,
+body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title]:focus::after{
+    content: attr(data-bms-title);
+    position: absolute;
+    left: calc(100% + 10px);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1100;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: #fff;
+    background: var(--ink);
+    box-shadow: 0 8px 18px rgba(15,23,42,.18);
+    font-size: 13px;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+body.bms-sidebar-hidden .nav-pills .nav-link:hover,
+body.bms-sidebar-hidden .nav-pills .nav-link.active{
+    transform: none;
+}
+
+body.bms-sidebar-hidden .nav-txt{
+    flex: 0 0 0 !important;
+    width: 0 !important;
+    max-width: 0 !important;
+    min-width: 0 !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(-8px);
+    white-space: nowrap;
+}
+
+body.bms-sidebar-hidden .nav-caret{
+    opacity: 0;
+    visibility: hidden;
+}
+
+body.bms-sidebar-hidden .app-sidebar .collapse{
+    display: none !important;
+}
+
+body.bms-sidebar-hidden .nav-sub{
+    margin-left: 0 !important;
 }

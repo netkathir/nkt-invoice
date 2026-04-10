@@ -15,6 +15,16 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
             <div class="brand-logo-wrap flex-grow-1">
                 <img class="brand-logo" src="<?= base_url('assets/img/Netkathir_logo.png') ?>" alt="Netkathir Logo">
             </div>
+            <button class="btn btn-sm bms-sidebar-toggle" type="button" onclick="toggleSidebar()" aria-label="Toggle sidebar" data-bms-title="Toggle sidebar">
+                <span class="bms-sidebar-toggle-icon" aria-hidden="true">
+                    <svg class="bms-sidebar-toggle-open" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <svg class="bms-sidebar-toggle-closed" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </span>
+            </button>
         </div>
 
         <div class="sidebar-menu px-2 pb-2">
@@ -95,7 +105,7 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
                             <?php endif; ?>
                             <?php if (can('roles.assign_perms')): ?>
                                 <a class="nav-link <?= $isActive('role_permissions') ?>"
-                                    href="<?= base_url('role-permissions') ?>">
+                                    href="<?= base_url('role-permissions') ?>" data-bms-title="Role Permissions">
                                     <span class="nav-ico" aria-hidden="true">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                             <path d="M12 1l8 4v6c0 5-3.4 9.7-8 11-4.6-1.3-8-6-8-11V5l8-4Z" fill="currentColor"
@@ -134,7 +144,7 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
                 <div class="collapse <?= $mastersOpen ? 'show' : '' ?>" id="navMasters">
                     <div class="nav flex-column nav-pills nav-sub">
                         <a class="nav-link <?= $isActive('client_master') ?>"
-                            href="<?= base_url('masters/client-master') ?>">
+                            href="<?= base_url('masters/client-master') ?>" data-bms-title="Client Master">
                             <span class="nav-ico" aria-hidden="true">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                     <path
@@ -182,7 +192,7 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
                     </a>
                     <div class="collapse <?= $invoicesOpen ? 'show' : '' ?>" id="navInvoices">
                         <div class="nav flex-column nav-pills nav-sub">
-                            <a class="nav-link <?= $isActive('proforma') ?>" href="<?= base_url('proforma') ?>">
+                            <a class="nav-link <?= $isActive('proforma') ?>" href="<?= base_url('proforma') ?>" data-bms-title="Invoices">
                                 <span class="nav-ico" aria-hidden="true">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                         <path
@@ -236,3 +246,25 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
         </div>
     </div>
 </aside>
+<script>
+    (function () {
+        const STORAGE_KEY = 'sidebarState';
+
+        window.toggleSidebar = function () {
+            document.body.classList.remove('bms-sidebar-open');
+            document.body.classList.toggle('bms-sidebar-hidden');
+
+            const isHidden = document.body.classList.contains('bms-sidebar-hidden');
+            localStorage.setItem(STORAGE_KEY, isHidden ? 'hidden' : 'open');
+        };
+
+        function restoreSidebarState() {
+            document.body.classList.remove('bms-sidebar-open');
+            if (localStorage.getItem(STORAGE_KEY) === 'hidden') {
+                document.body.classList.add('bms-sidebar-hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', restoreSidebarState);
+    })();
+</script>

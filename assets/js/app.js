@@ -4591,9 +4591,10 @@
 
         setSidebarState(resolveInitialSidebarOpen(), false);
 
-        $('#btnToggleSidebar, #btnOpenSidebar').on('click', function (e) {
+        $(document).on('click', '#btnToggleSidebar, #btnOpenSidebar', function (e) {
             e.preventDefault();
             e.stopPropagation();
+            console.log('Sidebar toggle clicked');
             toggleSidebarState();
         });
 

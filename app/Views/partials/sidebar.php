@@ -56,7 +56,7 @@
                     <div class="collapse <?= $accessOpen ? 'show' : '' ?>" id="navAccess">
                         <div class="nav flex-column nav-pills nav-sub">
                             <?php if (can('users.view')): ?>
-                                <a class="nav-link <?= $isActive('users') ?>" href="<?= base_url('users') ?>">
+                                <a class="nav-link <?= $isActive('users') ?>" href="<?= base_url('users') ?>" data-bms-title="Users">
                                     <span class="nav-ico" aria-hidden="true">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                             <path d="M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" fill="currentColor" opacity=".85"/>
@@ -66,7 +66,7 @@
                                 </a>
                             <?php endif; ?>
                             <?php if (can('roles.view')): ?>
-                                <a class="nav-link <?= $isActive('roles') ?>" href="<?= base_url('roles') ?>">
+                                <a class="nav-link <?= $isActive('roles') ?>" href="<?= base_url('roles') ?>" data-bms-title="Roles">
                                     <span class="nav-ico" aria-hidden="true">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                             <path d="M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4Zm0 2c-3.3 0-8 1.7-8 5v1h16v-1c0-3.3-4.7-5-8-5Z" fill="currentColor" opacity=".85"/>
@@ -76,7 +76,7 @@
                                 </a>
                             <?php endif; ?>
                             <?php if (can('permissions.view')): ?>
-                                <a class="nav-link <?= $isActive('permissions') ?>" href="<?= base_url('permissions') ?>">
+                                <a class="nav-link <?= $isActive('permissions') ?>" href="<?= base_url('permissions') ?>" data-bms-title="Permissions">
                                     <span class="nav-ico" aria-hidden="true">
                                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                             <path d="M12 1l8 4v6c0 5-3.4 9.7-8 11-4.6-1.3-8-6-8-11V5l8-4Z" fill="currentColor" opacity=".35"/>
@@ -165,7 +165,7 @@
                                 </span>
                                 <span class="nav-txt">Invoices</span>
                             </a>
-                            <a class="nav-link <?= $isActive('payments') ?>" href="<?= base_url('payments') ?>">
+                            <a class="nav-link <?= $isActive('payments') ?>" href="<?= base_url('payments') ?>" data-bms-title="Payment Capture">
                                 <span class="nav-ico" aria-hidden="true">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                         <path d="M12 1l8 4v6c0 5-3.4 9.7-8 11-4.6-1.3-8-6-8-11V5l8-4Z" fill="currentColor" opacity=".25"/>
@@ -174,7 +174,7 @@
                                 </span>
                                 <span class="nav-txt">Payment</span>
                             </a>
-                            <a class="nav-link <?= $isActive('payment_report') ?>" href="<?= base_url('payment-report') ?>">
+                            <a class="nav-link <?= $isActive('payment_report') ?>" href="<?= base_url('payment-report') ?>" data-bms-title="Received Payments Report">
                                 <span class="nav-ico" aria-hidden="true">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                                         <path d="M7 3h10v2H7V3Zm12 4H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V9c0-1.1-.9-2-2-2Zm0 12H5V9h14v10ZM7 11h10v2H7v-2Zm0 4h7v2H7v-2Z" fill="currentColor" opacity=".35"/>

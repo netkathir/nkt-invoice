@@ -38,5 +38,22 @@
     </div>
 </div>
     <?= $this->renderSection('modals') ?>
+
+    <script>
+        function toggleSidebar() {
+            document.body.classList.toggle('bms-sidebar-hidden');
+            
+            // Persist sidebar state using localStorage
+            const isHidden = document.body.classList.contains('bms-sidebar-hidden');
+            localStorage.setItem('sidebarState', isHidden ? 'hidden' : 'open');
+        }
+
+        // Restore state on load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (localStorage.getItem('sidebarState') === 'hidden') {
+                document.body.classList.add('bms-sidebar-hidden');
+            }
+        });
+    </script>
 </body>
 </html>

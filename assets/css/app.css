@@ -2191,13 +2191,26 @@ table tbody td{
     transition: opacity .22s ease, transform .22s ease, max-width .22s ease;
 }
 
-body.bms-sidebar-collapsed{
-    --sidebar-width: 88px;
+/* Mini-sidebar implementation for the toggle script */
+body.bms-sidebar-hidden .app-sidebar {
+    flex: 0 0 88px !important;
+    width: 88px !important;
+    max-width: 88px !important;
+    padding: 10px 10px !important;
+    overflow: visible;
 }
-body.bms-sidebar-collapsed .app-sidebar{
-    padding: 8px 10px;
+
+body.bms-sidebar-hidden .app-main {
+    flex: 1 1 100% !important;
+    max-width: 100% !important;
 }
-body.bms-sidebar-collapsed .sidebar-top{
+
+body.bms-sidebar-hidden .nav-txt {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+body.bms-sidebar-hidden .sidebar-top{
     flex-direction: column;
     align-items: center;
     justify-content: center;
@@ -2207,25 +2220,22 @@ body.bms-sidebar-collapsed .sidebar-top{
     padding-top: .9rem !important;
     padding-bottom: .8rem !important;
 }
-body.bms-sidebar-collapsed .brand-logo-wrap{
+
+body.bms-sidebar-hidden .brand-logo-wrap{
     display: none;
 }
-body.bms-sidebar-collapsed .sidebar-menu{
+
+body.bms-sidebar-hidden .sidebar-menu{
     padding-left: 0 !important;
     padding-right: 0 !important;
 }
-body.bms-sidebar-collapsed .nav-txt{
-    max-width: 0;
-    opacity: 0;
-    transform: translateX(-6px);
-}
 
-/* Tooltips for collapsed state using data-bms-title */
-body.bms-sidebar-collapsed .sidebar-menu .nav-link[data-bms-title] {
+/* Tooltips for hidden state using data-bms-title */
+body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title] {
     position: relative;
     overflow: visible;
 }
-body.bms-sidebar-collapsed .sidebar-menu .nav-link[data-bms-title]:hover::after {
+body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title]:hover::after {
     content: attr(data-bms-title);
     position: absolute;
     left: 100%;

@@ -71,16 +71,6 @@
                     <th>Amount</th>
                     <th>Actions</th>
                 </tr>
-                <tr class="bms-table-filter-row">
-                    <th><input type="text" class="form-control form-control-sm column-search" data-index="0" placeholder="Search No"></th>
-                    <th><input type="text" class="form-control form-control-sm column-search" data-index="1" placeholder="Search Date"></th>
-                    <th><input type="text" class="form-control form-control-sm column-search" data-index="2" placeholder="Search Client"></th>
-                    <th><input type="text" class="form-control form-control-sm column-search" data-index="3" placeholder="Search Desc"></th>
-                    <th></th>
-                    <th></th>
-                    <th><input type="text" class="form-control form-control-sm column-search" data-index="6" placeholder="Search Amount"></th>
-                    <th></th>
-                </tr>
                 </thead>
             </table>
         </div>

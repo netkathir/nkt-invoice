@@ -30,14 +30,14 @@
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label mb-1 fw-semibold">From Date</label>
-                    <input type="date" class="form-control" id="prFilterStartDate">
+                    <input type="text" class="form-control" id="prFilterStartDate" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label mb-1 fw-semibold">To Date</label>
-                    <input type="date" class="form-control" id="prFilterEndDate">
+                    <input type="text" class="form-control" id="prFilterEndDate" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-12 col-md-2 text-md-end">
-                    <button type="button" class="btn btn-outline-secondary w-100" id="prBtnReset">Reset</button>
+                    <button type="button" class="btn btn-outline-secondary px-3" id="prBtnReset">Reset Filters</button>
                 </div>
             </div>
         </div>

@@ -140,6 +140,44 @@
         return yyyy + '-' + mm + '-' + dd;
     }
 
+    function initPremiumDatePickers(container) {
+        if (typeof flatpickr === 'undefined') return;
+        const parent = container || document;
+        
+        // Month Picker
+        $(parent).find('.bms-month-picker').each(function() {
+            if (this._flatpickr) return;
+            flatpickr(this, {
+                dateFormat: "M Y",
+                allowInput: true,
+                appendTo: document.body,
+                disableMobile: "true",
+                onReady: function(selectedDates, dateStr, instance) {
+                    const $input = $(instance.input);
+                    $input.on('change', function() {
+                        if (!$input.val()) instance.clear();
+                    });
+                }
+            });
+        });
+
+        // Date Picker
+        const $inputs = $(parent).find('input[type="date"], .bms-date-picker, #filterStartDate, #filterEndDate, #pfFilterStartDate, #pfFilterEndDate, #payFilterStartDate, #payFilterEndDate, #prFilterStartDate, #prFilterEndDate, #payDate, #bi_entry_date');
+        
+        $inputs.each(function() {
+            if (this._flatpickr) return;
+            flatpickr(this, {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d M Y",
+                allowInput: true,
+                appendTo: document.body,
+                disableMobile: "true"
+            });
+        });
+    }
+    BMS.initPremiumDatePickers = initPremiumDatePickers;
+
     function formatUiDateDmy(value, type) {
         const raw = String(value || '').trim();
         if (!raw) return type === 'display' ? '-' : '';
@@ -2297,6 +2335,8 @@
 
         // Default to showing Pending items.
         // Must be set before DataTable's initial AJAX call.
+        BMS.initPremiumDatePickers();
+
         if (urlForceAll) {
             $('#filterStatus').val('');
         } else if (urlForceBilled) {
@@ -2315,7 +2355,7 @@
                 data: function (d) {
                     d.client_id = $('#filterClient').val() || (urlClientId > 0 ? urlClientId : '');
                     d.status = $('#filterStatus').val();
-                    d.month = urlMonth;
+                    d.month = $('#filterMonth').val() || urlMonth;
                     d.start_date = $('#filterStartDate').val();
                     d.end_date = $('#filterEndDate').val();
                 }
@@ -2355,15 +2395,24 @@
             ],
         }));
 
-        $('#filterClient,#filterStatus,#filterStartDate,#filterEndDate').on('change', function () {
+        $('#filterClient,#filterStatus,#filterStartDate,#filterEndDate,#filterMonth').on('change', function () {
             table.ajax.reload();
+        });
+
+        $('.column-search').on('keyup change clear', function () {
+            const index = $(this).data('index');
+            table.column(index).search(this.value).draw();
         });
 
         $('#btnResetFilters').on('click', function () {
             $('#filterClient').val('');
-            $('#filterStatus').val('Pending');
+            $('#filterStatus').val('');
+            $('#filterMonth').val('');
+            if ($('#filterMonth')[0]._flatpickr) $('#filterMonth')[0]._flatpickr.clear();
             $('#filterStartDate').val('');
+            if ($('#filterStartDate')[0]._flatpickr) $('#filterStartDate')[0]._flatpickr.clear();
             $('#filterEndDate').val('');
+            if ($('#filterEndDate')[0]._flatpickr) $('#filterEndDate')[0]._flatpickr.clear();
             table.ajax.reload();
         });
 
@@ -2373,7 +2422,7 @@
             const status = String($('#filterStatus').val() || '');
             const start = $('#filterStartDate').val();
             const end = $('#filterEndDate').val();
-            const month = urlMonth;
+            const month = $('#filterMonth').val() || urlMonth;
             if (clientId) params.set('client_id', clientId);
             if (status) params.set('status', status);
             if (start) params.set('start_date', start);
@@ -2583,6 +2632,7 @@
     BMS.initProformas = function () {
         const $tableEl = $('#dtProformas');
         if (! $tableEl.length) return;
+        BMS.initPremiumDatePickers();
         const $statTotal = $('#pfStatTotal');
         const $statVisible = $('#pfStatVisible');
         const $statExport = $('#pfStatExport');
@@ -2736,7 +2786,9 @@
 
         $('#pfBtnReset').on('click', function () {
             $('#pfFilterStartDate').val('');
+            if ($('#pfFilterStartDate')[0]._flatpickr) $('#pfFilterStartDate')[0]._flatpickr.clear();
             $('#pfFilterEndDate').val('');
+            if ($('#pfFilterEndDate')[0]._flatpickr) $('#pfFilterEndDate')[0]._flatpickr.clear();
             table.ajax.reload();
         });
 
@@ -2759,13 +2811,19 @@
             table.column(col).search(iso || raw).draw();
         });
 
-        // Native calendar for issue/due filters
-        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"3\"]'), '#pf_issue_native', function (iso) {
-            table.column(3).search(iso || '').draw();
-        }, isoToDmyText, textToIso);
-        attachNativeCalendar($tableEl.find('thead input.pf-col-filter[data-col=\"4\"]'), '#pf_due_native', function (iso) {
-            table.column(4).search(iso || '').draw();
-        }, isoToDmyText, textToIso);
+        // Premium Flatpickr for issue/due filters in column header if needed
+        $tableEl.find('thead input.pf-col-filter[data-col=\"3\"], thead input.pf-col-filter[data-col=\"4\"]').each(function() {
+            const colIndex = parseInt($(this).data('col'), 10);
+            flatpickr(this, {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d M Y",
+                allowInput: true,
+                onChange: function(selectedDates, dateStr) {
+                    table.column(colIndex).search(dateStr || '').draw();
+                }
+            });
+        });
 
         // Clear button resets filters
         $('#pfBtnClear').on('click', function () {
@@ -2807,6 +2865,7 @@
     BMS.initPayments = function () {
         const $tableEl = $('#dtPayments');
         if (! $tableEl.length) return;
+        BMS.initPremiumDatePickers();
 
         let table = null;
         let pendingInvoiceId = 0;
@@ -2853,7 +2912,9 @@
 
         $('#payBtnReset').on('click', function () {
             $('#payFilterStartDate').val('');
+            if ($('#payFilterStartDate')[0]._flatpickr) $('#payFilterStartDate')[0]._flatpickr.clear();
             $('#payFilterEndDate').val('');
+            if ($('#payFilterEndDate')[0]._flatpickr) $('#payFilterEndDate')[0]._flatpickr.clear();
             table.ajax.reload();
         });
 
@@ -3165,6 +3226,8 @@
         const $tableEl = $('#dtPaymentReport');
         if (! $tableEl.length) return;
 
+        BMS.initPremiumDatePickers();
+
         const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
             ajax: {
                 url: base('payment-report/list'),
@@ -3197,7 +3260,9 @@
         $(document).off('click.pr', '#prBtnReset').on('click.pr', '#prBtnReset', function () {
             $('#prPaymentStatus').val('All');
             $('#prFilterStartDate').val('');
+            if ($('#prFilterStartDate')[0]._flatpickr) $('#prFilterStartDate')[0]._flatpickr.clear();
             $('#prFilterEndDate').val('');
+            if ($('#prFilterEndDate')[0]._flatpickr) $('#prFilterEndDate')[0]._flatpickr.clear();
             table.ajax.reload();
         });
 
@@ -3215,6 +3280,8 @@
     BMS.initDailyExpenseForm = function () {
         const $tableEl = $('#dtDailyExpenses');
         if (! $tableEl.length) return;
+
+        BMS.initPremiumDatePickers();
 
         const table = $tableEl.DataTable($.extend(true, {}, dtDefaults(), {
             ajax: { url: base('day-book/daily-expense-form/list'), dataSrc: 'data' },
@@ -3349,8 +3416,24 @@
         const $cat = $('#derCategory');
         if (! $cat.length) return;
 
-        attachNativeCalendar('#derStart', '#derStartNative', function () {});
-        attachNativeCalendar('#derEnd', '#derEndNative', function () {});
+        flatpickr('#derStart', {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d M Y",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                $('#derStartNative').val(dateStr);
+            }
+        });
+        flatpickr('#derEnd', {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d M Y",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                $('#derEndNative').val(dateStr);
+            }
+        });
 
         function currentFilters() {
             return {
@@ -3466,7 +3549,15 @@
         const $txt = $('#de_exp_date');
         const $nat = $('#de_exp_date_native');
         if (!($txt.length && $nat.length)) return;
-        attachNativeCalendar('#de_exp_date', '#de_exp_date_native', function () {});
+        flatpickr('#de_exp_date', {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d M Y",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) {
+                $('#de_exp_date_native').val(dateStr);
+            }
+        });
     };
 
 	    BMS.initProformaCreate = function () {
@@ -3734,10 +3825,20 @@
 	            setDateFieldValue('#pf_due', dueIso);
 	        }
 
-	        attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
-	            syncDueDateFromIssue(iso);
+	        flatpickr('#pf_date', {
+	            dateFormat: "Y-m-d",
+	            altInput: true,
+	            altFormat: "d M Y",
+	            allowInput: true,
+	            onChange: function(selectedDates, dateStr) { $('#pf_date_native').val(dateStr); syncDueDateFromIssue(dateStr); }
 	        });
-	        attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+	        flatpickr('#pf_due', {
+	            dateFormat: "Y-m-d",
+	            altInput: true,
+	            altFormat: "d M Y",
+	            allowInput: true,
+	            onChange: function(selectedDates, dateStr) { $('#pf_due_native').val(dateStr); }
+	        });
 	        $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
 	            syncDueDateFromIssue(readDateFieldIso('#pf_date', textToIso));
 	        });
@@ -4115,10 +4216,20 @@
 	                setDateFieldValue('#pf_due', dueIso);
 	            }
 
-	            attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
-	                syncDueDateFromIssue(iso);
+	            flatpickr('#pf_date', {
+	                dateFormat: "Y-m-d",
+	                altInput: true,
+	                altFormat: "d M Y",
+	                allowInput: true,
+	                onChange: function(selectedDates, dateStr) { $('#pf_date_native').val(dateStr); syncDueDateFromIssue(dateStr); }
 	            });
-	            attachNativeCalendar('#pf_due', '#pf_due_native', function () {});
+	            flatpickr('#pf_due', {
+	                dateFormat: "Y-m-d",
+	                altInput: true,
+	                altFormat: "d M Y",
+	                allowInput: true,
+	                onChange: function(selectedDates, dateStr) { $('#pf_due_native').val(dateStr); }
+	            });
 	            $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
 	                syncDueDateFromIssue(readDateFieldIso('#pf_date'));
 	            });
@@ -4297,11 +4408,27 @@
             setDateFieldValue('#pf_to', dueIso);
         }
 
-        attachNativeCalendar('#pf_date', '#pf_date_native', function (iso) {
-            syncLegacyDueDateFromIssue(iso);
+        flatpickr('#pf_date', {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d M Y",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) { $('#pf_date_native').val(dateStr); syncLegacyDueDateFromIssue(dateStr); }
         });
-        attachNativeCalendar('#pf_from', '#pf_from_native', function () {});
-        attachNativeCalendar('#pf_to', '#pf_to_native', function () {});
+        flatpickr('#pf_from', {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d M Y",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) { $('#pf_from_native').val(dateStr); }
+        });
+        flatpickr('#pf_to', {
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d M Y",
+            allowInput: true,
+            onChange: function(selectedDates, dateStr) { $('#pf_to_native').val(dateStr); }
+        });
         $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
             syncLegacyDueDateFromIssue(readDateFieldIso('#pf_date'));
         });

@@ -60,14 +60,14 @@
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label small fw-bold">From Date</label>
-                    <input type="date" class="form-control form-control-sm" id="pfFilterStartDate">
+                    <input type="text" class="form-control form-control-sm" id="pfFilterStartDate" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label small fw-bold">To Date</label>
-                    <input type="date" class="form-control form-control-sm" id="pfFilterEndDate">
+                    <input type="text" class="form-control form-control-sm" id="pfFilterEndDate" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-12 col-md-3 text-md-end">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="pfBtnReset">Reset Filters</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="pfBtnReset">Reset Filters</button>
                 </div>
             </div>
         </div>

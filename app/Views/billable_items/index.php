@@ -12,9 +12,9 @@
 <div class="card mb-3">
     <div class="card-body">
         <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-4">
-                <label class="form-label">Client</label>
-                <select class="form-select" id="filterClient">
+            <div class="col-12 col-md-2">
+                <label class="form-label small fw-bold">Client</label>
+                <select class="form-select form-select-sm" id="filterClient">
                     <option value="">All Clients</option>
                     <?php foreach ($clients as $c): ?>
                         <option value="<?= esc((string) $c['id']) ?>"><?= esc($c['name']) ?></option>
@@ -22,23 +22,27 @@
                 </select>
             </div>
             <div class="col-12 col-md-2">
-                <label class="form-label">Status</label>
-                <select class="form-select" id="filterStatus">
-                    <option value="">All</option>
+                <label class="form-label small fw-bold">Status</label>
+                <select class="form-select form-select-sm" id="filterStatus">
+                    <option value="">All Status</option>
                     <option value="Pending">Pending</option>
                     <option value="Billed">Billed</option>
                 </select>
             </div>
             <div class="col-12 col-md-2">
-                <label class="form-label">From Date</label>
-                <input type="date" class="form-control" id="filterStartDate">
+                <label class="form-label small fw-bold">Billing Month</label>
+                <input type="text" class="form-control form-control-sm bms-month-picker" id="filterMonth" placeholder="Select Month">
             </div>
             <div class="col-12 col-md-2">
-                <label class="form-label">To Date</label>
-                <input type="date" class="form-control" id="filterEndDate">
+                <label class="form-label small fw-bold">From Date</label>
+                <input type="text" class="form-control form-control-sm bms-date-picker" id="filterStartDate" placeholder="YYYY-MM-DD">
+            </div>
+            <div class="col-12 col-md-2">
+                <label class="form-label small fw-bold">To Date</label>
+                <input type="text" class="form-control form-control-sm bms-date-picker" id="filterEndDate" placeholder="YYYY-MM-DD">
             </div>
             <div class="col-12 col-md-2 text-md-end">
-                <button type="button" class="btn btn-outline-secondary w-100" id="btnResetFilters">Reset</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnResetFilters">Reset Filters</button>
             </div>
         </div>
     </div>
@@ -59,6 +63,17 @@
                 <th>Proforma No</th>
                 <th>Actions</th>
             </tr>
+            <tr class="bms-table-filter-row">
+                <th></th>
+                <th><input type="text" class="form-control form-control-sm column-search" data-index="1" placeholder="Search No"></th>
+                <th><input type="text" class="form-control form-control-sm column-search" data-index="2" placeholder="Search Date"></th>
+                <th><input type="text" class="form-control form-control-sm column-search" data-index="3" placeholder="Search Client"></th>
+                <th><input type="text" class="form-control form-control-sm column-search" data-index="4" placeholder="Search Desc"></th>
+                <th><input type="text" class="form-control form-control-sm column-search" data-index="5" placeholder="Search Amount"></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
             </thead>
         </table>
     </div>
@@ -76,7 +91,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Entry Date</label>
-                            <input type="date" class="form-control" name="entry_date" id="bi_entry_date" value="<?= esc(date('Y-m-d')) ?>" required>
+                            <input type="text" class="form-control" name="entry_date" id="bi_entry_date" value="<?= esc(date('Y-m-d')) ?>" required>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Client</label>

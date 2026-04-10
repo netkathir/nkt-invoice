@@ -27,14 +27,14 @@
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label small fw-bold">From Date</label>
-                    <input type="date" class="form-control form-control-sm" id="payFilterStartDate">
+                    <input type="text" class="form-control form-control-sm" id="payFilterStartDate" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-12 col-md-3">
                     <label class="form-label small fw-bold">To Date</label>
-                    <input type="date" class="form-control form-control-sm" id="payFilterEndDate">
+                    <input type="text" class="form-control form-control-sm" id="payFilterEndDate" placeholder="YYYY-MM-DD">
                 </div>
                 <div class="col-12 col-md-2 text-md-end">
-                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="payBtnReset">Reset</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="payBtnReset">Reset Filters</button>
                 </div>
             </div>
         </div>
@@ -118,7 +118,7 @@
 
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Payment Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="payDate" value="<?= esc(date('Y-m-d')) ?>" required>
+                                <input type="text" class="form-control" id="payDate" value="<?= esc(date('Y-m-d')) ?>" required>
                             </div>
                             <div class="col-12 col-md-6">
                                 <label class="form-label">Amount <span class="text-danger">*</span></label>

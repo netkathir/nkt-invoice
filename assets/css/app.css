@@ -2861,23 +2861,29 @@ body.bms-sidebar-open .app-sidebar-open-trigger{
     display: none !important;
 }
 
+/* --- Mobile Adjustments --- */
 @media (max-width: 991.98px){
     .app-main{
         padding: 0 14px 0 14px;
     }
 
     .app-sidebar{
+        position: fixed;
+        inset: 0 auto 0 0;
+        z-index: 1080;
         width: min(320px, calc(100vw - 24px));
         max-width: min(320px, calc(100vw - 24px));
         padding: 12px;
+        transform: translateX(calc(-100% - 18px));
     }
 
     .app-panel--sidebar{
         height: calc(100vh - 24px);
     }
 
-    body:not(.bms-sidebar-open) .app-sidebar{
-        transform: translateX(calc(-100% - 18px));
+    body.bms-sidebar-open .app-sidebar{
+        transform: translateX(0) !important;
+        box-shadow: 0 28px 56px rgba(15,23,42,.18);
     }
 }
 
@@ -2893,24 +2899,12 @@ body.bms-sidebar-open .app-sidebar-open-trigger{
     }
 }
 
+/* --- Desktop Adjustments --- */
 @media (min-width: 992px){
     .app-sidebar{
         position: relative !important;
         transform: none !important;
         height: auto;
-    }
-}
-
-@media (max-width: 991.98px){
-    .app-sidebar{
-        position: fixed;
-        inset: 0 auto 0 0;
-        transform: translateX(-100%);
-        z-index: 1080;
-    }
-
-    body.bms-sidebar-open .app-sidebar{
-        transform: translateX(0);
     }
 }
 

@@ -20,17 +20,32 @@
     <div class="card bms-list-filter-card border-0">
         <div class="card-body">
             <div class="row g-2 align-items-end">
-                <div class="col-12 col-md-4">
-                    <label class="form-label">Client</label>
-                    <select class="form-select" id="filterClient"></select>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small fw-bold">Client</label>
+                    <select class="form-select form-select-sm" id="filterClient"></select>
                 </div>
-                <div class="col-12 col-md-3">
-                    <label class="form-label">Status</label>
-                    <select class="form-select" id="filterStatus">
+                <div class="col-12 col-md-2">
+                    <label class="form-label small fw-bold">Status</label>
+                    <select class="form-select form-select-sm" id="filterStatus">
                         <option value="Pending" selected>Pending</option>
                         <option value="Billed">Billed</option>
-                        <option value="">All</option>
+                        <option value="">All Status</option>
                     </select>
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small fw-bold">Billing Month</label>
+                    <input type="text" class="form-control form-control-sm bms-month-picker" id="filterMonth" placeholder="Select Month">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small fw-bold">From Date</label>
+                    <input type="text" class="form-control form-control-sm bms-date-picker" id="filterStartDate" placeholder="YYYY-MM-DD">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label class="form-label small fw-bold">To Date</label>
+                    <input type="text" class="form-control form-control-sm bms-date-picker" id="filterEndDate" placeholder="YYYY-MM-DD">
+                </div>
+                <div class="col-12 col-md-2 text-md-end">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" id="btnResetFilters">Reset Filters</button>
                 </div>
             </div>
         </div>
@@ -55,6 +70,16 @@
                     <th>Status</th>
                     <th>Amount</th>
                     <th>Actions</th>
+                </tr>
+                <tr class="bms-table-filter-row">
+                    <th><input type="text" class="form-control form-control-sm column-search" data-index="0" placeholder="Search No"></th>
+                    <th><input type="text" class="form-control form-control-sm column-search" data-index="1" placeholder="Search Date"></th>
+                    <th><input type="text" class="form-control form-control-sm column-search" data-index="2" placeholder="Search Client"></th>
+                    <th><input type="text" class="form-control form-control-sm column-search" data-index="3" placeholder="Search Desc"></th>
+                    <th></th>
+                    <th></th>
+                    <th><input type="text" class="form-control form-control-sm column-search" data-index="6" placeholder="Search Amount"></th>
+                    <th></th>
                 </tr>
                 </thead>
             </table>

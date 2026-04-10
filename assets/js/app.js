@@ -4544,7 +4544,7 @@
 
         function setSidebarState(open, persist) {
             document.body.classList.toggle('bms-sidebar-open', open);
-            document.body.classList.toggle('bms-sidebar-hidden', !open);
+            document.body.classList.toggle('bms-sidebar-collapsed', !open);
 
             const overlay = document.getElementById('appSidebarOverlay');
             if (overlay) {
@@ -4562,15 +4562,6 @@
                 toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             }
 
-            const reopenBtn = document.getElementById('btnReopenSidebar');
-            if (reopenBtn) {
-                if (!open) {
-                    reopenBtn.classList.remove('d-none');
-                } else {
-                    reopenBtn.classList.add('d-none');
-                }
-            }
-
             if (persist) {
                 try {
                     localStorage.setItem(SIDEBAR_KEY, open ? '0' : '1');
@@ -4579,7 +4570,7 @@
         }
 
         function toggleSidebarState() {
-            setSidebarState(document.body.classList.contains('bms-sidebar-hidden'), true);
+            setSidebarState(document.body.classList.contains('bms-sidebar-collapsed'), true);
         }
         window.BMS.toggleSidebarState = toggleSidebarState;
 
@@ -4596,7 +4587,7 @@
 
         setSidebarState(resolveInitialSidebarOpen(), false);
 
-        $(document).on('click', '#btnToggleSidebar, #btnToggleSidebarHeader, #btnOpenSidebar', function (e) {
+        $(document).on('click', '#btnToggleSidebar, #btnOpenSidebar', function (e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('Sidebar toggle clicked');

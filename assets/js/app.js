@@ -4572,6 +4572,7 @@
         function toggleSidebarState() {
             setSidebarState(document.body.classList.contains('bms-sidebar-collapsed'), true);
         }
+        window.BMS.toggleSidebarState = toggleSidebarState;
 
         function resolveInitialSidebarOpen() {
             try {

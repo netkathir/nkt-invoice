@@ -2063,7 +2063,7 @@ table tbody td{
     gap: 1.35rem 1rem;
     align-items: start;
 }
-
+}
 @media (max-width: 575.98px){
     .invoice-list-overview{
     display: grid;
@@ -2306,7 +2306,7 @@ body.bms-sidebar-hidden .btn-icon{
     background: rgba(220,53,69,.08);
     border: 1px solid rgba(220,53,69,.25);
 }
-
+}
 @media (max-width: 991.98px){
     .app-shell{
         flex-direction: column;

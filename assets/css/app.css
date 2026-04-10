@@ -2191,6 +2191,20 @@ table tbody td{
     transition: opacity .22s ease, transform .22s ease, max-width .22s ease;
 }
 
+body.bms-sidebar-hidden .app-sidebar{
+    width: 0;
+    flex: 0 0 0;
+    max-width: 0;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+body.bms-sidebar-hidden .app-main{
+    padding-left: 14px;
+}
+
 body.bms-sidebar-collapsed .app-sidebar{
     width: 88px;
     flex: 0 0 88px;

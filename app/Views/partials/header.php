@@ -14,6 +14,13 @@
         ?>
         <div class="d-flex align-items-center justify-content-between px-3 py-3">
             <div class="d-flex align-items-center gap-2 min-w-0">
+                <button type="button" class="btn p-0 border-0 me-2" id="btnToggleSidebarHeader" onclick="if(window.BMS && window.BMS.toggleSidebarState){ window.BMS.toggleSidebarState(); } else { document.body.classList.toggle('bms-sidebar-hidden'); }" aria-label="Toggle Sidebar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
                 <?php if (session()->get('admin_id')): ?>
                     <div class="header-welcome text-truncate">
                         <span class="text-muted">Welcome back,</span>

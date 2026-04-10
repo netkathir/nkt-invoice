@@ -4544,7 +4544,7 @@
 
         function setSidebarState(open, persist) {
             document.body.classList.toggle('bms-sidebar-open', open);
-            document.body.classList.toggle('bms-sidebar-collapsed', !open);
+            document.body.classList.toggle('bms-sidebar-hidden', !open);
 
             const overlay = document.getElementById('appSidebarOverlay');
             if (overlay) {
@@ -4570,7 +4570,7 @@
         }
 
         function toggleSidebarState() {
-            setSidebarState(document.body.classList.contains('bms-sidebar-collapsed'), true);
+            setSidebarState(document.body.classList.contains('bms-sidebar-hidden'), true);
         }
         window.BMS.toggleSidebarState = toggleSidebarState;
 
@@ -4580,11 +4580,6 @@
                 if (saved === '1' || saved === '0') {
                     return saved !== '1';
                 }
-
-                const legacy = localStorage.getItem('bms_sidebar_collapsed');
-                if (legacy === '1' || legacy === '0') {
-                    return legacy !== '1';
-                }
             } catch (e) {}
 
             return !sidebarBreakpoint.matches;
@@ -4592,7 +4587,7 @@
 
         setSidebarState(resolveInitialSidebarOpen(), false);
 
-        $(document).on('click', '#btnToggleSidebar, #btnOpenSidebar', function (e) {
+        $(document).on('click', '#btnToggleSidebar, #btnToggleSidebarHeader, #btnOpenSidebar', function (e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('Sidebar toggle clicked');

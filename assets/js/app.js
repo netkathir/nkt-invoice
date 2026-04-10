@@ -4562,6 +4562,15 @@
                 toggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
             }
 
+            const reopenBtn = document.getElementById('btnReopenSidebar');
+            if (reopenBtn) {
+                if (!open) {
+                    reopenBtn.classList.remove('d-none');
+                } else {
+                    reopenBtn.classList.add('d-none');
+                }
+            }
+
             if (persist) {
                 try {
                     localStorage.setItem(SIDEBAR_KEY, open ? '0' : '1');

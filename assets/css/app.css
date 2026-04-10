@@ -2191,68 +2191,23 @@ table tbody td{
     transition: opacity .22s ease, transform .22s ease, max-width .22s ease;
 }
 
-/* Mini-sidebar implementation for the toggle script */
-body.bms-sidebar-hidden .app-sidebar {
-    flex: 0 0 88px !important;
-    width: 88px !important;
-    max-width: 88px !important;
-    padding: 10px 10px !important;
-    overflow: visible;
-}
+     .bms-sidebar-hidden .app-sidebar {
+         flex: 0 0 0 !important;
+         width: 0 !important;
+         max-width: 0 !important;
+         padding: 0 !important;
+         overflow: hidden;
+     }
 
-body.bms-sidebar-hidden .app-main {
-    flex: 1 1 100% !important;
-    max-width: 100% !important;
-}
+     .bms-sidebar-hidden .app-main {
+         flex: 1 1 100% !important;
+         max-width: 100% !important;
+     }
 
-body.bms-sidebar-hidden .nav-txt {
-    opacity: 0;
-    transform: translateX(-10px);
-}
-
-body.bms-sidebar-hidden .sidebar-top{
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0;
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    padding-top: .9rem !important;
-    padding-bottom: .8rem !important;
-}
-
-body.bms-sidebar-hidden .brand-logo-wrap{
-    display: none;
-}
-
-body.bms-sidebar-hidden .sidebar-menu{
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-}
-
-/* Tooltips for hidden state using data-bms-title */
-body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title] {
-    position: relative;
-    overflow: visible;
-}
-body.bms-sidebar-hidden .sidebar-menu .nav-link[data-bms-title]:hover::after {
-    content: attr(data-bms-title);
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    background: var(--ink);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 13px;
-    white-space: nowrap;
-    z-index: 1050;
-    margin-left: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    pointer-events: none;
-    opacity: 1;
-}
+     .bms-sidebar-hidden .nav-txt {
+         opacity: 0;
+         transform: translateX(-10px);
+     }
 body.bms-sidebar-collapsed .nav-sub{
     margin-left: 0;
 }

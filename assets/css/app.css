@@ -2856,6 +2856,43 @@ body.bms-sidebar-open{
     display: none;
 }
 
+.bms-mobile-sidebar-trigger{
+    display: none;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: 8px;
+    color: rgba(15,23,42,.82);
+    background: rgba(255,255,255,.95);
+    border: 1px solid rgba(148,163,184,.32);
+    box-shadow: 0 12px 24px rgba(15,23,42,.12);
+}
+
+.bms-mobile-sidebar-trigger:hover,
+.bms-mobile-sidebar-trigger:focus{
+    color: var(--brand);
+    background: #fff;
+    border-color: rgba(13,110,253,.28);
+}
+
+@media (max-width: 991.98px){
+    .bms-mobile-sidebar-trigger{
+        display: inline-flex;
+        position: fixed;
+        left: 14px;
+        top: 14px;
+        z-index: 1065;
+    }
+
+    body.bms-sidebar-open .bms-mobile-sidebar-trigger{
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+}
+
 body.bms-sidebar-hidden .app-sidebar{
     flex: 0 0 88px !important;
     flex-basis: 88px !important;

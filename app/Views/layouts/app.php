@@ -19,6 +19,13 @@
 <div class="app-canvas p-0">
 <div class="app-shell app-frame d-flex">
     <?= $this->include('partials/sidebar') ?>
+    <button class="btn bms-mobile-sidebar-trigger" type="button" onclick="toggleSidebar()" aria-label="Open sidebar">
+        <span aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </span>
+    </button>
     <div class="app-sidebar-overlay" onclick="toggleSidebar()"></div>
     <div class="app-main flex-grow-1">
         <?= $this->include('partials/header') ?>

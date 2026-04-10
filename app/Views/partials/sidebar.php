@@ -249,16 +249,28 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
 <script>
     (function () {
         const STORAGE_KEY = 'sidebarState';
+        const mobileQuery = window.matchMedia('(max-width: 991.98px)');
 
         window.toggleSidebar = function () {
+            if (mobileQuery.matches) {
+                document.body.classList.remove('bms-sidebar-hidden');
+                document.body.classList.toggle('bms-sidebar-open');
+                return;
+            }
+
             document.body.classList.remove('bms-sidebar-open');
             document.body.classList.toggle('bms-sidebar-hidden');
-
             const isHidden = document.body.classList.contains('bms-sidebar-hidden');
             localStorage.setItem(STORAGE_KEY, isHidden ? 'hidden' : 'open');
         };
 
         function restoreSidebarState() {
+            if (mobileQuery.matches) {
+                document.body.classList.remove('bms-sidebar-hidden');
+                document.body.classList.remove('bms-sidebar-open');
+                return;
+            }
+
             document.body.classList.remove('bms-sidebar-open');
             if (localStorage.getItem(STORAGE_KEY) === 'hidden') {
                 document.body.classList.add('bms-sidebar-hidden');
@@ -266,5 +278,10 @@ $canProforma = can('billable_items.view') || can('client_masters.view');
         }
 
         document.addEventListener('DOMContentLoaded', restoreSidebarState);
+        if (typeof mobileQuery.addEventListener === 'function') {
+            mobileQuery.addEventListener('change', restoreSidebarState);
+        } else if (typeof mobileQuery.addListener === 'function') {
+            mobileQuery.addListener(restoreSidebarState);
+        }
     })();
 </script>

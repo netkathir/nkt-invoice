@@ -11,10 +11,9 @@
 <aside class="app-sidebar">
     <div class="app-panel app-panel--sidebar">
         <div class="sidebar-top px-3 pt-3 pb-2 d-flex align-items-center justify-content-between gap-2 app-brand">
-            <div class="brand-logo-wrap flex-grow-1">
-                <img class="brand-logo" src="<?= base_url('assets/img/Netkathir_logo.png') ?>" alt="Netkathir Logo">
-            </div>
-            <button type="button" class="btn p-0 border-0 btn-sidebar-toggle" id="btnToggleSidebar" onclick="if(window.BMS && window.BMS.toggleSidebarState){ window.BMS.toggleSidebarState(); } else { document.body.classList.toggle('bms-sidebar-collapsed'); }" aria-label="Toggle Sidebar">
+            <button type="button" class="btn p-0 border-0 btn-sidebar-toggle" id="btnToggleSidebar" 
+                onclick="document.body.classList.toggle('bms-sidebar-collapsed'); if(window.BMS && window.BMS.toggleSidebarState) { localStorage.setItem('bms_sidebar_closed', document.body.classList.contains('bms-sidebar-collapsed') ? '1' : '0'); }" 
+                aria-label="Toggle Sidebar">
                 <span class="nav-ico">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -23,6 +22,9 @@
                     </svg>
                 </span>
             </button>
+            <div class="brand-logo-wrap flex-grow-1">
+                <img class="brand-logo" src="<?= base_url('assets/img/Netkathir_logo.png') ?>" alt="Netkathir Logo">
+            </div>
         </div>
 
         <div class="sidebar-menu px-2 pb-2">

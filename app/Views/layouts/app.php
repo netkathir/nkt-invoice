@@ -19,8 +19,7 @@
 <div class="app-canvas p-0">
 <div class="app-shell app-frame d-flex">
     <?= $this->include('partials/sidebar') ?>
-<!-- ADD THIS -->
-<div class="app-sidebar-overlay" onclick="toggleSidebar()"></div>
+    <div class="app-sidebar-overlay" onclick="toggleSidebar()"></div>
     <div class="app-main flex-grow-1">
         <?= $this->include('partials/header') ?>
 

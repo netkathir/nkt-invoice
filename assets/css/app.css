@@ -2856,6 +2856,14 @@ body.bms-sidebar-open{
     align-items: center;
     justify-content: center;
 }
+.app-sidebar-toggle-icon{
+    font-size: 0;
+    line-height: 1;
+}
+.app-sidebar-toggle-icon::before{
+    content: "\2630";
+    font-size: 1.2rem;
+}
 
 body.bms-sidebar-open .app-sidebar-open-trigger{
     display: none !important;
@@ -2910,4 +2918,23 @@ body.bms-sidebar-open .app-sidebar-open-trigger{
 
 .app-main {
     transition: all 0.3s ease;
+}
+
+@media (min-width: 992px){
+    body.bms-sidebar-hidden .app-sidebar{
+        flex: 0 0 88px !important;
+        width: 88px !important;
+        max-width: 88px !important;
+        padding: 10px !important;
+        overflow: visible;
+    }
+
+    body.bms-sidebar-hidden .app-panel--sidebar{
+        height: calc(100vh - 20px);
+    }
+
+    body.bms-sidebar-hidden .app-main{
+        flex: 1 1 auto !important;
+        max-width: calc(100% - 88px) !important;
+    }
 }

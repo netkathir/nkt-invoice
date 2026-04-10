@@ -2137,11 +2137,7 @@ table tbody td{
 .btn-icon:active{
     transform: scale(.98);
 }
-.btn-sidebar-toggle{
-    transition: transform .28s cubic-bezier(.2,.8,.2,1);
-    transform-origin: center;
-    will-change: transform;
-}
+
 .btn-billed-icon{
     width: 34px;
     height: 34px;
@@ -2253,19 +2249,19 @@ table tbody td{
         pointer-events: none;
         opacity: 1;
     }
-    body.bms-sidebar-collapsed .nav-sub{
+    body.bms-sidebar-hidden .nav-sub{
     margin-left: 0;
 }
-body.bms-sidebar-collapsed .app-sidebar .collapse{
+body.bms-sidebar-hidden .app-sidebar .collapse{
     display: none !important;
 }
-body.bms-sidebar-collapsed .nav-caret{
+body.bms-sidebar-hidden .nav-caret{
     display: none;
 }
-body.bms-sidebar-collapsed .nav-pills{
+body.bms-sidebar-hidden .nav-pills{
     gap: 2px;
 }
-body.bms-sidebar-collapsed .nav-pills .nav-link{
+body.bms-sidebar-hidden .nav-pills .nav-link{
     justify-content: center;
     align-items: center;
     padding: 0;
@@ -2276,22 +2272,20 @@ body.bms-sidebar-collapsed .nav-pills .nav-link{
     gap: 0;
     transform: none;
 }
-body.bms-sidebar-collapsed .nav-pills .nav-link:hover,
-body.bms-sidebar-collapsed .nav-pills .nav-link.active{
+body.bms-sidebar-hidden .nav-pills .nav-link:hover,
+body.bms-sidebar-hidden .nav-pills .nav-link.active{
     transform: none;
 }
-body.bms-sidebar-collapsed .nav-ico{
+body.bms-sidebar-hidden .nav-ico{
     width: 22px;
     height: 22px;
 }
-body.bms-sidebar-collapsed .btn-icon{
+body.bms-sidebar-hidden .btn-icon{
     width: 44px;
     height: 44px;
     margin: 0 auto;
 }
-body.bms-sidebar-collapsed .btn-sidebar-toggle{
-    transform: none;
-}
+
 
 .cell-edit{
     display: inline-block;
@@ -2820,10 +2814,7 @@ body.bms-sidebar-collapsed .btn-sidebar-toggle{
     z-index: 1080;
 }
 
-body.bms-sidebar-closed .app-sidebar{
-    transform: translateX(calc(-100% - 18px));
-    box-shadow: none;
-}
+
 
 body.bms-sidebar-open .app-sidebar{
     transform: translateX(0);
@@ -2885,7 +2876,7 @@ body.bms-sidebar-open .app-sidebar-open-trigger{
         height: calc(100vh - 24px);
     }
 
-    body:not(.bms-sidebar-open):not(.bms-sidebar-closed) .app-sidebar{
+    body:not(.bms-sidebar-open) .app-sidebar{
         transform: translateX(calc(-100% - 18px));
     }
 }

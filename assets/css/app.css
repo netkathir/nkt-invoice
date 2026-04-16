@@ -2325,12 +2325,12 @@ table tbody td{
 .bms-invoice-create-card .form-label,
 .bms-invoice-create-card .form-text,
 .bms-invoice-create-card .form-check-label{
-    font-size: .82rem;
+    font-size: .88rem;
 }
 
 .bms-invoice-create-card .form-label{
-    font-weight: 600;
-    color: #334155;
+    font-weight: 700;
+    color: #1e293b;
 }
 
 .bms-invoice-create-card .form-control,
@@ -2341,11 +2341,13 @@ table tbody td{
     padding-bottom: .3rem;
     padding-left: .6rem;
     padding-right: .6rem;
-    font-size: .84rem;
+    font-size: .9rem;
+    font-weight: 600;
     line-height: 1.3;
     border-radius: 3px;
-    border-color: rgba(203,213,225,.95);
+    border-color: rgba(148,163,184,.9);
     box-shadow: none;
+    color: #0f172a;
 }
 
 .bms-invoice-create-card textarea.form-control{
@@ -2361,7 +2363,8 @@ table tbody td{
 .bms-invoice-create-card .form-control[readonly],
 .bms-invoice-create-card .form-select:disabled{
     background: #fff;
-    color: #475569;
+    color: #334155;
+    font-weight: 600;
 }
 
 .bms-invoice-create-card .bms-date-btn{
@@ -2385,7 +2388,8 @@ table tbody td{
 
 .bms-invoice-create-card .bms-items-box > .fw-semibold{
     margin-bottom: .55rem !important;
-    font-size: .88rem;
+    font-size: .96rem;
+    font-weight: 700 !important;
 }
 
 .bms-invoice-create-card #pfItemsTable{
@@ -2396,19 +2400,21 @@ table tbody td{
 .bms-invoice-create-card #pfItemsTable th,
 .bms-invoice-create-card #pfItemsTable td{
     padding: .38rem;
-    font-size: .8rem;
+    font-size: .85rem;
     vertical-align: top;
 }
 
 .bms-invoice-create-card #pfItemsTable thead th{
     background: #fff;
-    font-weight: 700;
+    font-weight: 800;
+    color: #111827;
     border-bottom-width: 1px;
 }
 
 .bms-invoice-create-card #pfItemsTable .form-control{
     min-height: 2rem;
-    font-size: .8rem;
+    font-size: .88rem;
+    font-weight: 600;
     padding: .28rem .45rem;
     border-radius: 3px;
 }
@@ -2427,6 +2433,8 @@ table tbody td{
 
 .bms-invoice-create-card #pfItemsTable .pf-item-desc-editor li{
     line-height: 1.45;
+    font-weight: 600;
+    color: #111827;
 }
 
 .bms-invoice-create-card .bms-pf-icon-btn{
@@ -2450,14 +2458,17 @@ table tbody td{
 
 .bms-invoice-create-card .row.justify-content-end.mt-4 .col-4,
 .bms-invoice-create-card .row.justify-content-end.mt-4 .col-8{
-    font-size: .82rem;
+    font-size: .9rem;
+    font-weight: 700;
+    color: #111827;
 }
 
 .bms-invoice-create-card #btnSaveProforma,
 .bms-invoice-create-card #btnUpdateProforma{
     min-height: 2.2rem;
     padding: .35rem .95rem;
-    font-size: .84rem;
+    font-size: .88rem;
+    font-weight: 700;
     border-radius: 3px;
 }
 
@@ -2476,6 +2487,8 @@ table tbody td{
 .bms-invoice-create-card .form-text{
     margin-top: .2rem;
     color: #6b7280;
+    font-size: .8rem;
+    font-weight: 500;
 }
 
 .bms-invoice-create-card #pf_invoice_no{

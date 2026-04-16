@@ -57,41 +57,46 @@
 </div>
 
 <div id="payAddPanel" class="<?= $isAdd ? '' : 'd-none' ?>">
-    <div class="card">
-            <div class="card-body py-4">
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-                <div class="h5 mb-0">Record Payment</div>
-                <div class="d-flex gap-2">
+    <div class="card payment-record-card border-0">
+            <div class="card-body py-4 payment-record-card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 payment-record-head">
+                <div>
+                    <div class="payment-record-kicker">Collections</div>
+                    <div class="h5 mb-0 payment-record-title">Record Payment</div>
+                    <div class="payment-record-subtitle">Capture customer collections with a cleaner, easier payment workflow.</div>
+                </div>
+                <div class="d-flex gap-2 payment-record-head-actions">
                     <a class="btn btn-sm btn-outline-secondary" href="<?= base_url('payments') ?>" id="payAddBackBtnTop">Back</a>
                 </div>
             </div>
 
-            <hr class="my-3">
+            <hr class="my-3 payment-record-divider">
 
-            <div class="row justify-content-center">
-                <div class="col-12 col-lg-8 col-xl-6">
-                    <div class="mb-3">
-                        <div class="fw-semibold text-primary-emphasis">Payment Information</div>
+            <div class="row justify-content-center payment-record-shell">
+                <div class="col-12 col-xl-10">
+                    <div class="payment-record-section-head mb-3">
+                        <div class="payment-record-section-badge">Payment Information</div>
+                        <div class="payment-record-section-copy">Select the customer, pick the invoice, and record the payment details below.</div>
                     </div>
 
-                    <div class="mt-4">
-                        <div class="row g-3">
+                    <div class="mt-4 payment-record-form-wrap">
+                        <div class="row g-3 payment-record-grid">
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Customer <span class="text-danger">*</span></label>
+                                <label class="form-label payment-record-label">Customer <span class="text-danger">*</span></label>
                                 <select class="form-select" id="payCustomer" required>
                                     <option value="">-- Select Customer --</option>
                                 </select>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Invoice Number <span class="text-danger">*</span></label>
+                                <label class="form-label payment-record-label">Invoice Number <span class="text-danger">*</span></label>
                                 <select class="form-select" id="payInvoice" required disabled>
                                     <option value="">-- Select Customer First --</option>
                                 </select>
                             </div>
 
                             <div class="col-12">
-                                <div id="payInvHistory" class="d-none border rounded-3 p-3 bg-primary-subtle">
+                                <div id="payInvHistory" class="d-none payment-record-history">
                                     <div class="row g-3 align-items-center small">
                                         <div class="col-6 col-lg">
                                             <div class="text-muted">Invoice Date</div>
@@ -110,24 +115,24 @@
                                             <div class="fw-semibold text-danger" id="payHistBal">0.00</div>
                                         </div>
                                         <div class="col-12 col-lg-auto text-lg-end">
-                                            <button type="button" class="btn btn-sm btn-info text-white" id="payTxnBtn">Transaction History</button>
+                                            <button type="button" class="btn btn-sm btn-info text-white payment-record-history-btn" id="payTxnBtn">Transaction History</button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Payment Date <span class="text-danger">*</span></label>
+                                <label class="form-label payment-record-label">Payment Date <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="payDate" value="<?= esc(date('Y-m-d')) ?>" required>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Amount <span class="text-danger">*</span></label>
+                                <label class="form-label payment-record-label">Amount <span class="text-danger">*</span></label>
                                 <input type="number" min="0" step="0.01" class="form-control" id="payAmount" placeholder="0.00" required>
-                                <div class="form-text" id="payAmountMax"></div>
+                                <div class="form-text payment-record-help" id="payAmountMax"></div>
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                                <label class="form-label payment-record-label">Payment Method <span class="text-danger">*</span></label>
                                 <select class="form-select" id="payMode">
                                     <option value="">-- Select Payment Method --</option>
                                     <option value="Cash">Cash</option>
@@ -138,12 +143,12 @@
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Remarks</label>
+                                <label class="form-label payment-record-label">Remarks</label>
                                 <textarea class="form-control" id="payRemarks" rows="3" placeholder="Enter any remarks or notes (optional)"></textarea>
                             </div>
                         </div>
 
-                        <div class="d-flex gap-2 mt-3">
+                        <div class="d-flex gap-2 mt-4 payment-record-actions">
                             <a class="btn btn-outline-secondary" id="payAddBackBtn" href="<?= base_url('payments') ?>">List</a>
                             <button class="btn btn-success ms-auto" id="paySaveBtn" type="button">Record Payment</button>
                         </div>

@@ -90,6 +90,33 @@
                                         <input class="form-control" id="client_billing_line2" placeholder="Optional">
                                     </div>
 
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">City</label>
+                                        <input class="form-control" id="client_billing_city" placeholder="Optional">
+                                        <div class="invalid-feedback" data-err="billing_city"></div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">State</label>
+                                        <select class="form-select" id="client_billing_state">
+                                            <option value="">Select State</option>
+                                        </select>
+                                        <input class="form-control d-none mt-0" id="client_billing_state_text" placeholder="Optional" disabled>
+                                        <div class="invalid-feedback" data-err="billing_state"></div>
+                                    </div>
+
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Postal Code</label>
+                                        <input class="form-control" id="client_billing_postal_code" placeholder="Optional">
+                                        <div class="invalid-feedback" data-err="billing_postal_code"></div>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label class="form-label">Country</label>
+                                        <select class="form-select" id="client_billing_country">
+                                            <option value="">Select Country</option>
+                                        </select>
+                                        <div class="invalid-feedback" data-err="billing_country"></div>
+                                    </div>
+
                                     <div class="col-12">
                                         <div class="form-check mt-1">
                                             <input class="form-check-input" type="checkbox" id="client_same_as_address">
@@ -103,6 +130,10 @@
                             <!-- Hidden fields (DB mapping) -->
                             <textarea class="d-none" name="address" id="client_address"></textarea>
                             <textarea class="d-none" name="billing_address" id="client_billing_address"></textarea>
+                            <input type="hidden" name="billing_city" id="client_billing_city_value">
+                            <input type="hidden" name="billing_state" id="client_billing_state_value">
+                            <input type="hidden" name="billing_country" id="client_billing_country_value">
+                            <input type="hidden" name="billing_postal_code" id="client_billing_postal_code_value">
                         </div>
                     </div>
                 </form>

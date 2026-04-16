@@ -1510,6 +1510,273 @@ table tbody td{
     gap: 1rem;
 }
 
+#payAddPanel{
+    position: relative;
+}
+
+#payAddPanel .payment-record-card{
+    overflow: hidden;
+    border: 1px solid rgba(226,232,240,.9);
+    border-radius: 28px;
+    background:
+        radial-gradient(560px 220px at 0% 0%, rgba(59,130,246,.10), rgba(59,130,246,0) 62%),
+        radial-gradient(420px 220px at 100% 100%, rgba(20,184,166,.10), rgba(20,184,166,0) 60%),
+        linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,251,255,.96));
+    box-shadow: 0 24px 48px rgba(15,23,42,.10);
+}
+
+#payAddPanel .payment-record-card-body{
+    padding: 1.4rem 1.3rem 1.25rem;
+}
+
+#payAddPanel .payment-record-head{
+    align-items: flex-start !important;
+}
+
+#payAddPanel .payment-record-kicker{
+    display: inline-flex;
+    align-items: center;
+    padding: .3rem .72rem;
+    border-radius: 999px;
+    border: 1px solid rgba(37,99,235,.14);
+    background: rgba(37,99,235,.08);
+    color: #1d4ed8;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+#payAddPanel .payment-record-title{
+    margin-top: .65rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -.02em;
+}
+
+#payAddPanel .payment-record-subtitle{
+    margin-top: .35rem;
+    max-width: 540px;
+    color: rgba(51,65,85,.76);
+    font-size: .96rem;
+    line-height: 1.65;
+}
+
+#payAddPanel .payment-record-head-actions .btn{
+    min-height: 40px;
+    border-radius: 12px;
+    padding: .5rem .95rem;
+    font-weight: 600;
+}
+
+#payAddPanel .payment-record-divider{
+    margin-top: 1.2rem !important;
+    margin-bottom: 1.4rem !important;
+    border-color: rgba(226,232,240,.84);
+}
+
+#payAddPanel .payment-record-shell{
+    position: relative;
+}
+
+#payAddPanel .payment-record-shell:before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background:
+        linear-gradient(135deg, rgba(37,99,235,.07), rgba(37,99,235,0) 36%),
+        linear-gradient(225deg, rgba(20,184,166,.06), rgba(20,184,166,0) 42%);
+    pointer-events: none;
+}
+
+#payAddPanel .payment-record-shell > .col-12{
+    position: relative;
+    z-index: 1;
+}
+
+#payAddPanel .payment-record-section-head{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .7rem 1rem;
+}
+
+#payAddPanel .payment-record-section-badge{
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: .36rem .85rem;
+    border-radius: 999px;
+    background: linear-gradient(135deg, rgba(37,99,235,.12), rgba(20,184,166,.10));
+    color: #143c82;
+    font-size: .92rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+#payAddPanel .payment-record-section-copy{
+    color: rgba(51,65,85,.7);
+    font-size: .92rem;
+}
+
+#payAddPanel .payment-record-form-wrap{
+    padding: 1.35rem;
+    border: 1px solid rgba(226,232,240,.92);
+    border-radius: 24px;
+    background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,250,255,.96));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 18px 32px rgba(148,163,184,.12);
+}
+
+#payAddPanel .payment-record-label{
+    margin-bottom: .45rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: .01em;
+}
+
+#payAddPanel .payment-record-form-wrap .form-control,
+#payAddPanel .payment-record-form-wrap .form-select{
+    min-height: 56px;
+    border-radius: 16px;
+    border: 1px solid rgba(148,163,184,.26);
+    background: rgba(255,255,255,.98);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    font-size: 1rem;
+    color: #0f172a;
+    padding-left: .95rem;
+    padding-right: .95rem;
+}
+
+#payAddPanel .payment-record-form-wrap .form-control:focus,
+#payAddPanel .payment-record-form-wrap .form-select:focus{
+    border-color: rgba(37,99,235,.4);
+    box-shadow: 0 0 0 .24rem rgba(37,99,235,.12);
+}
+
+#payAddPanel .payment-record-form-wrap .form-select:disabled,
+#payAddPanel .payment-record-form-wrap .form-control:disabled{
+    background: linear-gradient(180deg, rgba(241,245,249,.94), rgba(226,232,240,.82));
+    color: rgba(51,65,85,.8);
+    border-color: rgba(203,213,225,.95);
+}
+
+#payAddPanel #payRemarks{
+    min-height: 132px;
+    resize: vertical;
+    padding-top: .85rem;
+    line-height: 1.55;
+}
+
+#payAddPanel .payment-record-help{
+    margin-top: .42rem;
+    color: #0f766e;
+    font-weight: 600;
+}
+
+#payAddPanel .payment-record-history{
+    padding: 1rem 1.05rem;
+    border: 1px solid rgba(59,130,246,.18);
+    border-radius: 20px;
+    background:
+        radial-gradient(180px 90px at 0% 0%, rgba(59,130,246,.13), rgba(59,130,246,0) 72%),
+        linear-gradient(135deg, rgba(239,246,255,.92), rgba(236,253,245,.78));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+}
+
+#payAddPanel .payment-record-history .text-muted{
+    font-size: .73rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(51,65,85,.62) !important;
+}
+
+#payAddPanel .payment-record-history .fw-semibold{
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+#payAddPanel .payment-record-history-btn{
+    min-height: 38px;
+    padding: .5rem .9rem;
+    border-radius: 12px;
+    border: 0;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    box-shadow: 0 12px 22px rgba(37,99,235,.2);
+    font-weight: 700;
+}
+
+#payAddPanel .payment-record-actions{
+    align-items: center;
+    padding-top: .55rem;
+    border-top: 1px solid rgba(226,232,240,.8);
+}
+
+#payAddPanel .payment-record-actions .btn{
+    min-height: 44px;
+    border-radius: 14px;
+    padding: .62rem 1rem;
+    font-weight: 700;
+}
+
+#payAddPanel #payAddBackBtn{
+    border-color: rgba(148,163,184,.42);
+    color: #334155;
+    background: rgba(255,255,255,.9);
+}
+
+#payAddPanel #paySaveBtn{
+    min-width: 178px;
+    border: 0;
+    background: linear-gradient(135deg, #059669, #10b981);
+    box-shadow: 0 16px 28px rgba(5,150,105,.18);
+}
+
+#payAddPanel #paySaveBtn:hover{
+    transform: translateY(-1px);
+    box-shadow: 0 20px 32px rgba(5,150,105,.22);
+}
+
+@media (max-width: 991.98px){
+    #payAddPanel .payment-record-title{
+        font-size: 1.35rem;
+    }
+
+    #payAddPanel .payment-record-form-wrap{
+        padding: 1rem;
+        border-radius: 20px;
+    }
+}
+
+@media (max-width: 575.98px){
+    #payAddPanel .payment-record-card-body{
+        padding: 1rem .9rem;
+    }
+
+    #payAddPanel .payment-record-subtitle{
+        font-size: .9rem;
+    }
+
+    #payAddPanel .payment-record-form-wrap .form-control,
+    #payAddPanel .payment-record-form-wrap .form-select{
+        min-height: 50px;
+        border-radius: 14px;
+        font-size: .95rem;
+    }
+
+    #payAddPanel .payment-record-actions{
+        flex-wrap: wrap;
+    }
+
+    #payAddPanel .payment-record-actions .btn,
+    #payAddPanel #paySaveBtn{
+        width: 100%;
+    }
+}
+
 .invoice-list-stage{
     position: relative;
     overflow: hidden;
@@ -2491,21 +2758,6 @@ table tbody td{
     font-weight: 500;
 }
 
-.bms-invoice-create-card #pf_invoice_no{
-    max-width: 12rem;
-}
-
-.bms-invoice-create-card #pf_gst,
-.bms-invoice-create-card #pf_state,
-.bms-invoice-create-card #pf_city,
-.bms-invoice-create-card #pf_pincode{
-    max-width: 14rem;
-}
-
-.bms-invoice-create-card #pf_currency{
-    max-width: 9rem;
-}
-
 .bms-invoice-create-card #pf_total_input,
 .bms-invoice-create-card #pf_gst_percent,
 .bms-invoice-create-card #pf_total_gst,
@@ -2522,18 +2774,15 @@ table tbody td{
     max-width: 100%;
 }
 
-.bms-invoice-create-card .bms-date-wrap{
-    max-width: 12rem;
+.bms-invoice-create-card > .card-body > .row.g-4 > .col-12.col-lg-6 .col-12.col-md-9 > .form-control,
+.bms-invoice-create-card > .card-body > .row.g-4 > .col-12.col-lg-6 .col-12.col-md-9 > .form-select,
+.bms-invoice-create-card > .card-body > .row.g-4 > .col-12.col-lg-6 .col-12.col-md-9 > .bms-date-wrap,
+.bms-invoice-create-card > .card-body > .row.g-4 > .col-12.col-lg-6 .col-12.col-md-9 > .bms-combobox{
+    width: 100%;
+    max-width: 100%;
 }
 
 @media (max-width: 991.98px){
-    .bms-invoice-create-card .bms-date-wrap,
-    .bms-invoice-create-card #pf_invoice_no,
-    .bms-invoice-create-card #pf_gst,
-    .bms-invoice-create-card #pf_state,
-    .bms-invoice-create-card #pf_city,
-    .bms-invoice-create-card #pf_pincode,
-    .bms-invoice-create-card #pf_currency,
     .bms-invoice-create-card #pf_total_input,
     .bms-invoice-create-card #pf_gst_percent,
     .bms-invoice-create-card #pf_total_gst,
@@ -2546,6 +2795,34 @@ table tbody td{
 .bms-combobox{
     position: relative;
 }
+
+.bms-combobox-native{
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+.bms-combobox-input{
+    padding-right: 2.35rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%2364758b' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right .75rem center;
+    background-size: 14px 14px;
+}
+
+.bms-combobox.is-open .bms-combobox-input{
+    border-color: rgba(59,130,246,.45);
+    box-shadow: 0 0 0 .12rem rgba(59,130,246,.12);
+}
+
 .bms-combobox-menu{
     position: absolute;
     top: calc(100% + 4px);
@@ -2560,6 +2837,10 @@ table tbody td{
     overflow: auto;
     padding: 6px 0;
 }
+
+.modal .bms-combobox-menu{
+    z-index: 1080;
+}
 .bms-combobox-item{
     display: block;
     width: 100%;
@@ -2569,7 +2850,8 @@ table tbody td{
     border: 0;
 }
 .bms-combobox-item:hover,
-.bms-combobox-item:focus{
+.bms-combobox-item:focus,
+.bms-combobox-item.is-active{
     background: rgba(0,0,0,.06);
     outline: none;
 }
@@ -2626,7 +2908,8 @@ table tbody td{
 }
 
 .bms-invoice-create-card button.bms-combobox-item:hover,
-.bms-invoice-create-card button.bms-combobox-item:focus{
+.bms-invoice-create-card button.bms-combobox-item:focus,
+.bms-invoice-create-card button.bms-combobox-item.is-active{
     background: rgba(37,99,235,.08) !important;
     color: #1d4ed8;
     outline: none;

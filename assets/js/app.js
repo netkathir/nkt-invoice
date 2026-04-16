@@ -178,6 +178,242 @@
     }
     BMS.initPremiumDatePickers = initPremiumDatePickers;
 
+    function initSearchableSelect(target, options) {
+        const $select = $(target).first();
+        if (!$select.length) return null;
+        if ($select.data('bmsSearchableReady')) {
+            return $select.data('bmsSearchableApi') || null;
+        }
+
+        const config = $.extend({
+            placeholder: String($select.find('option').first().text() || 'Select').trim(),
+            noResultsText: 'No matching results found.',
+        }, options || {});
+
+        const selectEl = $select.get(0);
+        const selectId = String($select.attr('id') || ('bms-select-' + Date.now()));
+        const menuId = selectId + '-combobox-menu';
+        const $feedback = $select.siblings('.invalid-feedback').first();
+        const $wrapper = $('<div class="bms-combobox bms-searchable-select"></div>');
+        const $input = $('<input type="text" class="form-control bms-combobox-input" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false">');
+        const $menu = $('<div class="bms-combobox-menu d-none" role="listbox"></div>').attr('id', menuId);
+        let renderedOptions = [];
+        let activeIndex = -1;
+
+        $input.attr('aria-controls', menuId);
+        $input.attr('placeholder', config.placeholder);
+
+        if ($feedback.length) {
+            $wrapper.insertBefore($feedback);
+        } else {
+            $wrapper.insertAfter($select);
+        }
+
+        $wrapper.append($input, $menu);
+        $select.addClass('bms-combobox-native').attr('tabindex', '-1').attr('aria-hidden', 'true');
+
+        function readOptions() {
+            return $select.find('option').map(function () {
+                const $opt = $(this);
+                const label = String($opt.text() || '').trim();
+                return {
+                    value: String($opt.val() || ''),
+                    label: label,
+                    searchText: label.toLowerCase(),
+                    disabled: !!$opt.prop('disabled'),
+                    selected: !!$opt.prop('selected'),
+                };
+            }).get();
+        }
+
+        function getSelectedOption() {
+            const value = String($select.val() || '');
+            const optionsList = readOptions();
+            for (let i = 0; i < optionsList.length; i += 1) {
+                if (optionsList[i].value === value) return optionsList[i];
+            }
+            return null;
+        }
+
+        function syncInputState() {
+            const selected = getSelectedOption();
+            $input.val(selected && selected.value !== '' ? selected.label : '');
+            $input.toggleClass('is-invalid', $select.hasClass('is-invalid'));
+            $input.prop('disabled', !!$select.prop('disabled'));
+            $input.attr('aria-disabled', $select.prop('disabled') ? 'true' : 'false');
+        }
+
+        function setExpanded(isOpen) {
+            $wrapper.toggleClass('is-open', !!isOpen);
+            $input.attr('aria-expanded', isOpen ? 'true' : 'false');
+            $menu.toggleClass('d-none', !isOpen);
+        }
+
+        function highlightActiveItem() {
+            const $items = $menu.find('.bms-combobox-item');
+            $items.removeClass('is-active');
+            if (activeIndex < 0 || activeIndex >= $items.length) return;
+            const el = $items.get(activeIndex);
+            if (!el) return;
+            $(el).addClass('is-active');
+            if (typeof el.scrollIntoView === 'function') {
+                el.scrollIntoView({ block: 'nearest' });
+            }
+        }
+
+        function renderMenu(query) {
+            const normalizedQuery = String(query || '').trim().toLowerCase();
+            const selectedValue = String($select.val() || '');
+            const allOptions = readOptions().filter(function (opt) { return !opt.disabled; });
+
+            renderedOptions = allOptions.filter(function (opt) {
+                if (!normalizedQuery) return true;
+                return opt.searchText.indexOf(normalizedQuery) !== -1;
+            });
+
+            $menu.empty();
+
+            if (!renderedOptions.length) {
+                $menu.append('<div class="bms-combobox-empty">' + escapeHtml(config.noResultsText) + '</div>');
+                activeIndex = -1;
+                return;
+            }
+
+            activeIndex = renderedOptions.findIndex(function (opt) {
+                return opt.value === selectedValue && opt.value !== '';
+            });
+            if (activeIndex < 0) activeIndex = 0;
+
+            const frag = document.createDocumentFragment();
+            renderedOptions.forEach(function (opt, index) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'bms-combobox-item' + (index === activeIndex ? ' is-active' : '');
+                btn.setAttribute('role', 'option');
+                btn.setAttribute('aria-selected', opt.value === selectedValue ? 'true' : 'false');
+                btn.setAttribute('data-value', opt.value);
+                btn.textContent = opt.label;
+                frag.appendChild(btn);
+            });
+            $menu.get(0).appendChild(frag);
+        }
+
+        function openMenu(showAll) {
+            if ($input.prop('disabled')) return;
+            const query = showAll ? '' : $input.val();
+            renderMenu(query);
+            setExpanded(true);
+        }
+
+        function closeMenu(resetText) {
+            setExpanded(false);
+            if (resetText) syncInputState();
+        }
+
+        function selectValue(value) {
+            $select.val(String(value || ''));
+            $select.trigger('change');
+            syncInputState();
+            closeMenu(false);
+        }
+
+        $input
+            .on('focus', function () {
+                openMenu(true);
+                const el = this;
+                window.setTimeout(function () {
+                    if (document.activeElement === el && typeof el.select === 'function' && String(el.value || '').trim()) {
+                        el.select();
+                    }
+                }, 0);
+            })
+            .on('click', function () {
+                openMenu(true);
+            })
+            .on('input', function () {
+                openMenu(false);
+            })
+            .on('keydown', function (e) {
+                if (e.key === 'ArrowDown') {
+                    if ($menu.hasClass('d-none')) {
+                        openMenu(false);
+                    } else if (activeIndex < renderedOptions.length - 1) {
+                        activeIndex += 1;
+                        highlightActiveItem();
+                    }
+                    e.preventDefault();
+                    return;
+                }
+                if (e.key === 'ArrowUp') {
+                    if ($menu.hasClass('d-none')) {
+                        openMenu(false);
+                    } else if (activeIndex > 0) {
+                        activeIndex -= 1;
+                        highlightActiveItem();
+                    }
+                    e.preventDefault();
+                    return;
+                }
+                if (e.key === 'Enter') {
+                    if (!$menu.hasClass('d-none') && activeIndex >= 0 && renderedOptions[activeIndex]) {
+                        selectValue(renderedOptions[activeIndex].value);
+                        e.preventDefault();
+                    }
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    closeMenu(true);
+                    e.preventDefault();
+                }
+            })
+            .on('blur', function () {
+                window.setTimeout(function () {
+                    closeMenu(true);
+                }, 150);
+            });
+
+        $menu
+            .on('mousedown', '.bms-combobox-item', function (e) {
+                e.preventDefault();
+            })
+            .on('click', '.bms-combobox-item', function () {
+                selectValue($(this).data('value'));
+            });
+
+        $(document).on('mousedown.bmsCombobox.' + selectId, function (e) {
+            if ($(e.target).closest($wrapper).length) return;
+            closeMenu(true);
+        });
+
+        $select.on('change.bmsCombobox', syncInputState);
+
+        if (typeof MutationObserver === 'function' && selectEl) {
+            const observer = new MutationObserver(function () {
+                syncInputState();
+            });
+            observer.observe(selectEl, {
+                attributes: true,
+                attributeFilter: ['class', 'disabled'],
+                childList: true,
+                subtree: true,
+            });
+            $select.data('bmsSearchableObserver', observer);
+        }
+
+        syncInputState();
+
+        const api = {
+            sync: syncInputState,
+            open: function () { openMenu(true); },
+            close: function () { closeMenu(true); },
+        };
+
+        $select.data('bmsSearchableReady', true);
+        $select.data('bmsSearchableApi', api);
+        return api;
+    }
+    BMS.initSearchableSelect = initSearchableSelect;
+
     function formatUiDateDmy(value, type) {
         const raw = String(value || '').trim();
         if (!raw) return type === 'display' ? '-' : '';
@@ -1111,8 +1347,27 @@
         const $state = $('#client_state');
         const $stateText = $('#client_state_text');
         const $country = $('#client_country');
+        const $billingState = $('#client_billing_state');
+        const $billingStateText = $('#client_billing_state_text');
+        const $billingCountry = $('#client_billing_country');
+        const stateSearchable = initSearchableSelect($state, {
+            placeholder: 'Select State',
+            noResultsText: 'No matching states found.',
+        });
+        const countrySearchable = initSearchableSelect($country, {
+            placeholder: 'Select Country',
+            noResultsText: 'No matching countries found.',
+        });
+        const billingStateSearchable = initSearchableSelect($billingState, {
+            placeholder: 'Select State',
+            noResultsText: 'No matching states found.',
+        });
+        const billingCountrySearchable = initSearchableSelect($billingCountry, {
+            placeholder: 'Select Country',
+            noResultsText: 'No matching countries found.',
+        });
         let lastManualBilling = '';
-        let lastManualBillingLines = { line1: '', line2: '' };
+        let lastManualBillingLines = { line1: '', line2: '', city: '', state: '', country: '', postal_code: '' };
 
         function normalizeLine(v) {
             return String(v || '').replace(/\s+/g, ' ').trim();
@@ -1153,11 +1408,19 @@
             $('#client_billing_address').val(joinLines($('#client_billing_line1').val(), $('#client_billing_line2').val()));
         }
 
+        function syncHiddenBillingLocation() {
+            $('#client_billing_city_value').val(String($('#client_billing_city').val() || '').trim());
+            $('#client_billing_state_value').val(getBillingStateValue());
+            $('#client_billing_country_value').val(String($billingCountry.val() || '').trim());
+            $('#client_billing_postal_code_value').val(String($('#client_billing_postal_code').val() || '').trim());
+        }
+
         function setFormMode(mode) {
             const isView = mode === 'view';
             $form.find('input,select,textarea').prop('disabled', isView);
             $saveBtn.toggle(!isView);
             syncStateMode($country.val(), getStateValue(), isView);
+            syncBillingStateMode($billingCountry.val(), getBillingStateValue(), isView);
             syncSameAsState();
         }
 
@@ -1173,6 +1436,13 @@
             return String($stateText.val() || '').trim();
         }
 
+        function getBillingStateValue() {
+            if (!$billingState.hasClass('d-none')) {
+                return String($billingState.val() || '').trim();
+            }
+            return String($billingStateText.val() || '').trim();
+        }
+
         function syncStateMode(countryValue, stateValue, forceDisabled) {
             const country = String(countryValue || '').trim();
             const value = String(typeof stateValue === 'undefined' ? getStateValue() : stateValue || '').trim();
@@ -1180,22 +1450,85 @@
             const disabled = typeof forceDisabled === 'boolean'
                 ? forceDisabled
                 : $form.find('input,select,textarea').first().prop('disabled');
+            const $stateSearchWrap = $state.nextAll('.bms-searchable-select').first();
 
             if (useDropdown) {
                 populateSelectOptions($state, INDIA_STATES, 'Select State', value);
                 $state.removeClass('d-none').prop('disabled', disabled).attr('name', 'state');
                 $stateText.addClass('d-none').prop('disabled', true).removeAttr('name').val(value);
+                $stateSearchWrap.removeClass('d-none');
+                if (stateSearchable && typeof stateSearchable.sync === 'function') {
+                    stateSearchable.sync();
+                }
                 return;
             }
 
             populateSelectOptions($state, INDIA_STATES, 'Select State', '');
             $state.addClass('d-none').prop('disabled', true).removeAttr('name');
             $stateText.removeClass('d-none').prop('disabled', disabled).attr('name', 'state').val(value);
+            $stateSearchWrap.addClass('d-none');
+            if (stateSearchable && typeof stateSearchable.close === 'function') {
+                stateSearchable.close();
+            }
+        }
+
+        function syncBillingStateMode(countryValue, stateValue, forceDisabled) {
+            const country = String(countryValue || '').trim();
+            const value = String(typeof stateValue === 'undefined' ? getBillingStateValue() : stateValue || '').trim();
+            const useDropdown = isIndiaCountry(country);
+            const disabled = typeof forceDisabled === 'boolean'
+                ? forceDisabled
+                : $form.find('input,select,textarea').first().prop('disabled');
+            const $stateSearchWrap = $billingState.nextAll('.bms-searchable-select').first();
+
+            if (useDropdown) {
+                populateSelectOptions($billingState, INDIA_STATES, 'Select State', value);
+                $billingState.removeClass('d-none').prop('disabled', disabled).removeAttr('name');
+                $billingStateText.addClass('d-none').prop('disabled', true).removeAttr('name').val(value);
+                $stateSearchWrap.removeClass('d-none');
+                if (billingStateSearchable && typeof billingStateSearchable.sync === 'function') {
+                    billingStateSearchable.sync();
+                }
+                syncHiddenBillingLocation();
+                return;
+            }
+
+            populateSelectOptions($billingState, INDIA_STATES, 'Select State', '');
+            $billingState.addClass('d-none').prop('disabled', true).removeAttr('name');
+            $billingStateText.removeClass('d-none').prop('disabled', disabled).removeAttr('name').val(value);
+            $stateSearchWrap.addClass('d-none');
+            if (billingStateSearchable && typeof billingStateSearchable.close === 'function') {
+                billingStateSearchable.close();
+            }
+            syncHiddenBillingLocation();
         }
 
         function setLocationValues(stateValue, countryValue) {
             populateSelectOptions($country, COUNTRY_OPTIONS, 'Select Country', countryValue);
+            if (countrySearchable && typeof countrySearchable.sync === 'function') {
+                countrySearchable.sync();
+            }
             syncStateMode(countryValue, stateValue);
+        }
+
+        function setBillingLocationValues(stateValue, countryValue) {
+            populateSelectOptions($billingCountry, COUNTRY_OPTIONS, 'Select Country', countryValue);
+            if (billingCountrySearchable && typeof billingCountrySearchable.sync === 'function') {
+                billingCountrySearchable.sync();
+            }
+            syncBillingStateMode(countryValue, stateValue);
+            syncHiddenBillingLocation();
+        }
+
+        function captureManualBillingFields() {
+            lastManualBillingLines = {
+                line1: String($('#client_billing_line1').val() || ''),
+                line2: String($('#client_billing_line2').val() || ''),
+                city: String($('#client_billing_city').val() || ''),
+                state: getBillingStateValue(),
+                country: String($billingCountry.val() || ''),
+                postal_code: String($('#client_billing_postal_code').val() || ''),
+            };
         }
 
         function setSameAs(on) {
@@ -1203,28 +1536,43 @@
             const $bill2 = $('#client_billing_line2');
             const $addr1 = $('#client_address_line1');
             const $addr2 = $('#client_address_line2');
+            const $billCity = $('#client_billing_city');
+            const $billPostal = $('#client_billing_postal_code');
             if (on) {
                 if (! $bill1.prop('disabled')) {
-                    lastManualBillingLines = {
-                        line1: String($bill1.val() || ''),
-                        line2: String($bill2.val() || ''),
-                    };
+                    captureManualBillingFields();
                 }
                 $bill1.val($addr1.val() || '');
                 $bill2.val($addr2.val() || '');
+                $billCity.val($('#client_city').val() || '');
+                $billPostal.val($('#client_postal_code').val() || '');
+                setBillingLocationValues(getStateValue(), String($country.val() || ''));
                 $bill1.prop('disabled', true);
                 $bill2.prop('disabled', true);
+                $billCity.prop('disabled', true);
+                $billPostal.prop('disabled', true);
+                $billingCountry.prop('disabled', true);
+                syncBillingStateMode($billingCountry.val(), getBillingStateValue(), true);
                 syncHiddenBilling();
+                syncHiddenBillingLocation();
             } else {
                 $bill1.prop('disabled', false);
                 $bill2.prop('disabled', false);
+                $billCity.prop('disabled', false);
+                $billPostal.prop('disabled', false);
+                $billingCountry.prop('disabled', false);
                 const current = joinLines($bill1.val(), $bill2.val());
                 const addr = joinLines($addr1.val(), $addr2.val());
                 if (String(current || '') === String(addr || '')) {
                     $bill1.val(lastManualBillingLines.line1 || '');
                     $bill2.val(lastManualBillingLines.line2 || '');
-                    syncHiddenBilling();
+                    $billCity.val(lastManualBillingLines.city || '');
+                    $billPostal.val(lastManualBillingLines.postal_code || '');
+                    setBillingLocationValues(lastManualBillingLines.state || '', lastManualBillingLines.country || '');
                 }
+                syncBillingStateMode($billingCountry.val(), getBillingStateValue(), false);
+                syncHiddenBilling();
+                syncHiddenBillingLocation();
             }
         }
 
@@ -1233,14 +1581,27 @@
             const $chk = $('#client_same_as_address');
             const $bill1 = $('#client_billing_line1');
             const $bill2 = $('#client_billing_line2');
+            const $billCity = $('#client_billing_city');
+            const $billPostal = $('#client_billing_postal_code');
             $chk.prop('disabled', isView);
 
             if ($chk.is(':checked')) {
                 $bill1.prop('disabled', true);
                 $bill2.prop('disabled', true);
+                $billCity.prop('disabled', true);
+                $billPostal.prop('disabled', true);
+                $billingCountry.prop('disabled', true);
                 $bill1.val($('#client_address_line1').val() || '');
                 $bill2.val($('#client_address_line2').val() || '');
+                $billCity.val($('#client_city').val() || '');
+                $billPostal.val($('#client_postal_code').val() || '');
+                setBillingLocationValues(getStateValue(), String($country.val() || ''));
+                syncBillingStateMode($billingCountry.val(), getBillingStateValue(), true);
                 syncHiddenBilling();
+                syncHiddenBillingLocation();
+            } else {
+                syncBillingStateMode($billingCountry.val(), getBillingStateValue(), isView);
+                syncHiddenBillingLocation();
             }
         }
 
@@ -1291,11 +1652,14 @@
             $('#client_id').val('');
             $('#client_gst_no').val('');
             lastManualBilling = '';
+            lastManualBillingLines = { line1: '', line2: '', city: '', state: '', country: '', postal_code: '' };
             $('#client_same_as_address').prop('checked', false);
-            $('#client_billing_line1,#client_billing_line2').prop('disabled', false);
-            $('#client_address_line1,#client_address_line2,#client_billing_line1,#client_billing_line2').val('');
-            $('#client_address,#client_billing_address').val('');
+            $('#client_billing_line1,#client_billing_line2,#client_billing_city,#client_billing_postal_code').prop('disabled', false);
+            $('#client_billing_country').prop('disabled', false);
+            $('#client_address_line1,#client_address_line2,#client_billing_line1,#client_billing_line2,#client_billing_city,#client_billing_postal_code').val('');
+            $('#client_address,#client_billing_address,#client_billing_city_value,#client_billing_state_value,#client_billing_country_value,#client_billing_postal_code_value').val('');
             setLocationValues('', '');
+            setBillingLocationValues('', '');
             setFormMode('edit');
             $modal.show();
         });
@@ -1326,7 +1690,17 @@
             $('#client_city').val(row.city || '');
             setLocationValues(row.state || '', row.country || '');
             $('#client_postal_code').val(row.postal_code || '');
-            lastManualBillingLines = splitLines(row.billing_address || '');
+            $('#client_billing_city').val((row.billing_city || row.city || ''));
+            $('#client_billing_postal_code').val((row.billing_postal_code || row.postal_code || ''));
+            setBillingLocationValues((row.billing_state || row.state || ''), (row.billing_country || row.country || ''));
+            lastManualBillingLines = {
+                line1: String($('#client_billing_line1').val() || ''),
+                line2: String($('#client_billing_line2').val() || ''),
+                city: String($('#client_billing_city').val() || ''),
+                state: getBillingStateValue(),
+                country: String($billingCountry.val() || ''),
+                postal_code: String($('#client_billing_postal_code').val() || ''),
+            };
             $('#client_same_as_address').prop('checked', false);
             setFormMode('view');
             $modal.show();
@@ -1358,24 +1732,38 @@
             $('#client_city').val(row.city || '');
             setLocationValues(row.state || '', row.country || '');
             $('#client_postal_code').val(row.postal_code || '');
-            lastManualBillingLines = splitLines(row.billing_address || '');
+            $('#client_billing_city').val((row.billing_city || row.city || ''));
+            $('#client_billing_postal_code').val((row.billing_postal_code || row.postal_code || ''));
+            setBillingLocationValues((row.billing_state || row.state || ''), (row.billing_country || row.country || ''));
+            lastManualBillingLines = {
+                line1: String($('#client_billing_line1').val() || ''),
+                line2: String($('#client_billing_line2').val() || ''),
+                city: String($('#client_billing_city').val() || ''),
+                state: getBillingStateValue(),
+                country: String($billingCountry.val() || ''),
+                postal_code: String($('#client_billing_postal_code').val() || ''),
+            };
             $('#client_same_as_address').prop('checked', false);
             setFormMode('edit');
             $modal.show();
         });
 
         setLocationValues('', '');
+        setBillingLocationValues('', '');
 
         $('#client_same_as_address').on('change', function () {
             setSameAs($(this).is(':checked'));
         });
 
-        $('#client_address_line1,#client_address_line2').on('input', function () {
+        $('#client_address_line1,#client_address_line2,#client_city,#client_postal_code').on('input', function () {
             syncHiddenAddress();
             if ($('#client_same_as_address').is(':checked')) {
                 $('#client_billing_line1').val($('#client_address_line1').val() || '');
                 $('#client_billing_line2').val($('#client_address_line2').val() || '');
+                $('#client_billing_city').val($('#client_city').val() || '');
+                $('#client_billing_postal_code').val($('#client_postal_code').val() || '');
                 syncHiddenBilling();
+                syncHiddenBillingLocation();
             }
         });
 
@@ -1383,8 +1771,36 @@
             syncHiddenBilling();
         });
 
+        $('#client_billing_city,#client_billing_postal_code,#client_billing_state_text').on('input', function () {
+            syncHiddenBillingLocation();
+        });
+
         $('#client_country').on('change', function () {
             syncStateMode($(this).val(), getStateValue());
+            if ($('#client_same_as_address').is(':checked')) {
+                setBillingLocationValues(getStateValue(), String($(this).val() || ''));
+                $('#client_billing_city').val($('#client_city').val() || '');
+                $('#client_billing_postal_code').val($('#client_postal_code').val() || '');
+                syncBillingStateMode(String($(this).val() || ''), getStateValue(), true);
+                syncHiddenBillingLocation();
+            }
+        });
+
+        $('#client_state,#client_state_text').on('change input', function () {
+            if ($('#client_same_as_address').is(':checked')) {
+                setBillingLocationValues(getStateValue(), String($country.val() || ''));
+                syncBillingStateMode(String($country.val() || ''), getStateValue(), true);
+                syncHiddenBillingLocation();
+            }
+        });
+
+        $('#client_billing_country').on('change', function () {
+            syncBillingStateMode($(this).val(), getBillingStateValue());
+            syncHiddenBillingLocation();
+        });
+
+        $('#client_billing_state,#client_billing_state_text').on('change input', function () {
+            syncHiddenBillingLocation();
         });
 
         $('#dtClients tbody').on('click', 'button.btn-del', function () {
@@ -3604,6 +4020,15 @@
 	            $el.val((parseFloat(value) || 0).toFixed(2));
 	        }
 
+            function setPercentDisplay($el, value) {
+                if (!($el && $el.length)) return;
+                let num = parseFloat(value);
+                if (!isFinite(num)) num = 0;
+                let text = num.toFixed(2).replace(/\.?0+$/, '');
+                if (!text) text = '0';
+                $el.val(text + '%');
+            }
+
 	        function gstEnabled() {
 	            return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
 	        }
@@ -3621,16 +4046,20 @@
 	            const enabled = gstEnabled();
 	            const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
 	            const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+                const showSplitRows = enabled && mode !== 'IGST';
+                const showIgstRow = enabled && mode === 'IGST';
 
 	            toggleGstNo();
+                $('#pf_cgst_row, #pf_sgst_row').toggleClass('d-none', !showSplitRows);
+                $('#pf_igst_row').toggleClass('d-none', !showIgstRow);
 
 	            if (!enabled) {
 	                $('#pf_gst_box').addClass('d-none');
 	                setMoney($('#pf_total_gst'), 0);
 	                setMoney($('#pf_net_amount'), total);
-	                setMoney($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
-	                setMoney($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
-	                setMoney($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
+	                setPercentDisplay($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
+	                setPercentDisplay($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
+	                setPercentDisplay($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
 	                return;
 	            }
 
@@ -3647,11 +4076,11 @@
 	            const totalGst = cgst + sgst + igst;
 	            const net = total + totalGst;
 
-	            setMoney($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	            setPercentDisplay($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
 	            setMoney($('#pf_cgst_val'), cgst);
-	            setMoney($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	            setPercentDisplay($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
 	            setMoney($('#pf_sgst_val'), sgst);
-	            setMoney($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
+	            setPercentDisplay($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
 	            setMoney($('#pf_igst_val'), igst);
 	            setMoney($('#pf_total_gst'), totalGst);
 	            setMoney($('#pf_net_amount'), net);
@@ -3810,6 +4239,10 @@
 	        }
 
 	        const $clientSelect = $('#pf_client_id');
+        const clientSearchable = initSearchableSelect($clientSelect, {
+            placeholder: 'Select client',
+            noResultsText: 'No matching clients found.',
+        });
         let currentClientCountry = '';
 
         function syncInvoiceTypeFromCountry() {
@@ -3849,6 +4282,9 @@
 	                    return;
 	                }
 	                applyClientOption($opt);
+                    if (clientSearchable && typeof clientSearchable.sync === 'function') {
+                        clientSearchable.sync();
+                    }
 	            });
 	        }
 	        syncInvoiceTypeFromCountry();
@@ -4072,6 +4508,15 @@
 	                $el.val((parseFloat(value) || 0).toFixed(2));
 	            }
 
+                function setPercentDisplay($el, value) {
+                    if (!($el && $el.length)) return;
+                    let num = parseFloat(value);
+                    if (!isFinite(num)) num = 0;
+                    let text = num.toFixed(2).replace(/\.?0+$/, '');
+                    if (!text) text = '0';
+                    $el.val(text + '%');
+                }
+
 	            function gstEnabled() {
 	                return ($('#pf_invoice_type').val() || '') === 'GST Invoice';
 	            }
@@ -4089,16 +4534,20 @@
 	                const enabled = gstEnabled();
 	                const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
 	                const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+                    const showSplitRows = enabled && mode !== 'IGST';
+                    const showIgstRow = enabled && mode === 'IGST';
 
 	                toggleGstNo();
+                    $('#pf_cgst_row, #pf_sgst_row').toggleClass('d-none', !showSplitRows);
+                    $('#pf_igst_row').toggleClass('d-none', !showIgstRow);
 
 	                if (!enabled) {
 	                    $('#pf_gst_box').addClass('d-none');
 	                    setMoney($('#pf_total_gst'), 0);
 	                    setMoney($('#pf_net_amount'), total);
-	                    setMoney($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
-	                    setMoney($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
-	                    setMoney($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
+	                    setPercentDisplay($('#pf_cgst_amt'), 0); setMoney($('#pf_cgst_val'), 0);
+	                    setPercentDisplay($('#pf_sgst_amt'), 0); setMoney($('#pf_sgst_val'), 0);
+	                    setPercentDisplay($('#pf_igst_amt'), 0); setMoney($('#pf_igst_val'), 0);
 	                    return;
 	                }
 
@@ -4115,11 +4564,11 @@
 	                const totalGst = cgst + sgst + igst;
 	                const net = total + totalGst;
 
-	                setMoney($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	                setPercentDisplay($('#pf_cgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
 	                setMoney($('#pf_cgst_val'), cgst);
-	                setMoney($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
+	                setPercentDisplay($('#pf_sgst_amt'), percent > 0 && mode !== 'IGST' ? (percent / 2.0) : 0);
 	                setMoney($('#pf_sgst_val'), sgst);
-	                setMoney($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
+	                setPercentDisplay($('#pf_igst_amt'), percent > 0 && mode === 'IGST' ? percent : 0);
 	                setMoney($('#pf_igst_val'), igst);
 	                setMoney($('#pf_total_gst'), totalGst);
 	                setMoney($('#pf_net_amount'), net);
@@ -4283,6 +4732,10 @@
 	            }
 
             let currentClientCountry = '';
+            const clientSearchable = initSearchableSelect($('#pf_client_id'), {
+                placeholder: 'Select client',
+                noResultsText: 'No matching clients found.',
+            });
 
             function syncInvoiceTypeFromCountry() {
                 $('#pf_invoice_type').val(resolveInvoiceTypeByCountry(currentClientCountry));
@@ -4302,7 +4755,12 @@
                 syncInvoiceTypeFromCountry();
             }
 	            initCompanyField();
-	            $('#pf_client_id').on('change', initCompanyField);
+	            $('#pf_client_id').on('change', function () {
+                    initCompanyField();
+                    if (clientSearchable && typeof clientSearchable.sync === 'function') {
+                        clientSearchable.sync();
+                    }
+                });
 	            function syncDueDateFromIssue(iso) {
 	                const dueIso = addDaysToIso(iso, 30);
 	                setDateFieldValue('#pf_due', dueIso);

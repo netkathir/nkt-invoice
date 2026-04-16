@@ -23,6 +23,11 @@
         return date('d/m/Y', $ts);
     };
 
+    $formatPercent = static function (float $value): string {
+        $formatted = rtrim(rtrim(number_format($value, 2, '.', ''), '0'), '.');
+        return ($formatted === '' ? '0' : $formatted) . '%';
+    };
+
     $buildClientLabel = static function (array $client): string {
         return (string) ($client['name'] ?: ($client['contact_person'] ?: ($client['email'] ?: ($client['phone'] ?: ('Client #' . ($client['id'] ?? ''))))));
     };
@@ -35,7 +40,7 @@
     $billingFrom = (string) ($proforma['billing_from'] ?? '');
     $currency = (string) (($proforma['currency'] ?? '') ?: 'INR');
     $invoiceType = (string) (($proforma['invoice_type'] ?? '') ?: 'GST Invoice');
-    $gstPercent = (float) ($proforma['gst_percent'] ?? 0);
+    $gstPercent = (float) (($proforma['gst_percent'] ?? null) ?? ($isCreate ? 18 : 0));
     $gstMode = (string) (($proforma['gst_mode'] ?? '') ?: 'CGST_SGST');
     $totalAmount = (float) ($proforma['total_amount'] ?? 0);
     $totalGst = (float) ($proforma['total_gst'] ?? 0);
@@ -58,6 +63,10 @@
             'gst_no' => (string) ($proforma['gst_no'] ?? ''),
             'address' => (string) ($proforma['address'] ?? ''),
             'billing_address' => (string) ($proforma['billing_address'] ?? ''),
+            'billing_city' => (string) ($proforma['billing_city'] ?? ''),
+            'billing_state' => (string) ($proforma['billing_state'] ?? ''),
+            'billing_country' => (string) ($proforma['billing_country'] ?? ''),
+            'billing_postal_code' => (string) ($proforma['billing_postal_code'] ?? ''),
             'city' => (string) ($proforma['city'] ?? ''),
             'state' => (string) ($proforma['state'] ?? ''),
             'country' => (string) ($proforma['country'] ?? ''),
@@ -76,10 +85,12 @@
     $initialGstNo = (string) (($selectedClient['gst_no'] ?? '') ?: ($proforma['gst_no'] ?? ''));
     $initialAddr1 = (string) (($selectedClient['address'] ?? '') ?: ($proforma['address'] ?? ''));
     $initialAddr2 = (string) (($selectedClient['billing_address'] ?? '') ?: ($proforma['billing_address'] ?? ''));
-    $initialCity = (string) (($selectedClient['city'] ?? '') ?: ($proforma['city'] ?? ''));
-    $initialState = (string) (($selectedClient['state'] ?? '') ?: ($proforma['state'] ?? ''));
-    $initialPincode = (string) ((($selectedClient['postal_code'] ?? '') ?: ($selectedClient['pincode'] ?? '')) ?: ($proforma['postal_code'] ?? ''));
+    $initialCity = (string) ((($selectedClient['billing_city'] ?? '') ?: ($selectedClient['city'] ?? '')) ?: (($proforma['billing_city'] ?? '') ?: ($proforma['city'] ?? '')));
+    $initialState = (string) ((($selectedClient['billing_state'] ?? '') ?: ($selectedClient['state'] ?? '')) ?: (($proforma['billing_state'] ?? '') ?: ($proforma['state'] ?? '')));
+    $initialPincode = (string) ((((($selectedClient['billing_postal_code'] ?? '') ?: ($selectedClient['postal_code'] ?? '')) ?: ($selectedClient['pincode'] ?? '')) ?: (($proforma['billing_postal_code'] ?? '') ?: ($proforma['postal_code'] ?? ''))));
     $showGstFields = $invoiceType === 'GST Invoice';
+    $showSplitGstRows = $showGstFields && $gstMode !== 'IGST';
+    $showIgstRow = $showGstFields && $gstMode === 'IGST';
     $fieldLabelColClass = 'col-12 col-md-3';
     $fieldInputColClass = 'col-12 col-md-9';
     $summaryLabelColClass = 'col-4 col-md-3 text-end fw-semibold';
@@ -138,10 +149,10 @@
                                         data-gst="<?= esc($gstNo) ?>"
                                         data-addr1="<?= esc((string) ($c['address'] ?? '')) ?>"
                                         data-addr2="<?= esc((string) ($c['billing_address'] ?? '')) ?>"
-                                        data-city="<?= esc((string) ($c['city'] ?? '')) ?>"
-                                        data-state="<?= esc((string) ($c['state'] ?? '')) ?>"
-                                        data-country="<?= esc((string) ($c['country'] ?? '')) ?>"
-                                        data-pincode="<?= esc((string) (($c['postal_code'] ?? '') ?: ($c['pincode'] ?? ''))) ?>"
+                                        data-city="<?= esc((string) (($c['billing_city'] ?? '') ?: ($c['city'] ?? ''))) ?>"
+                                        data-state="<?= esc((string) (($c['billing_state'] ?? '') ?: ($c['state'] ?? ''))) ?>"
+                                        data-country="<?= esc((string) (($c['billing_country'] ?? '') ?: ($c['country'] ?? ''))) ?>"
+                                        data-pincode="<?= esc((string) ((($c['billing_postal_code'] ?? '') ?: ($c['postal_code'] ?? '')) ?: ($c['pincode'] ?? ''))) ?>"
                                         <?= $selected ? 'selected' : '' ?>
                                     ><?= esc($clientLabel) ?></option>
                                 <?php endforeach; ?>
@@ -385,29 +396,29 @@
                             </div>
                         </div>
 
-                        <div class="row g-2 align-items-center mt-2">
+                        <div id="pf_cgst_row" class="row g-2 align-items-center mt-2<?= $showSplitGstRows ? '' : ' d-none' ?>">
                             <div class="<?= $summaryLabelColClass ?>">CGST</div>
                             <div class="<?= $summaryValueColClass ?>">
                                 <div class="row g-2">
-                                    <div class="col-6"><input type="text" class="form-control" id="pf_cgst_amt" value="<?= esc(number_format($cgstRate, 2, '.', '')) ?>" readonly></div>
+                                    <div class="col-6"><input type="text" class="form-control" id="pf_cgst_amt" value="<?= esc($formatPercent($cgstRate)) ?>" readonly></div>
                                     <div class="col-6"><input type="text" class="form-control" id="pf_cgst_val" value="<?= esc(number_format($cgstAmount, 2, '.', '')) ?>" readonly></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="row g-2 align-items-center mt-2">
+                        <div id="pf_sgst_row" class="row g-2 align-items-center mt-2<?= $showSplitGstRows ? '' : ' d-none' ?>">
                             <div class="<?= $summaryLabelColClass ?>">SGST</div>
                             <div class="<?= $summaryValueColClass ?>">
                                 <div class="row g-2">
-                                    <div class="col-6"><input type="text" class="form-control" id="pf_sgst_amt" value="<?= esc(number_format($sgstRate, 2, '.', '')) ?>" readonly></div>
+                                    <div class="col-6"><input type="text" class="form-control" id="pf_sgst_amt" value="<?= esc($formatPercent($sgstRate)) ?>" readonly></div>
                                     <div class="col-6"><input type="text" class="form-control" id="pf_sgst_val" value="<?= esc(number_format($sgstAmount, 2, '.', '')) ?>" readonly></div>
                                 </div>
                             </div>
                         </div>
-                        <div class="row g-2 align-items-center mt-2">
+                        <div id="pf_igst_row" class="row g-2 align-items-center mt-2<?= $showIgstRow ? '' : ' d-none' ?>">
                             <div class="<?= $summaryLabelColClass ?>">IGST</div>
                             <div class="<?= $summaryValueColClass ?>">
                                 <div class="row g-2">
-                                    <div class="col-6"><input type="text" class="form-control" id="pf_igst_amt" value="<?= esc(number_format($igstRate, 2, '.', '')) ?>" readonly></div>
+                                    <div class="col-6"><input type="text" class="form-control" id="pf_igst_amt" value="<?= esc($formatPercent($igstRate)) ?>" readonly></div>
                                     <div class="col-6"><input type="text" class="form-control" id="pf_igst_val" value="<?= esc(number_format($igstAmount, 2, '.', '')) ?>" readonly></div>
                                 </div>
                             </div>

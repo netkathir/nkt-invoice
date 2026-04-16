@@ -486,7 +486,7 @@ class ProformaController extends BaseController
     public function show(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.billing_city, clients.billing_state, clients.billing_country, clients.billing_postal_code, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -514,7 +514,7 @@ class ProformaController extends BaseController
         $autoprint = (string) $this->request->getGet('autoprint') === '1';
 
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.billing_city, clients.billing_state, clients.billing_country, clients.billing_postal_code, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -541,7 +541,7 @@ class ProformaController extends BaseController
     public function pdf(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.billing_city, clients.billing_state, clients.billing_country, clients.billing_postal_code, clients.city, clients.state, clients.country, clients.postal_code')
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -591,10 +591,10 @@ class ProformaController extends BaseController
         $billToEmail = (string) (($proforma['email'] ?? '') ?: '');
         $billToPhone = (string) (($proforma['phone'] ?? '') ?: '');
         $billToAddr1 = trim((string) (($proforma['billing_address'] ?? '') ?: ($proforma['address'] ?? '')));
-        $billToCity = (string) (($proforma['city'] ?? '') ?: '');
-        $billToState = (string) (($proforma['state'] ?? '') ?: '');
-        $billToCountry = (string) (($proforma['country'] ?? '') ?: '');
-        $billToPostal = (string) (($proforma['postal_code'] ?? '') ?: '');
+        $billToCity = (string) ((($proforma['billing_city'] ?? '') ?: ($proforma['city'] ?? '')) ?: '');
+        $billToState = (string) ((($proforma['billing_state'] ?? '') ?: ($proforma['state'] ?? '')) ?: '');
+        $billToCountry = (string) ((($proforma['billing_country'] ?? '') ?: ($proforma['country'] ?? '')) ?: '');
+        $billToPostal = (string) ((($proforma['billing_postal_code'] ?? '') ?: ($proforma['postal_code'] ?? '')) ?: '');
 
         $subTotal = (float) ($proforma['total_amount'] ?? 0);
         $netAmount = (float) (($proforma['net_amount'] ?? null) ?? $subTotal);

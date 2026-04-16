@@ -38,10 +38,10 @@
     $billToPhone = trim((string) ($proforma['phone'] ?? ''));
     $billToGst = trim((string) ($proforma['gst_no'] ?? ''));
     $billToAddress = trim((string) (($proforma['billing_address'] ?? '') ?: ($proforma['address'] ?? '')));
-    $billToCity = trim((string) ($proforma['city'] ?? ''));
-    $billToState = trim((string) ($proforma['state'] ?? ''));
-    $billToCountry = trim((string) ($proforma['country'] ?? ''));
-    $billToPostal = trim((string) ($proforma['postal_code'] ?? ''));
+    $billToCity = trim((string) ((($proforma['billing_city'] ?? '') ?: ($proforma['city'] ?? '')) ?: ''));
+    $billToState = trim((string) ((($proforma['billing_state'] ?? '') ?: ($proforma['state'] ?? '')) ?: ''));
+    $billToCountry = trim((string) ((($proforma['billing_country'] ?? '') ?: ($proforma['country'] ?? '')) ?: ''));
+    $billToPostal = trim((string) ((($proforma['billing_postal_code'] ?? '') ?: ($proforma['postal_code'] ?? '')) ?: ''));
     $billToPlace = trim(implode(', ', array_values(array_filter([$billToCity, $billToState, $billToCountry]))));
     if ($billToPostal !== '') {
         $billToPlace = trim($billToPlace . ($billToPlace !== '' ? ' - ' : '') . $billToPostal);

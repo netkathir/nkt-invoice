@@ -2309,23 +2309,23 @@ table tbody td{
 }
 
 .bms-invoice-create-card .card-body{
-    padding: .4rem .45rem .75rem;
+    padding: .26rem .3rem .5rem;
 }
 
 .bms-invoice-create-card .row.g-4{
-    --bs-gutter-y: .35rem;
-    --bs-gutter-x: .65rem;
+    --bs-gutter-y: .18rem;
+    --bs-gutter-x: .3rem;
 }
 
 .bms-invoice-create-card .row.g-3{
-    --bs-gutter-y: .3rem;
-    --bs-gutter-x: .55rem;
+    --bs-gutter-y: .18rem;
+    --bs-gutter-x: .32rem;
 }
 
 .bms-invoice-create-card .form-label,
 .bms-invoice-create-card .form-text,
 .bms-invoice-create-card .form-check-label{
-    font-size: .62rem;
+    font-size: .58rem;
 }
 
 .bms-invoice-create-card .form-label{
@@ -2336,18 +2336,20 @@ table tbody td{
 .bms-invoice-create-card .form-control,
 .bms-invoice-create-card .form-select,
 .bms-invoice-create-card .input-group-text{
-    min-height: 1.5rem;
-    padding-top: .12rem;
-    padding-bottom: .12rem;
-    font-size: .64rem;
-    line-height: 1.2;
+    min-height: 1rem;
+    padding-top: .02rem;
+    padding-bottom: .02rem;
+    padding-left: .28rem;
+    padding-right: .28rem;
+    font-size: .58rem;
+    line-height: 1.1;
     border-radius: 1px;
     border-color: rgba(203,213,225,.95);
     box-shadow: none;
 }
 
 .bms-invoice-create-card textarea.form-control{
-    min-height: 3rem;
+    min-height: 2.1rem;
 }
 
 .bms-invoice-create-card .form-control:focus,
@@ -2363,22 +2365,22 @@ table tbody td{
 }
 
 .bms-invoice-create-card .bms-date-btn{
-    min-width: 1.45rem;
-    padding: .1rem .35rem;
+    min-width: 1rem;
+    padding: .02rem .12rem;
     border-radius: 0 1px 1px 0;
 }
 
 .bms-invoice-create-card .bms-date-btn svg{
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
 }
 
 .bms-invoice-create-card .bms-items-box{
-    margin-top: .85rem !important;
+    margin-top: .55rem !important;
     border-width: 1px;
     border-color: rgba(148,163,184,.42);
-    border-radius: 0;
-    padding: .25rem;
+    border-radius: 1px;
+    padding: .1rem;
 }
 
 .bms-invoice-create-card .bms-items-box > .fw-semibold{
@@ -2393,8 +2395,8 @@ table tbody td{
 
 .bms-invoice-create-card #pfItemsTable th,
 .bms-invoice-create-card #pfItemsTable td{
-    padding: .24rem;
-    font-size: .62rem;
+    padding: .14rem;
+    font-size: .58rem;
     vertical-align: top;
 }
 
@@ -2405,15 +2407,17 @@ table tbody td{
 }
 
 .bms-invoice-create-card #pfItemsTable .form-control{
-    min-height: 1.35rem;
-    font-size: .62rem;
-    padding: .08rem .28rem;
+    min-height: .88rem;
+    font-size: .58rem;
+    padding: .03rem .12rem;
+    border-radius: 1px;
 }
 
 .bms-invoice-create-card #pfItemsTable .pf-item-desc-editor{
-    min-height: 2.9rem !important;
-    padding: .18rem .32rem;
+    min-height: 1.8rem !important;
+    padding: .08rem .14rem;
     overflow: auto;
+    border-radius: 1px;
 }
 
 .bms-invoice-create-card #pfItemsTable .pf-item-desc-editor ul{
@@ -2426,33 +2430,34 @@ table tbody td{
 }
 
 .bms-invoice-create-card .bms-pf-icon-btn{
-    width: 1rem;
-    height: 1rem;
-    min-width: 1rem;
-    font-size: .68rem;
+    width: .88rem;
+    height: .88rem;
+    min-width: .88rem;
+    font-size: .62rem;
     line-height: 1;
     border-radius: 1px;
     padding: 0;
 }
 
 .bms-invoice-create-card .row.justify-content-end.mt-4{
-    margin-top: .65rem !important;
+    margin-top: .55rem !important;
 }
 
 .bms-invoice-create-card .row.justify-content-end.mt-4 .row.g-2{
-    --bs-gutter-y: .22rem;
-    --bs-gutter-x: .35rem;
+    --bs-gutter-y: .18rem;
+    --bs-gutter-x: .25rem;
 }
 
 .bms-invoice-create-card .row.justify-content-end.mt-4 .col-4,
 .bms-invoice-create-card .row.justify-content-end.mt-4 .col-8{
-    font-size: .62rem;
+    font-size: .58rem;
 }
 
-.bms-invoice-create-card #btnSaveProforma{
-    min-height: 1.7rem;
-    padding: .2rem .75rem;
-    font-size: .66rem;
+.bms-invoice-create-card #btnSaveProforma,
+.bms-invoice-create-card #btnUpdateProforma{
+    min-height: 1.08rem;
+    padding: .08rem .45rem;
+    font-size: .56rem;
     border-radius: 1px;
 }
 

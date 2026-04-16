@@ -41,11 +41,11 @@
                                 <div class="fw-semibold text-primary mb-2">Address Information</div>
                                 <div class="row g-3">
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label">Address Line 1</label>
+                                        <label class="form-label">Street Name</label>
                                         <input class="form-control" id="client_address_line1" placeholder="Optional">
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label">Address Line 2</label>
+                                        <label class="form-label">Door Number</label>
                                         <input class="form-control" id="client_address_line2" placeholder="Optional">
                                     </div>
 
@@ -59,6 +59,7 @@
                                         <select class="form-select" name="state" id="client_state">
                                             <option value="">Select State</option>
                                         </select>
+                                        <input class="form-control d-none mt-0" id="client_state_text" placeholder="Optional" disabled>
                                         <div class="invalid-feedback" data-err="state"></div>
                                     </div>
 
@@ -81,11 +82,11 @@
                                     </div>
 
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label">Address Line 1</label>
+                                        <label class="form-label">Street Name</label>
                                         <input class="form-control" id="client_billing_line1" placeholder="Optional">
                                     </div>
                                     <div class="col-12 col-md-6">
-                                        <label class="form-label">Address Line 2</label>
+                                        <label class="form-label">Door Number</label>
                                         <input class="form-control" id="client_billing_line2" placeholder="Optional">
                                     </div>
 

@@ -80,6 +80,10 @@
     $initialState = (string) (($selectedClient['state'] ?? '') ?: ($proforma['state'] ?? ''));
     $initialPincode = (string) ((($selectedClient['postal_code'] ?? '') ?: ($selectedClient['pincode'] ?? '')) ?: ($proforma['postal_code'] ?? ''));
     $showGstFields = $invoiceType === 'GST Invoice';
+    $fieldLabelColClass = 'col-12 col-md-3';
+    $fieldInputColClass = 'col-12 col-md-9';
+    $summaryLabelColClass = 'col-4 col-md-3 text-end fw-semibold';
+    $summaryValueColClass = 'col-8 col-md-9';
 ?>
 <div class="bms-invoice-create-page">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 bms-invoice-create-toolbar">
@@ -96,10 +100,10 @@
             <div class="row g-4">
                 <div class="col-12 col-lg-6">
                     <div class="row g-3 align-items-center">
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">Invoice No <span class="text-danger">*</span></label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input
                                 type="text"
                                 class="form-control"
@@ -114,10 +118,10 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">Client Name <span class="text-danger">*</span></label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <select class="form-select" id="pf_client_id" <?= $isReadonly ? 'disabled' : '' ?> required>
                                 <option value="">Select client</option>
                                 <?php foreach ($clients as $c): ?>
@@ -148,31 +152,31 @@
                             <input type="hidden" id="pf_from" value="<?= esc($billingFrom) ?>">
                         </div>
 
-                        <div class="col-12 col-md-4<?= $showGstFields ? '' : ' d-none' ?>" id="pf_gst_row">
+                        <div class="<?= $fieldLabelColClass . ($showGstFields ? '' : ' d-none') ?>" id="pf_gst_row">
                             <label class="form-label mb-0 text-md-end fw-semibold">GST NO</label>
                         </div>
-                        <div class="col-12 col-md-8<?= $showGstFields ? '' : ' d-none' ?>" id="pf_gst_col">
+                        <div class="<?= $fieldInputColClass . ($showGstFields ? '' : ' d-none') ?>" id="pf_gst_col">
                             <input type="text" class="form-control" id="pf_gst" value="<?= esc($initialGstNo) ?>" readonly>
                         </div>
 
-                        <div class="col-12 col-md-4">
-                            <label class="form-label mb-0 text-md-end fw-semibold">Address Line1</label>
+                        <div class="<?= $fieldLabelColClass ?>">
+                            <label class="form-label mb-0 text-md-end fw-semibold">Street Name</label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input type="text" class="form-control" id="pf_addr1" value="<?= esc($initialAddr1) ?>" <?= $isReadonly ? 'readonly' : '' ?>>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">State</label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input type="text" class="form-control" id="pf_state" value="<?= esc($initialState) ?>" <?= $isReadonly ? 'readonly' : '' ?>>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">Currency <span class="text-danger">*</span></label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <select class="form-select" id="pf_currency" <?= $isReadonly ? 'disabled' : '' ?> required>
                                 <option value="">Select</option>
                                 <option value="INR" <?= $currency === 'INR' ? 'selected' : '' ?>>INR</option>
@@ -189,10 +193,10 @@
 
                 <div class="col-12 col-lg-6">
                     <div class="row g-3 align-items-center">
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">Invoice Type <span class="text-danger">*</span></label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <select class="form-select" id="pf_invoice_type" required disabled>
                                 <option value="GST Invoice" <?= $invoiceType === 'GST Invoice' ? 'selected' : '' ?>>GST Invoice</option>
                                 <option value="Export Invoice" <?= $invoiceType === 'Export Invoice' ? 'selected' : '' ?>>Export Invoice</option>
@@ -203,17 +207,17 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">Company Name</label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input type="text" class="form-control" id="pf_company" value="<?= esc($initialCompany) ?>" readonly>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">Date Of Issue <span class="text-danger">*</span></label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <?php if ($isReadonly): ?>
                                 <input type="text" class="form-control" id="pf_date" value="<?= esc($issueDate) ?>" readonly>
                             <?php else: ?>
@@ -239,24 +243,24 @@
                             <?php endif; ?>
                         </div>
 
-                        <div class="col-12 col-md-4">
-                            <label class="form-label mb-0 text-md-end fw-semibold">Address Line2</label>
+                        <div class="<?= $fieldLabelColClass ?>">
+                            <label class="form-label mb-0 text-md-end fw-semibold">Door Number</label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input type="text" class="form-control" id="pf_addr2" value="<?= esc($initialAddr2) ?>" <?= $isReadonly ? 'readonly' : '' ?>>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">City</label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input type="text" class="form-control" id="pf_city" value="<?= esc($initialCity) ?>" <?= $isReadonly ? 'readonly' : '' ?>>
                         </div>
 
-                        <div class="col-12 col-md-4">
+                        <div class="<?= $fieldLabelColClass ?>">
                             <label class="form-label mb-0 text-md-end fw-semibold">PinCode</label>
                         </div>
-                        <div class="col-12 col-md-8">
+                        <div class="<?= $fieldInputColClass ?>">
                             <input type="text" class="form-control" id="pf_pincode" value="<?= esc($initialPincode) ?>" <?= $isReadonly ? 'readonly' : '' ?>>
                         </div>
                     </div>
@@ -270,12 +274,12 @@
                         <thead class="table-light">
                         <tr>
                             <th>Item Description</th>
-                            <th class="text-end" style="width:120px;">Quantity</th>
-                            <th style="width:110px;">Unit</th>
-                            <th class="text-end" style="width:140px;">Price</th>
-                            <th class="text-end" style="width:140px;">Value</th>
+                            <th class="text-end" style="width:96px;">Quantity</th>
+                            <th style="width:82px;">Unit</th>
+                            <th class="text-end" style="width:118px;">Price</th>
+                            <th class="text-end" style="width:118px;">Value</th>
                             <?php if (! $isReadonly): ?>
-                                <th class="text-center" style="width:90px;">Actions</th>
+                                <th class="text-center" style="width:74px;">Actions</th>
                             <?php endif; ?>
                         </tr>
                         </thead>
@@ -344,8 +348,8 @@
             <div class="row g-3 justify-content-end mt-4">
                 <div class="col-12 col-md-6 col-lg-5 col-xl-4">
                     <div class="row g-2 align-items-center">
-                        <div class="col-4 text-end fw-semibold">Total</div>
-                        <div class="col-8">
+                        <div class="<?= $summaryLabelColClass ?>">Total</div>
+                        <div class="<?= $summaryValueColClass ?>">
                             <input type="text" class="form-control" id="pf_total_input" value="<?= esc(number_format($totalAmount, 2, '.', '')) ?>" readonly>
                             <span id="pf_total" class="d-none"><?= esc(number_format($totalAmount, 2, '.', '')) ?></span>
                         </div>
@@ -353,8 +357,8 @@
 
                     <div id="pf_gst_box" class="mt-2<?= $showGstFields ? '' : ' d-none' ?>">
                         <div class="row g-2 align-items-center">
-                            <div class="col-4 text-end fw-semibold">GST %</div>
-                            <div class="col-8">
+                            <div class="<?= $summaryLabelColClass ?>">GST %</div>
+                            <div class="<?= $summaryValueColClass ?>">
                                 <input
                                     type="<?= $isReadonly ? 'text' : 'number' ?>"
                                     min="0"
@@ -368,8 +372,8 @@
                         </div>
 
                         <div class="row g-2 align-items-center mt-1">
-                            <div class="col-4"></div>
-                            <div class="col-8 d-flex flex-wrap gap-3">
+                            <div class="<?= $summaryLabelColClass ?>"></div>
+                            <div class="<?= $summaryValueColClass ?> d-flex flex-wrap gap-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="radio" name="pf_gst_mode" id="pf_mode_cgst" value="CGST_SGST" <?= $gstMode === 'IGST' ? '' : 'checked' ?> <?= $isReadonly ? 'disabled' : '' ?>>
                                     <label class="form-check-label" for="pf_mode_cgst">CGST &amp; SGST</label>
@@ -382,8 +386,8 @@
                         </div>
 
                         <div class="row g-2 align-items-center mt-2">
-                            <div class="col-4 text-end fw-semibold">CGST</div>
-                            <div class="col-8">
+                            <div class="<?= $summaryLabelColClass ?>">CGST</div>
+                            <div class="<?= $summaryValueColClass ?>">
                                 <div class="row g-2">
                                     <div class="col-6"><input type="text" class="form-control" id="pf_cgst_amt" value="<?= esc(number_format($cgstRate, 2, '.', '')) ?>" readonly></div>
                                     <div class="col-6"><input type="text" class="form-control" id="pf_cgst_val" value="<?= esc(number_format($cgstAmount, 2, '.', '')) ?>" readonly></div>
@@ -391,8 +395,8 @@
                             </div>
                         </div>
                         <div class="row g-2 align-items-center mt-2">
-                            <div class="col-4 text-end fw-semibold">SGST</div>
-                            <div class="col-8">
+                            <div class="<?= $summaryLabelColClass ?>">SGST</div>
+                            <div class="<?= $summaryValueColClass ?>">
                                 <div class="row g-2">
                                     <div class="col-6"><input type="text" class="form-control" id="pf_sgst_amt" value="<?= esc(number_format($sgstRate, 2, '.', '')) ?>" readonly></div>
                                     <div class="col-6"><input type="text" class="form-control" id="pf_sgst_val" value="<?= esc(number_format($sgstAmount, 2, '.', '')) ?>" readonly></div>
@@ -400,8 +404,8 @@
                             </div>
                         </div>
                         <div class="row g-2 align-items-center mt-2">
-                            <div class="col-4 text-end fw-semibold">IGST</div>
-                            <div class="col-8">
+                            <div class="<?= $summaryLabelColClass ?>">IGST</div>
+                            <div class="<?= $summaryValueColClass ?>">
                                 <div class="row g-2">
                                     <div class="col-6"><input type="text" class="form-control" id="pf_igst_amt" value="<?= esc(number_format($igstRate, 2, '.', '')) ?>" readonly></div>
                                     <div class="col-6"><input type="text" class="form-control" id="pf_igst_val" value="<?= esc(number_format($igstAmount, 2, '.', '')) ?>" readonly></div>
@@ -410,23 +414,23 @@
                         </div>
 
                         <div class="row g-2 align-items-center mt-2">
-                            <div class="col-4 text-end fw-semibold">Total GST</div>
-                            <div class="col-8">
+                            <div class="<?= $summaryLabelColClass ?>">Total GST</div>
+                            <div class="<?= $summaryValueColClass ?>">
                                 <input type="text" class="form-control" id="pf_total_gst" value="<?= esc(number_format($totalGst, 2, '.', '')) ?>" readonly>
                             </div>
                         </div>
                     </div>
 
                     <div class="row g-2 align-items-center mt-2">
-                        <div class="col-4 text-end fw-semibold">Net Amount</div>
-                        <div class="col-8">
+                        <div class="<?= $summaryLabelColClass ?>">Net Amount</div>
+                        <div class="<?= $summaryValueColClass ?>">
                             <input type="text" class="form-control" id="pf_net_amount" value="<?= esc(number_format($netAmount, 2, '.', '')) ?>" readonly>
                         </div>
                     </div>
 
                     <div class="row g-2 align-items-center mt-2">
-                        <div class="col-4 text-end fw-semibold">Due Date<?= $isReadonly ? '' : ' <span class="text-danger">*</span>' ?></div>
-                        <div class="col-8">
+                        <div class="<?= $summaryLabelColClass ?>">Due Date<?= $isReadonly ? '' : ' <span class="text-danger">*</span>' ?></div>
+                        <div class="<?= $summaryValueColClass ?>">
                             <?php if ($isReadonly): ?>
                                 <input type="text" class="form-control" id="pf_due" value="<?= esc($dueDate) ?>" readonly>
                             <?php else: ?>

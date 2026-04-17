@@ -22,7 +22,7 @@ class ProformaService
 
     /**
      * @param list<int> $billableItemIds
-     * @param array{proforma_number?:string,proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string,invoice_type?:string,gst_percent?:string|float,gst_mode?:string} $meta
+     * @param array{proforma_number?:string,proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string,invoice_type?:string,gst_percent?:string|float} $meta
      * @return array{id:int,proforma_number:string,total_amount:string}
      */
     public function create(int $clientId, array $billableItemIds, array $meta = []): array
@@ -57,7 +57,9 @@ class ProformaService
         $currency = isset($meta['currency']) && $meta['currency'] !== '' ? (string) $meta['currency'] : 'INR';
 
         $gstPercent = isset($meta['gst_percent']) && $meta['gst_percent'] !== '' ? (float) $meta['gst_percent'] : 0.0;
-        $gstMode = isset($meta['gst_mode']) && $meta['gst_mode'] !== '' ? (string) $meta['gst_mode'] : ProformaModel::GST_MODE_CGST_SGST;
+        $gstMode = function_exists('bms_resolve_gst_mode')
+            ? bms_resolve_gst_mode($client, null, ProformaModel::GST_MODE_CGST_SGST)
+            : ProformaModel::GST_MODE_CGST_SGST;
 
         $this->db->transBegin();
 
@@ -186,7 +188,7 @@ class ProformaService
 
     /**
      * @param list<int> $billableItemIds
-     * @param array{proforma_number?:string,proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string,invoice_type?:string,gst_percent?:string|float,gst_mode?:string} $meta
+     * @param array{proforma_number?:string,proforma_date?:string,billing_from?:string|null,billing_to?:string|null,currency?:string,status?:string,invoice_type?:string,gst_percent?:string|float} $meta
      * @return array{id:int,proforma_number:string,total_amount:string}
      */
     public function update(int $proformaId, array $billableItemIds, array $meta = []): array
@@ -233,7 +235,10 @@ class ProformaService
             : (string) ($proforma['currency'] ?? 'INR');
 
         $gstPercent = isset($meta['gst_percent']) && $meta['gst_percent'] !== '' ? (float) $meta['gst_percent'] : (float) ($proforma['gst_percent'] ?? 0);
-        $gstMode = isset($meta['gst_mode']) && $meta['gst_mode'] !== '' ? (string) $meta['gst_mode'] : (string) ($proforma['gst_mode'] ?? ProformaModel::GST_MODE_CGST_SGST);
+        $gstModeFallback = (string) ($proforma['gst_mode'] ?? ProformaModel::GST_MODE_CGST_SGST);
+        $gstMode = function_exists('bms_resolve_gst_mode')
+            ? bms_resolve_gst_mode($client, null, $gstModeFallback)
+            : $gstModeFallback;
 
 	        $this->db->transBegin();
 

@@ -227,3 +227,202 @@ if (! function_exists('bms_is_india_country')) {
         return in_array($country, ['india', 'in'], true);
     }
 }
+
+if (! function_exists('bms_normalize_tax_region_text')) {
+    /**
+     * Normalize free-form region text for stable comparisons.
+     */
+    function bms_normalize_tax_region_text(?string $value): string
+    {
+        $value = strtolower(trim((string) $value));
+        if ($value === '') {
+            return '';
+        }
+
+        $value = preg_replace('/[^a-z0-9]+/', ' ', $value) ?? $value;
+        $value = preg_replace('/\s+/', ' ', trim($value)) ?? trim($value);
+
+        return $value;
+    }
+}
+
+if (! function_exists('bms_extract_gstin_state_code')) {
+    /**
+     * Extract the leading 2-digit GSTIN state code.
+     */
+    function bms_extract_gstin_state_code(?string $gstin): string
+    {
+        $gstin = strtoupper(trim((string) $gstin));
+        if ($gstin === '') {
+            return '';
+        }
+
+        $gstin = preg_replace('/\s+/', '', $gstin) ?? $gstin;
+
+        return preg_match('/^(\d{2})/', $gstin, $m) === 1 ? (string) $m[1] : '';
+    }
+}
+
+if (! function_exists('bms_india_state_alias_map')) {
+    /**
+     * Map common Indian state names/aliases to GST state codes.
+     *
+     * @return array<string, string>
+     */
+    function bms_india_state_alias_map(): array
+    {
+        static $map = null;
+        if (is_array($map)) {
+            return $map;
+        }
+
+        $map = [
+            'jammu and kashmir' => '01',
+            'jk' => '01',
+            'himachal pradesh' => '02',
+            'hp' => '02',
+            'punjab' => '03',
+            'pb' => '03',
+            'chandigarh' => '04',
+            'ch' => '04',
+            'uttarakhand' => '05',
+            'uttrakhand' => '05',
+            'uttaranchal' => '05',
+            'uk' => '05',
+            'haryana' => '06',
+            'hr' => '06',
+            'delhi' => '07',
+            'new delhi' => '07',
+            'dl' => '07',
+            'rajasthan' => '08',
+            'rj' => '08',
+            'uttar pradesh' => '09',
+            'up' => '09',
+            'bihar' => '10',
+            'br' => '10',
+            'sikkim' => '11',
+            'sk' => '11',
+            'arunachal pradesh' => '12',
+            'arunachal' => '12',
+            'ar' => '12',
+            'nagaland' => '13',
+            'nl' => '13',
+            'manipur' => '14',
+            'mn' => '14',
+            'mizoram' => '15',
+            'mz' => '15',
+            'tripura' => '16',
+            'tr' => '16',
+            'meghalaya' => '17',
+            'ml' => '17',
+            'assam' => '18',
+            'as' => '18',
+            'west bengal' => '19',
+            'wb' => '19',
+            'jharkhand' => '20',
+            'jh' => '20',
+            'odisha' => '21',
+            'orissa' => '21',
+            'od' => '21',
+            'chhattisgarh' => '22',
+            'chattisgarh' => '22',
+            'cg' => '22',
+            'madhya pradesh' => '23',
+            'mp' => '23',
+            'gujarat' => '24',
+            'gj' => '24',
+            'dadra and nagar haveli and daman and diu' => '26',
+            'dnhdd' => '26',
+            'dnh and dd' => '26',
+            'maharashtra' => '27',
+            'mh' => '27',
+            'karnataka' => '29',
+            'ka' => '29',
+            'goa' => '30',
+            'ga' => '30',
+            'lakshadweep' => '31',
+            'ld' => '31',
+            'kerala' => '32',
+            'kl' => '32',
+            'tamil nadu' => '33',
+            'tamilnadu' => '33',
+            'tn' => '33',
+            'puducherry' => '34',
+            'pondicherry' => '34',
+            'py' => '34',
+            'andaman and nicobar islands' => '35',
+            'andaman nicobar' => '35',
+            'an' => '35',
+            'telangana' => '36',
+            'ts' => '36',
+            'andhra pradesh' => '37',
+            'andhra' => '37',
+            'ap' => '37',
+            'ladakh' => '38',
+            'la' => '38',
+        ];
+
+        return $map;
+    }
+}
+
+if (! function_exists('bms_resolve_india_state_code')) {
+    /**
+     * Resolve an Indian state/UT into a GST state code using GSTIN first, then text.
+     */
+    function bms_resolve_india_state_code(?string $state, ?string $gstin = null): string
+    {
+        $gstCode = bms_extract_gstin_state_code($gstin);
+        if ($gstCode !== '') {
+            return $gstCode;
+        }
+
+        $normalized = bms_normalize_tax_region_text($state);
+        if ($normalized === '') {
+            return '';
+        }
+
+        $aliases = bms_india_state_alias_map();
+        if (isset($aliases[$normalized])) {
+            return $aliases[$normalized];
+        }
+
+        return preg_match('/^\d{2}$/', $normalized) === 1 ? $normalized : '';
+    }
+}
+
+if (! function_exists('bms_resolve_gst_mode')) {
+    /**
+     * Resolve GST mode from authoritative company/client location data.
+     *
+     * @param array<string, mixed>|null $client
+     * @param array<string, mixed>|null $companyInfo
+     */
+    function bms_resolve_gst_mode(?array $client, ?array $companyInfo = null, string $fallback = 'CGST_SGST'): string
+    {
+        $fallback = strtoupper(trim($fallback)) === 'IGST' ? 'IGST' : 'CGST_SGST';
+        $client = is_array($client) ? $client : [];
+
+        $clientCountry = (string) (($client['billing_country'] ?? '') ?: ($client['country'] ?? ''));
+        if (! bms_is_india_country($clientCountry)) {
+            return $fallback;
+        }
+
+        $companyInfo = is_array($companyInfo) ? $companyInfo : bms_company_info();
+
+        $companyStateCode = bms_resolve_india_state_code(
+            (string) ($companyInfo['state'] ?? ''),
+            (string) ($companyInfo['gstin_number'] ?? '')
+        );
+        $clientStateCode = bms_resolve_india_state_code(
+            (string) (($client['billing_state'] ?? '') ?: ($client['state'] ?? '')),
+            (string) (($client['gst_no'] ?? '') ?: ($client['gstin_number'] ?? ''))
+        );
+
+        if ($companyStateCode !== '' && $clientStateCode !== '') {
+            return $companyStateCode === $clientStateCode ? 'CGST_SGST' : 'IGST';
+        }
+
+        return $fallback;
+    }
+}

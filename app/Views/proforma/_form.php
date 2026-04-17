@@ -42,15 +42,10 @@
     $invoiceType = (string) (($proforma['invoice_type'] ?? '') ?: 'GST Invoice');
     $gstPercent = (float) (($proforma['gst_percent'] ?? null) ?? ($isCreate ? 18 : 0));
     $gstMode = (string) (($proforma['gst_mode'] ?? '') ?: 'CGST_SGST');
+    $companyInfo = function_exists('bms_company_info') ? bms_company_info() : [];
     $totalAmount = (float) ($proforma['total_amount'] ?? 0);
     $totalGst = (float) ($proforma['total_gst'] ?? 0);
     $netAmount = (float) (($proforma['net_amount'] ?? null) ?? ($totalAmount + $totalGst));
-    $cgstRate = $invoiceType === 'GST Invoice' && $gstMode !== 'IGST' ? ($gstPercent / 2) : 0;
-    $sgstRate = $invoiceType === 'GST Invoice' && $gstMode !== 'IGST' ? ($gstPercent / 2) : 0;
-    $igstRate = $invoiceType === 'GST Invoice' && $gstMode === 'IGST' ? $gstPercent : 0;
-    $cgstAmount = (float) ($proforma['cgst_amount'] ?? ($gstMode === 'IGST' ? 0 : ($totalGst / 2)));
-    $sgstAmount = (float) ($proforma['sgst_amount'] ?? ($gstMode === 'IGST' ? 0 : ($totalGst / 2)));
-    $igstAmount = (float) ($proforma['igst_amount'] ?? ($gstMode === 'IGST' ? $totalGst : 0));
     $selectedClient = null;
 
     if ($isView && $clients === []) {
@@ -81,6 +76,16 @@
         }
     }
 
+    $gstMode = function_exists('bms_resolve_gst_mode')
+        ? bms_resolve_gst_mode($selectedClient ?: $proforma, $companyInfo, $gstMode)
+        : $gstMode;
+    $cgstRate = $invoiceType === 'GST Invoice' && $gstMode !== 'IGST' ? ($gstPercent / 2) : 0;
+    $sgstRate = $invoiceType === 'GST Invoice' && $gstMode !== 'IGST' ? ($gstPercent / 2) : 0;
+    $igstRate = $invoiceType === 'GST Invoice' && $gstMode === 'IGST' ? $gstPercent : 0;
+    $cgstAmount = (float) ($proforma['cgst_amount'] ?? ($gstMode === 'IGST' ? 0 : ($totalGst / 2)));
+    $sgstAmount = (float) ($proforma['sgst_amount'] ?? ($gstMode === 'IGST' ? 0 : ($totalGst / 2)));
+    $igstAmount = (float) ($proforma['igst_amount'] ?? ($gstMode === 'IGST' ? $totalGst : 0));
+
     $initialCompany = (string) (($selectedClient['name'] ?? '') ?: ($proforma['client_name'] ?? ''));
     $initialGstNo = (string) (($selectedClient['gst_no'] ?? '') ?: ($proforma['gst_no'] ?? ''));
     $initialAddr1 = (string) (($selectedClient['address'] ?? '') ?: ($proforma['address'] ?? ''));
@@ -96,7 +101,12 @@
     $summaryLabelColClass = 'col-4 col-md-3 text-end fw-semibold';
     $summaryValueColClass = 'col-8 col-md-9';
 ?>
-<div class="bms-invoice-create-page">
+<div
+    class="bms-invoice-create-page"
+    data-default-gst-mode="CGST_SGST"
+    data-initial-client-id="<?= esc($selectedClientId) ?>"
+    data-initial-gst-mode="<?= esc($gstMode) ?>"
+>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 bms-invoice-create-toolbar">
         <h5 class="mb-0"><?= esc($title) ?></h5>
         <a class="btn btn-link p-0 text-decoration-none" href="<?= base_url('proforma') ?>">Back</a>
@@ -140,6 +150,9 @@
                                         $clientLabel = $buildClientLabel($c);
                                         $company = (string) (($c['name'] ?? '') ?: $clientLabel);
                                         $gstNo = (string) (($c['gst_no'] ?? '') ?: ($c['gst'] ?? ''));
+                                        $clientGstMode = function_exists('bms_resolve_gst_mode')
+                                            ? bms_resolve_gst_mode($c, $companyInfo, 'CGST_SGST')
+                                            : 'CGST_SGST';
                                         $selected = (string) ($c['id'] ?? '') === $selectedClientId;
                                     ?>
                                     <option
@@ -147,6 +160,7 @@
                                         data-label="<?= esc($clientLabel) ?>"
                                         data-company="<?= esc($company) ?>"
                                         data-gst="<?= esc($gstNo) ?>"
+                                        data-gst-mode="<?= esc($clientGstMode) ?>"
                                         data-addr1="<?= esc((string) ($c['address'] ?? '')) ?>"
                                         data-addr2="<?= esc((string) ($c['billing_address'] ?? '')) ?>"
                                         data-city="<?= esc((string) (($c['billing_city'] ?? '') ?: ($c['city'] ?? ''))) ?>"
@@ -379,20 +393,6 @@
                                     value="<?= esc(number_format($gstPercent, 2, '.', '')) ?>"
                                     <?= $isReadonly ? 'readonly' : '' ?>
                                 >
-                            </div>
-                        </div>
-
-                        <div class="row g-2 align-items-center mt-1">
-                            <div class="<?= $summaryLabelColClass ?>"></div>
-                            <div class="<?= $summaryValueColClass ?> d-flex flex-wrap gap-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="pf_gst_mode" id="pf_mode_cgst" value="CGST_SGST" <?= $gstMode === 'IGST' ? '' : 'checked' ?> <?= $isReadonly ? 'disabled' : '' ?>>
-                                    <label class="form-check-label" for="pf_mode_cgst">CGST &amp; SGST</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="pf_gst_mode" id="pf_mode_igst" value="IGST" <?= $gstMode === 'IGST' ? 'checked' : '' ?> <?= $isReadonly ? 'disabled' : '' ?>>
-                                    <label class="form-check-label" for="pf_mode_igst">IGST</label>
-                                </div>
                             </div>
                         </div>
 

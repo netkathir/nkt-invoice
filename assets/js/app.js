@@ -961,6 +961,21 @@
         return isIndiaCountry(country) ? 'GST Invoice' : 'Export Invoice';
     }
 
+    function resolveProformaGstMode($page, $clientSelect) {
+        const defaultMode = String(($page && $page.length ? $page.data('defaultGstMode') : '') || 'CGST_SGST').trim() || 'CGST_SGST';
+        const initialClientId = String(($page && $page.length ? $page.data('initialClientId') : '') || '').trim();
+        const initialMode = String(($page && $page.length ? $page.data('initialGstMode') : '') || '').trim();
+        const selectedId = String(($clientSelect && $clientSelect.length ? $clientSelect.val() : '') || '').trim();
+        const $selected = $clientSelect && $clientSelect.length ? $clientSelect.find('option:selected') : $();
+        const optionMode = String(($selected.length ? $selected.data('gstMode') : '') || '').trim();
+
+        if (selectedId && selectedId === initialClientId && initialMode) {
+            return initialMode;
+        }
+
+        return optionMode || defaultMode;
+    }
+
     function descriptionPlainText(value) {
         const raw = String(value || '');
         if (!raw) return '';
@@ -4045,7 +4060,7 @@
 	            const total = parseMoney($('#pf_total').text());
 	            const enabled = gstEnabled();
 	            const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
-	            const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+	            const mode = currentGstMode || 'CGST_SGST';
                 const showSplitRows = enabled && mode !== 'IGST';
                 const showIgstRow = enabled && mode === 'IGST';
 
@@ -4239,11 +4254,13 @@
 	        }
 
 	        const $clientSelect = $('#pf_client_id');
+        const $page = $('.bms-invoice-create-page').first();
         const clientSearchable = initSearchableSelect($clientSelect, {
             placeholder: 'Select client',
             noResultsText: 'No matching clients found.',
         });
         let currentClientCountry = '';
+        let currentGstMode = resolveProformaGstMode($page, $clientSelect);
 
         function syncInvoiceTypeFromCountry() {
             $('#pf_invoice_type').val(resolveInvoiceTypeByCountry(currentClientCountry));
@@ -4253,6 +4270,7 @@
         function clearClientFields() {
             currentClientCountry = '';
             if ($clientSelect.length) $clientSelect.val('');
+            currentGstMode = resolveProformaGstMode($page, $clientSelect);
             $('#pf_company').val('');
             $('#pf_gst').val('');
             $('#pf_addr1').val('');
@@ -4265,6 +4283,7 @@
 
         function applyClientOption($opt) {
             currentClientCountry = ($opt.data('country') || '').toString().trim();
+            currentGstMode = resolveProformaGstMode($page, $clientSelect);
             $('#pf_company').val(($opt.data('company') || '').toString().trim());
             $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
             $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
@@ -4370,7 +4389,6 @@
 
 	        $('#pf_invoice_type').on('change', recalcGst);
 	        $('#pf_gst_percent').on('input', recalcGst);
-	        $(document).on('change', 'input[name="pf_gst_mode"]', recalcGst);
 	        recalcGst();
 
 	        ensureOneRow();
@@ -4450,7 +4468,6 @@
             const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
 	            const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
-	            const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
 	            const items = collectItems();
 
 	            $('#pf_invoice_no, #pf_client_id, #pf_date, #pf_invoice_type, #pf_currency, #pf_due').removeClass('is-invalid');
@@ -4484,7 +4501,6 @@
                 billing_to: dueDate,
 	                currency: currency,
 	                gst_percent: gstEnabled() ? gstPercent : '',
-	                gst_mode: gstEnabled() ? gstMode : '',
 	                items: items,
 	            })
 	                .done(function (res) {
@@ -4533,7 +4549,7 @@
 	                const total = parseMoney($('#pf_total').text());
 	                const enabled = gstEnabled();
 	                const percent = Math.max(0, parseFloat($('#pf_gst_percent').val() || '0') || 0);
-	                const mode = $('input[name="pf_gst_mode"]:checked').val() || 'CGST_SGST';
+	                const mode = currentGstMode || 'CGST_SGST';
                     const showSplitRows = enabled && mode !== 'IGST';
                     const showIgstRow = enabled && mode === 'IGST';
 
@@ -4732,10 +4748,13 @@
 	            }
 
             let currentClientCountry = '';
-            const clientSearchable = initSearchableSelect($('#pf_client_id'), {
+            const $clientSelect = $('#pf_client_id');
+            const $page = $('.bms-invoice-create-page').first();
+            const clientSearchable = initSearchableSelect($clientSelect, {
                 placeholder: 'Select client',
                 noResultsText: 'No matching clients found.',
             });
+            let currentGstMode = resolveProformaGstMode($page, $clientSelect);
 
             function syncInvoiceTypeFromCountry() {
                 $('#pf_invoice_type').val(resolveInvoiceTypeByCountry(currentClientCountry));
@@ -4743,8 +4762,9 @@
             }
 
             function initCompanyField() {
-                const $opt = $('#pf_client_id option:selected');
+                const $opt = $clientSelect.find('option:selected');
                 currentClientCountry = ($opt.data('country') || '').toString().trim();
+                currentGstMode = resolveProformaGstMode($page, $clientSelect);
                 $('#pf_company').val(($opt.data('company') || '').toString().trim());
                 $('#pf_gst').val(($opt.data('gst') || '').toString().trim());
                 $('#pf_addr1').val(($opt.data('addr1') || '').toString().trim());
@@ -4755,7 +4775,7 @@
                 syncInvoiceTypeFromCountry();
             }
 	            initCompanyField();
-	            $('#pf_client_id').on('change', function () {
+	            $clientSelect.on('change', function () {
                     initCompanyField();
                     if (clientSearchable && typeof clientSearchable.sync === 'function') {
                         clientSearchable.sync();
@@ -4789,7 +4809,6 @@
 
 	            $('#pf_invoice_type').on('change', recalcGst);
 	            $('#pf_gst_percent').on('input', recalcGst);
-	            $(document).on('change', 'input[name="pf_gst_mode"]', recalcGst);
 
 	            ensureOneRow();
 	            recalcTotal();
@@ -4868,7 +4887,6 @@
                 const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
 	                const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	                const gstPercent = ($('#pf_gst_percent').val() || '').trim();
-	                const gstMode = ($('input[name="pf_gst_mode"]:checked').val() || '').trim();
 	                const items = collectItems();
 
 	                if (!proformaId) return;
@@ -4911,7 +4929,6 @@
                     billing_to: dueDate,
 	                    currency: currency,
 	                    gst_percent: gstEnabled() ? gstPercent : '',
-	                    gst_mode: gstEnabled() ? gstMode : '',
 	                    items: items,
 	                })
 	                    .done(function (res) {

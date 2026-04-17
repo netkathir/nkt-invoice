@@ -310,7 +310,6 @@ class ProformaController extends BaseController
                 'billing_to'    => $this->normalizeIsoDate((string) $this->request->getPost('billing_to')),
                 'currency'      => (string) $this->request->getPost('currency'),
                 'gst_percent'   => (string) $this->request->getPost('gst_percent'),
-                'gst_mode'      => (string) $this->request->getPost('gst_mode'),
             ]);
 
             return $this->response->setJSON([
@@ -463,7 +462,6 @@ class ProformaController extends BaseController
                 'billing_to'    => $this->normalizeIsoDate((string) $this->request->getPost('billing_to')),
                 'currency'      => (string) $this->request->getPost('currency'),
                 'gst_percent'   => (string) $this->request->getPost('gst_percent'),
-                'gst_mode'      => (string) $this->request->getPost('gst_mode'),
             ]);
 
             return $this->response->setJSON([

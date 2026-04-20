@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\ClientTableSchema;
 use App\Models\ClientModel;
 use Throwable;
 
@@ -24,6 +25,7 @@ class ClientMasterController extends BaseController
     public function save()
     {
         $clientModel = new ClientModel();
+        $clientTable = new ClientTableSchema();
 
         $id = (int) $this->request->getPost('id');
         $payload = [
@@ -51,6 +53,14 @@ class ClientMasterController extends BaseController
         }
 
         try {
+            try {
+                $clientTable->ensureBillingLocationColumns();
+            } catch (Throwable) {
+                // Fall back to a safe partial save if this database user cannot alter schema.
+            }
+
+            $payload = $clientTable->filterExistingColumns($payload);
+
             if (! $clientModel->save($payload)) {
                 return $this->response->setStatusCode(422)->setJSON([
                     'success' => false,

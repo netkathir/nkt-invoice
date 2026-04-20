@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\ClientTableSchema;
 use App\Libraries\ProformaService;
 use App\Libraries\SimplePdf;
 use App\Models\BillableItemModel;
@@ -13,6 +14,30 @@ use Throwable;
 
 class ProformaController extends BaseController
 {
+    private function buildClientDetailsSelect(string $clientAlias = 'clients'): string
+    {
+        $clientTable = new ClientTableSchema();
+
+        return implode(', ', [
+            'proforma_invoices.*',
+            $clientAlias . '.name as client_name',
+            $clientAlias . '.contact_person',
+            $clientAlias . '.email',
+            $clientAlias . '.phone',
+            $clientTable->optionalSelect($clientAlias, 'gst_no'),
+            $clientTable->optionalSelect($clientAlias, 'address'),
+            $clientTable->optionalSelect($clientAlias, 'billing_address'),
+            $clientTable->optionalSelect($clientAlias, 'billing_city'),
+            $clientTable->optionalSelect($clientAlias, 'billing_state'),
+            $clientTable->optionalSelect($clientAlias, 'billing_country'),
+            $clientTable->optionalSelect($clientAlias, 'billing_postal_code'),
+            $clientTable->optionalSelect($clientAlias, 'city'),
+            $clientTable->optionalSelect($clientAlias, 'state'),
+            $clientTable->optionalSelect($clientAlias, 'country'),
+            $clientTable->optionalSelect($clientAlias, 'postal_code'),
+        ]);
+    }
+
     private function normalizeIsoDate(?string $value): string
     {
         $raw = trim((string) ($value ?? ''));
@@ -484,7 +509,7 @@ class ProformaController extends BaseController
     public function show(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.billing_city, clients.billing_state, clients.billing_country, clients.billing_postal_code, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select($this->buildClientDetailsSelect())
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -512,7 +537,7 @@ class ProformaController extends BaseController
         $autoprint = (string) $this->request->getGet('autoprint') === '1';
 
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.billing_city, clients.billing_state, clients.billing_country, clients.billing_postal_code, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select($this->buildClientDetailsSelect())
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();
@@ -539,7 +564,7 @@ class ProformaController extends BaseController
     public function pdf(int $id)
     {
         $proforma = (new ProformaModel())
-            ->select('proforma_invoices.*, clients.name as client_name, clients.contact_person, clients.email, clients.phone, clients.gst_no, clients.address, clients.billing_address, clients.billing_city, clients.billing_state, clients.billing_country, clients.billing_postal_code, clients.city, clients.state, clients.country, clients.postal_code')
+            ->select($this->buildClientDetailsSelect())
             ->join('clients', 'clients.id = proforma_invoices.client_id')
             ->where('proforma_invoices.id', $id)
             ->first();

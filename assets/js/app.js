@@ -4349,9 +4349,27 @@
 	            $('#pf_due_native').val(value);
 	        }
 
+	        let dueDateTouched = false;
+
+	        function bindFlatpickrButton(selector) {
+	            const el = $(selector).get(0);
+	            if (!el || !el._flatpickr) return;
+
+	            const $btn = $(el).closest('.bms-date-wrap').find('.bms-date-btn').first();
+	            if (!$btn.length) return;
+
+	            $btn.off('click.bmsDatePicker').on('click.bmsDatePicker', function (e) {
+	                e.preventDefault();
+	                el._flatpickr.open();
+	            });
+	        }
+
 	        function syncDueDateFromIssue(iso) {
 	            const dueIso = addDaysToIso(iso, 30);
-	            setCreateDueDate(dueIso);
+	            const currentDueIso = readCreateDateIso('#pf_due');
+	            if (!dueDateTouched || !currentDueIso) {
+	                setCreateDueDate(dueIso);
+	            }
 	            return dueIso;
 	        }
 
@@ -4374,14 +4392,22 @@
 	            defaultDate: initialDueIso,
 	            onChange: function(selectedDates, dateStr) {
 	                $('#pf_due_native').val(dateStr);
-	                syncDueDateFromIssue(readCreateDateIso('#pf_date'));
+	                dueDateTouched = !!dateStr;
+	                if (!dateStr) {
+	                    syncDueDateFromIssue(readCreateDateIso('#pf_date'));
+	                }
 	            }
 	        });
+	        bindFlatpickrButton('#pf_date');
+	        bindFlatpickrButton('#pf_due');
 	        $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
 	            syncDueDateFromIssue(readCreateDateIso('#pf_date'));
 	        });
 	        $('#pf_due').off('change.bmsInvoiceDue input.bmsInvoiceDue').on('change.bmsInvoiceDue input.bmsInvoiceDue', function () {
-	            syncDueDateFromIssue(readCreateDateIso('#pf_date'));
+	            dueDateTouched = !!readCreateDateIso('#pf_due');
+	            if (!dueDateTouched) {
+	                syncDueDateFromIssue(readCreateDateIso('#pf_date'));
+	            }
 	        });
 	        setCreateDateField('#pf_date', initialIssueIso);
 	        $('#pf_date_native').val(initialIssueIso);
@@ -4463,8 +4489,7 @@
 	            const clientId = String($('#pf_client_id').val() || '').trim();
 	            const pfDate = readCreateDateIso('#pf_date');
 	            const currency = ($('#pf_currency').val() || '').trim();
-            const expectedDueDate = addDaysToIso(pfDate, 30);
-            const dueDate = expectedDueDate || readCreateDateIso('#pf_due');
+            const dueDate = readCreateDateIso('#pf_due') || addDaysToIso(pfDate, 30);
             const billingFrom = String($('#pf_from').val() || '').trim() || pfDate;
 	            const invoiceType = resolveInvoiceTypeByCountry(currentClientCountry);
 	            const gstPercent = ($('#pf_gst_percent').val() || '').trim();
@@ -4483,9 +4508,6 @@
 	            if (hasInvalid) {
 	                notify('Please fill the required fields.', 'danger');
 	                return;
-	            }
-	            if (expectedDueDate) {
-	                setCreateDueDate(expectedDueDate);
 	            }
 	            if (!items.length) {
 	                notify('Add at least one item.', 'danger');
@@ -4781,9 +4803,28 @@
                         clientSearchable.sync();
                     }
                 });
+	            let dueDateTouched = false;
+
+	            function bindFlatpickrButton(selector) {
+	                const el = $(selector).get(0);
+	                if (!el || !el._flatpickr) return;
+
+	                const $btn = $(el).closest('.bms-date-wrap').find('.bms-date-btn').first();
+	                if (!$btn.length) return;
+
+	                $btn.off('click.bmsDatePicker').on('click.bmsDatePicker', function (e) {
+	                    e.preventDefault();
+	                    el._flatpickr.open();
+	                });
+	            }
+
 	            function syncDueDateFromIssue(iso) {
 	                const dueIso = addDaysToIso(iso, 30);
-	                setDateFieldValue('#pf_due', dueIso);
+	                const currentDueIso = readDateFieldIso('#pf_due');
+	                if (!dueDateTouched || !currentDueIso) {
+	                    setDateFieldValue('#pf_due', dueIso);
+	                }
+	                return dueIso;
 	            }
 
 	            flatpickr('#pf_date', {
@@ -4798,10 +4839,24 @@
 	                altInput: true,
 	                altFormat: "d M Y",
 	                allowInput: true,
-	                onChange: function(selectedDates, dateStr) { $('#pf_due_native').val(dateStr); }
+	                onChange: function(selectedDates, dateStr) {
+	                    $('#pf_due_native').val(dateStr);
+	                    dueDateTouched = !!dateStr;
+	                    if (!dateStr) {
+	                        syncDueDateFromIssue(readDateFieldIso('#pf_date'));
+	                    }
+	                }
 	            });
+	            bindFlatpickrButton('#pf_date');
+	            bindFlatpickrButton('#pf_due');
 	            $('#pf_date').off('change.bmsInvoiceDate input.bmsInvoiceDate').on('change.bmsInvoiceDate input.bmsInvoiceDate', function () {
 	                syncDueDateFromIssue(readDateFieldIso('#pf_date'));
+	            });
+	            $('#pf_due').off('change.bmsInvoiceDue input.bmsInvoiceDue').on('change.bmsInvoiceDue input.bmsInvoiceDue', function () {
+	                dueDateTouched = !!readDateFieldIso('#pf_due');
+	                if (!dueDateTouched) {
+	                    syncDueDateFromIssue(readDateFieldIso('#pf_date'));
+	                }
 	            });
 	            if (!readDateFieldIso('#pf_due')) {
 	                syncDueDateFromIssue(readDateFieldIso('#pf_date'));

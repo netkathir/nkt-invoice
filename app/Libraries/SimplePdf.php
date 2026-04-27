@@ -27,6 +27,10 @@ class SimplePdf
     /** @var array{0:float,1:float,2:float} */
     private array $fillRgb = [1, 1, 1];
     private float $lineWidth = 1.0;
+    /** @var array<int, array{name:string, data:string, width:int, height:int}> */
+    private array $images = [];
+    /** @var array<int, array<string, bool>> */
+    private array $pageImages = [];
 
     public function addPage(): void
     {
@@ -111,6 +115,73 @@ class SimplePdf
     }
 
     /**
+     * Draw an image as a JPEG XObject. PNGs are converted to JPEG in-memory when GD is available.
+     * Unsupported or unreadable files are skipped safely.
+     */
+    public function image(string $file, float $x, float $yFromTop, float $w, float $h): void
+    {
+        $this->ensurePage();
+
+        $file = trim($file);
+        if ($file === '' || ! is_file($file) || ! is_readable($file)) {
+            return;
+        }
+
+        $bytes = @file_get_contents($file);
+        if ($bytes === false || $bytes === '') {
+            return;
+        }
+
+        $img = null;
+        if (function_exists('imagecreatefromstring')) {
+            $img = @imagecreatefromstring($bytes);
+        }
+        if (! $img) {
+            return;
+        }
+
+        ob_start();
+        imagejpeg($img, null, 92);
+        $jpeg = (string) (ob_get_clean() ?: '');
+        imagedestroy($img);
+
+        if ($jpeg === '') {
+            return;
+        }
+
+        $hash = sha1($file . '|' . $jpeg);
+        $name = null;
+        foreach ($this->images as $image) {
+            if (sha1($image['data']) === $hash) {
+                $name = $image['name'];
+                break;
+            }
+        }
+
+        if ($name === null) {
+            $name = 'Im' . (count($this->images) + 1);
+            $size = @getimagesizefromstring($bytes);
+            $width = is_array($size) && isset($size[0]) ? (int) $size[0] : 1;
+            $height = is_array($size) && isset($size[1]) ? (int) $size[1] : 1;
+            $this->images[] = [
+                'name' => $name,
+                'data' => $jpeg,
+                'width' => max(1, $width),
+                'height' => max(1, $height),
+            ];
+        }
+
+        $pageIndex = $this->currentPage;
+        if (! isset($this->pageImages[$pageIndex])) {
+            $this->pageImages[$pageIndex] = [];
+        }
+        $this->pageImages[$pageIndex][$name] = true;
+
+        $yPdf = $this->toPdfY($yFromTop + $h);
+        $this->append(sprintf("q %.2F 0 0 %.2F %.2F %.2F cm /%s Do Q\n", $w, $h, $x, $yPdf, $name));
+    }
+
+    /**
      * Very rough width estimate for standard fonts.
      */
     public function estimateTextWidth(string $text, ?float $fontSize = null): float
@@ -177,6 +248,18 @@ class SimplePdf
         $font1 = $addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
         $font2 = $addObj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>");
 
+        // Image XObjects
+        $imageObjIds = [];
+        foreach ($this->images as $image) {
+            $imageObjIds[$image['name']] = $addObj(sprintf(
+                "<< /Type /XObject /Subtype /Image /Width %d /Height %d /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length %d >>\nstream\n%s\nendstream",
+                $image['width'],
+                $image['height'],
+                strlen($image['data']),
+                $image['data']
+            ));
+        }
+
         // Content streams
         $contentObjIds = [];
         foreach ($this->pages as $content) {
@@ -188,14 +271,23 @@ class SimplePdf
         $pagesObjId = $addObj("<< /Type /Pages /Kids [] /Count 0 >>");
 
         $pageObjIds = [];
-        foreach ($contentObjIds as $cid) {
+        foreach ($contentObjIds as $idx => $cid) {
+            $xObjectEntries = [];
+            $usedImageNames = array_keys($this->pageImages[$idx] ?? []);
+            foreach ($usedImageNames as $name) {
+                if (isset($imageObjIds[$name])) {
+                    $xObjectEntries[] = '/' . $name . ' ' . $imageObjIds[$name] . ' 0 R';
+                }
+            }
+            $xObjectDict = $xObjectEntries !== [] ? ' /XObject << ' . implode(' ', $xObjectEntries) . ' >>' : '';
             $pageBody = sprintf(
-                "<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %.2F %.2F] /Resources << /Font << /F1 %d 0 R /F2 %d 0 R >> >> /Contents %d 0 R >>",
+                "<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %.2F %.2F] /Resources << /Font << /F1 %d 0 R /F2 %d 0 R >>%s >> /Contents %d 0 R >>",
                 $pagesObjId,
                 $this->pageW,
                 $this->pageH,
                 $font1,
                 $font2,
+                $xObjectDict,
                 $cid
             );
             $pageObjIds[] = $addObj($pageBody);

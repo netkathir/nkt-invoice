@@ -644,6 +644,15 @@
                 '<path d="M17 12h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
                 '</svg>';
         }
+        if (n === 'pdf') {
+            return '' +
+                '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+                '<path d="M7 9V4h10v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M6 18H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M7 14h10v6H7z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '<path d="M17 12h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>' +
+                '</svg>';
+        }
         if (n === 'billed') {
             return '' +
                 '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
@@ -2836,6 +2845,7 @@
                     const isPending = row.status === 'Pending';
                     let actionHtml =
                         actionBtn('view', 'btn-outline-dark', 'View') +
+                        actionLink('print', 'btn-outline-dark', 'Export PDF', base('billable-items/pdf/' + row.id)) +
                         actionBtn('edit', 'btn-outline-primary', 'Edit') +
                         actionBtn('del', 'btn-outline-danger', 'Delete');
 

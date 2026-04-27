@@ -85,6 +85,7 @@ $routes->group('', ['filter' => 'adminauth'], static function (RouteCollection $
         $routes->get('/', 'BillableItemsController::index');
         $routes->get('list', 'BillableItemsController::list');
         $routes->get('download', 'BillableItemsController::download');
+        $routes->get('pdf/(:num)', 'BillableItemsController::pdf/$1');
         $routes->post('save', 'BillableItemsController::save');
         $routes->post('update', 'BillableItemsController::update');
         $routes->post('delete', 'BillableItemsController::delete');

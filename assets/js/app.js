@@ -994,15 +994,8 @@
             try {
                 const tmp = document.createElement('div');
                 tmp.innerHTML = raw;
-                const lis = tmp.querySelectorAll('li');
-                if (lis && lis.length) {
-                    const parts = [];
-                    lis.forEach(function (li) {
-                        const t = String(li.innerText || li.textContent || '').trim();
-                        if (t) parts.push(t);
-                    });
-                    return parts.join(' ');
-                }
+                const parts = descriptionListLines(tmp);
+                if (parts.length) return parts.join(' ');
             } catch (e) {}
         }
 
@@ -1011,6 +1004,58 @@
             .replace(/\u00A0/g, ' ')
             .replace(/\s+/g, ' ')
             .trim();
+    }
+
+    function descriptionListLines(root) {
+        const out = [];
+        if (!root || typeof root.querySelectorAll !== 'function') return out;
+
+        const topItems = Array.prototype.slice.call(root.querySelectorAll('li')).filter(function (li) {
+            return !(li.parentElement && li.parentElement.closest('li'));
+        });
+
+        topItems.forEach(function (li) {
+            extractListItemLines(li).forEach(function (line) {
+                if (line) out.push(line);
+            });
+        });
+
+        return out;
+    }
+
+    function extractListItemLines(li) {
+        const lines = [];
+        if (!li) return lines;
+
+        const clone = li.cloneNode(true);
+        Array.prototype.slice.call(clone.querySelectorAll('ul,ol')).forEach(function (list) {
+            list.remove();
+        });
+        Array.prototype.slice.call(clone.querySelectorAll('br')).forEach(function (br) {
+            br.replaceWith(document.createTextNode('\n'));
+        });
+
+        String(clone.innerText || clone.textContent || '')
+            .replace(/\u00A0/g, ' ')
+            .split(/\r?\n/)
+            .map(function (line) { return line.trim(); })
+            .filter(function (line) { return line !== ''; })
+            .forEach(function (line) { lines.push(line); });
+
+        Array.prototype.slice.call(li.children || []).forEach(function (child) {
+            const name = String(child.tagName || '').toLowerCase();
+            if (name !== 'ul' && name !== 'ol') return;
+
+            Array.prototype.slice.call(child.children || []).forEach(function (nested) {
+                if (String(nested.tagName || '').toLowerCase() === 'li') {
+                    extractListItemLines(nested).forEach(function (line) {
+                        if (line) lines.push(line);
+                    });
+                }
+            });
+        });
+
+        return lines;
     }
 
     function renderTruncatedDescription(value, type, maxChars) {
@@ -1057,13 +1102,7 @@
             try {
                 const tmp = document.createElement('div');
                 tmp.innerHTML = raw;
-                const lis = tmp.querySelectorAll('li');
-                if (lis && lis.length) {
-                    lis.forEach(function (li) {
-                        const t = String(li.innerText || li.textContent || '').trim();
-                        if (t) lines.push(t);
-                    });
-                }
+                lines = descriptionListLines(tmp);
             } catch (e) {}
         }
         if (!lines.length) {
@@ -1101,13 +1140,7 @@
             try {
                 const tmp = document.createElement('div');
                 tmp.innerHTML = raw;
-                const lis = tmp.querySelectorAll('li');
-                if (lis && lis.length) {
-                    lis.forEach(function (li) {
-                        const t = String(li.innerText || li.textContent || '').trim();
-                        if (t) lines.push(t);
-                    });
-                }
+                lines = descriptionListLines(tmp);
             } catch (e) {}
         }
 
@@ -4142,15 +4175,13 @@
 	            const el = $el && $el.length ? $el[0] : null;
 	            if (!el) return '';
 
-	            const liNodes = el.querySelectorAll('li');
-	            if (liNodes && liNodes.length) {
-	                return Array.from(liNodes)
-	                    .map(function (li) {
-	                        return stripBulletPrefix(String(li.innerText || li.textContent || '').replace(/\u00A0/g, ' ').trim());
-	                    })
-	                    .filter(function (l) { return l !== ''; })
-	                    .join("\n");
-	            }
+            const lines = descriptionListLines(el);
+            if (lines.length) {
+                return lines
+                    .map(stripBulletPrefix)
+                    .filter(function (l) { return l !== ''; })
+                    .join("\n");
+            }
 
 	            return normalizeBulletText($el.text());
 	        }
@@ -4653,12 +4684,10 @@
 	                const el = $el && $el.length ? $el[0] : null;
 	                if (!el) return '';
 
-	                const liNodes = el.querySelectorAll('li');
-	                if (liNodes && liNodes.length) {
-	                    return Array.from(liNodes)
-	                        .map(function (li) {
-	                            return stripBulletPrefix(String(li.innerText || li.textContent || '').replace(/\u00A0/g, ' ').trim());
-	                        })
+	                const lines = descriptionListLines(el);
+	                if (lines.length) {
+	                    return lines
+	                        .map(stripBulletPrefix)
 	                        .filter(function (l) { return l !== ''; })
 	                        .join("\n");
 	                }

@@ -60,10 +60,13 @@ if (! function_exists('bms_description_to_plain')) {
                 $doc->loadHTML('<?xml encoding="UTF-8"><body>' . $maybeHtml . '</body>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
                 libxml_clear_errors();
 
-                $lis = $doc->getElementsByTagName('li');
                 $items = [];
-                foreach ($lis as $li) {
-                    $t = bms_description_node_text($li);
+                foreach ($doc->getElementsByTagName('li') as $li) {
+                    if (bms_description_li_has_li_ancestor($li)) {
+                        continue;
+                    }
+
+                    $t = bms_description_li_text($li);
                     if ($t !== '') {
                         $items[] = $t;
                     }
@@ -132,7 +135,11 @@ if (! function_exists('bms_description_to_list_items')) {
                 libxml_clear_errors();
 
                 foreach ($doc->getElementsByTagName('li') as $li) {
-                    $text = bms_description_node_text($li);
+                    if (bms_description_li_has_li_ancestor($li)) {
+                        continue;
+                    }
+
+                    $text = bms_description_li_text($li);
                     $lines = array_values(array_filter(array_map(
                         static function ($line) {
                             $line = trim((string) $line);
@@ -226,6 +233,116 @@ if (! function_exists('bms_description_node_text')) {
             }
 
             if (in_array($name, ['p', 'div', 'li'], true)) {
+                $parts[] = "\n";
+            }
+        }
+
+        $text = implode('', $parts);
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        $text = str_replace(["\r\n", "\r"], "\n", $text);
+        $text = preg_replace("/[ \t]+\n/u", "\n", $text) ?? $text;
+        $text = preg_replace("/\n{3,}/u", "\n\n", $text) ?? $text;
+
+        return trim($text);
+    }
+}
+
+if (! function_exists('bms_description_li_has_li_ancestor')) {
+    /**
+     * Detect nested list items so parent/child text is not counted twice.
+     */
+    function bms_description_li_has_li_ancestor(\DOMNode $node): bool
+    {
+        $parent = $node->parentNode;
+        while ($parent instanceof \DOMNode) {
+            if ($parent instanceof \DOMElement && strtolower($parent->nodeName) === 'li') {
+                return true;
+            }
+            $parent = $parent->parentNode;
+        }
+
+        return false;
+    }
+}
+
+if (! function_exists('bms_description_li_text')) {
+    /**
+     * Extract one list item's text, flattening nested subpoints exactly once.
+     */
+    function bms_description_li_text(\DOMElement $li): string
+    {
+        $lines = [];
+        $own = trim(bms_description_node_text_without_nested_lists($li));
+        if ($own !== '') {
+            foreach (preg_split('/\r?\n/', $own) ?: [] as $line) {
+                $line = trim((string) $line);
+                if ($line !== '') {
+                    $lines[] = $line;
+                }
+            }
+        }
+
+        foreach ($li->childNodes as $child) {
+            if (! ($child instanceof \DOMElement)) {
+                continue;
+            }
+
+            $name = strtolower($child->nodeName);
+            if (! in_array($name, ['ul', 'ol'], true)) {
+                continue;
+            }
+
+            foreach ($child->childNodes as $nested) {
+                if ($nested instanceof \DOMElement && strtolower($nested->nodeName) === 'li') {
+                    $nestedText = bms_description_li_text($nested);
+                    foreach (preg_split('/\r?\n/', $nestedText) ?: [] as $line) {
+                        $line = trim((string) $line);
+                        if ($line !== '') {
+                            $lines[] = $line;
+                        }
+                    }
+                }
+            }
+        }
+
+        return trim(implode("\n", $lines));
+    }
+}
+
+if (! function_exists('bms_description_node_text_without_nested_lists')) {
+    /**
+     * Extract direct list item text while skipping child ul/ol blocks.
+     */
+    function bms_description_node_text_without_nested_lists(\DOMNode $node): string
+    {
+        $parts = [];
+
+        foreach ($node->childNodes as $child) {
+            if ($child instanceof \DOMText || $child instanceof \DOMCdataSection) {
+                $parts[] = html_entity_decode((string) $child->nodeValue, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+                continue;
+            }
+
+            if (! ($child instanceof \DOMElement)) {
+                continue;
+            }
+
+            $name = strtolower($child->nodeName);
+            if (in_array($name, ['ul', 'ol'], true)) {
+                continue;
+            }
+
+            if ($name === 'br') {
+                $parts[] = "\n";
+                continue;
+            }
+
+            $childText = bms_description_node_text_without_nested_lists($child);
+            if ($childText !== '') {
+                $parts[] = $childText;
+            }
+
+            if (in_array($name, ['p', 'div'], true)) {
                 $parts[] = "\n";
             }
         }

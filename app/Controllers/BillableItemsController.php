@@ -610,7 +610,7 @@ class BillableItemsController extends BaseController
         $pdf->line($xL + 34.0, 64.0, $xR - 34.0, 64.0);
 
         $infoTop = 66.0;
-        $infoH = 120.0;
+        $infoH = 116.0;
         $leftInfoW = 292.0;
         $rightInfoX = $xL + $leftInfoW;
 
@@ -632,14 +632,14 @@ class BillableItemsController extends BaseController
             $companyPhone !== '' ? $companyPhone : '',
         ], static fn ($line) => trim((string) $line) !== ''));
 
-        $pdf->setFont('Helvetica', '', 8.5);
+        $pdf->setFont('Helvetica', '', 8.2);
         $companyY = $infoTop + 31.0;
         foreach ($companyLines as $idx => $line) {
             $isLinkLine = $idx >= 4;
             $pdf->setTextColor($isLinkLine ? 25 : 30, $isLinkLine ? 92 : 41, $isLinkLine ? 204 : 59);
-            foreach ($pdf->wrapText((string) $line, 238.0, 8.5) as $wrappedLine) {
+            foreach ($pdf->wrapText((string) $line, 236.0, 8.2) as $wrappedLine) {
                 $pdf->text($xL + 34.0, $companyY, $wrappedLine);
-                $companyY += 10.5;
+                $companyY += 10.0;
             }
         }
 
@@ -652,14 +652,14 @@ class BillableItemsController extends BaseController
         ];
 
         $labelX = $rightInfoX + 12.0;
-        $valueX = $labelX + 74.0;
-        $metaY = $infoTop + 18.0;
+        $valueX = $labelX + 72.0;
+        $metaY = $infoTop + 16.0;
         foreach ($metaRows as [$label, $value]) {
-            $pdf->setFont('Helvetica', 'B', 8.6);
+            $pdf->setFont('Helvetica', 'B', 8.4);
             $pdf->setTextColor(15, 23, 42);
             $pdf->text($labelX, $metaY, $label);
 
-            $pdf->setFont('Helvetica', '', 8.6);
+            $pdf->setFont('Helvetica', '', 8.4);
             $pdf->setTextColor(30, 41, 59);
             $lines = preg_split('/\r?\n/', (string) $value) ?: ['-'];
             if ($lines === []) {
@@ -667,21 +667,21 @@ class BillableItemsController extends BaseController
             }
             $valueY = $metaY;
             foreach ($lines as $line) {
-                $wrappedLines = $pdf->wrapText(trim((string) $line), 128.0, 8.6);
+                $wrappedLines = $pdf->wrapText(trim((string) $line), 126.0, 8.4);
                 foreach ($wrappedLines as $wrappedLine) {
                     $pdf->text($valueX, $valueY, $wrappedLine);
-                    $valueY += 10.5;
+                    $valueY += 10.0;
                 }
             }
-            $metaY += max(17.0, $valueY - $metaY + 1.0);
+            $metaY += max(16.0, $valueY - $metaY + 1.0);
         }
 
         $tableTop = $infoTop + $infoH + 12.0;
         $tableW = $contentW - 44.0;
         $tableX = $xL + 22.0;
-        $wDesc = 292.0;
+        $wDesc = 288.0;
         $wUnit = 50.0;
-        $wPrice = 66.0;
+        $wPrice = 68.0;
         $wQty = 54.0;
         $wAmt = $tableW - ($wDesc + $wUnit + $wPrice + $wQty);
         $tableHeadH = 22.0;
@@ -689,11 +689,11 @@ class BillableItemsController extends BaseController
         $pdf->setDrawColor(150, 185, 191);
         $pdf->setFillColor(240, 245, 246);
         $pdf->rect($tableX, $tableTop, $tableW, $tableHeadH, true, true);
-        $pdf->setFont('Helvetica', 'B', 9.0);
+        $pdf->setFont('Helvetica', 'B', 8.8);
         $pdf->setTextColor(15, 23, 42);
         $pdf->text($tableX + 8.0, $tableTop + 14.0, 'Description');
         $pdf->text($tableX + $wDesc + 11.0, $tableTop + 14.0, 'Unit');
-        $pdf->text($tableX + $wDesc + $wUnit + 9.0, $tableTop + 14.0, 'Price');
+        $pdf->text($tableX + $wDesc + $wUnit + 10.0, $tableTop + 14.0, 'Price');
         $pdf->text($tableX + $wDesc + $wUnit + $wPrice + 8.0, $tableTop + 14.0, 'Quantity');
         $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty + 8.0, $tableTop + 14.0, 'Amount');
 
@@ -714,7 +714,7 @@ class BillableItemsController extends BaseController
         }
 
         $tableRowTop = $tableTop + $tableHeadH;
-        $rowH = max(28.0, 12.0 + (count($descLines) * 10.5));
+        $rowH = max(28.0, 12.0 + (count($descLines) * 10.0));
         $pdf->setDrawColor(150, 185, 191);
         $pdf->setFillColor(255, 255, 255);
         $pdf->rect($tableX, $tableRowTop, $tableW, $rowH, true, true);
@@ -724,12 +724,12 @@ class BillableItemsController extends BaseController
         $pdf->rect($tableX + $wDesc + $wUnit + $wPrice, $tableRowTop, $wQty, $rowH, true, true);
         $pdf->rect($tableX + $wDesc + $wUnit + $wPrice + $wQty, $tableRowTop, $wAmt, $rowH, true, true);
 
-        $pdf->setFont('Helvetica', '', 8.8);
+        $pdf->setFont('Helvetica', '', 8.4);
         $pdf->setTextColor(30, 41, 59);
         $descY = $tableRowTop + 14.0;
         foreach ($descLines as $descLine) {
             $pdf->text($tableX + 8.0, $descY, $descLine);
-            $descY += 10.5;
+            $descY += 10.0;
         }
 
         $unitText = 'Nos';
@@ -742,12 +742,12 @@ class BillableItemsController extends BaseController
         $midY = $tableRowTop + ($rowH / 2.0) + 2.0;
 
         $pdf->text($tableX + $wDesc + 14.0, $midY, $unitText);
-        $pdf->text($tableX + $wDesc + $wUnit + $wPrice - 8.0 - $pdf->estimateTextWidth($priceText, 8.8), $midY, $priceText);
-        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty - 8.0 - $pdf->estimateTextWidth($qtyText, 8.8), $midY, $qtyText);
-        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty + $wAmt - 8.0 - $pdf->estimateTextWidth($amtText, 8.8), $midY, $amtText);
+        $pdf->text($tableX + $wDesc + $wUnit + $wPrice - 8.0 - $pdf->estimateTextWidth($priceText, 8.4), $midY, $priceText);
+        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty - 8.0 - $pdf->estimateTextWidth($qtyText, 8.4), $midY, $qtyText);
+        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty + $wAmt - 8.0 - $pdf->estimateTextWidth($amtText, 8.4), $midY, $amtText);
 
-        $summaryW = 244.0;
-        $summaryX = $xR - $summaryW - 10.0;
+        $summaryW = 236.0;
+        $summaryX = $xR - $summaryW - 12.0;
         $summaryTop = $tableRowTop + $rowH + 10.0;
         $summaryRows = [
             ['Invoice Total', $formatMoney($baseAmount)],
@@ -761,41 +761,46 @@ class BillableItemsController extends BaseController
             $rowTop = $summaryTop + ($i * $sumRowH);
             $pdf->setFillColor(255, 255, 255);
             $pdf->rect($summaryX, $rowTop, $summaryW, $sumRowH, true, true);
-            $pdf->setFont('Helvetica', 'B', 8.9);
+            $pdf->setFont('Helvetica', 'B', 8.7);
             $pdf->setTextColor(15, 23, 42);
             $pdf->text($summaryX + 10.0, $rowTop + 14.0, $label);
-            $valueX = $summaryX + $summaryW - 10.0 - $pdf->estimateTextWidth($value, 8.9);
+            $valueX = $summaryX + $summaryW - 10.0 - $pdf->estimateTextWidth($value, 8.7);
             $pdf->text($valueX, $rowTop + 14.0, $value);
         }
 
         $footerTop = $summaryTop + ($sumRowH * count($summaryRows)) + 16.0;
-        $pdf->setFont('Helvetica', '', 8.4);
+        $pdf->setFont('Helvetica', '', 8.2);
         $pdf->setTextColor(30, 41, 59);
         $leftFooterY = $footerTop;
         if ($companyAccount !== '') {
             $pdf->text($xL + 34.0, $leftFooterY, $companyAccount);
-            $leftFooterY += 10.5;
+            $leftFooterY += 9.8;
         }
         if ($companyPaypal !== '') {
             $pdf->text($xL + 34.0, $leftFooterY, 'Paypal account: ' . $companyPaypal);
-            $leftFooterY += 10.5;
+            $leftFooterY += 9.8;
         }
         $supportLine = 'For support, contact ' . ($companyEmail !== '' ? $companyEmail : $companyName) . ($companyPhone !== '' ? (' / ' . $companyPhone) : '');
-        $pdf->text($xL + 34.0, $leftFooterY, $supportLine);
-        $leftFooterY += 10.5;
+        foreach ($pdf->wrapText($supportLine, 238.0, 8.2) as $supportWrapped) {
+            $pdf->text($xL + 34.0, $leftFooterY, $supportWrapped);
+            $leftFooterY += 9.8;
+        }
 
         $pdf->setFont('Helvetica', 'B', 8.8);
         $pdf->setTextColor(30, 41, 59);
-        $rightFooterX = $xR - 190.0;
+        $rightFooterX = $xR - 175.0;
         $pdf->text($rightFooterX, $footerTop + 8.0, 'For ' . $companyName);
         $pdf->setFont('Helvetica', '', 7.8);
-        $pdf->text($rightFooterX - 6.0, $footerTop + 19.0, 'This is a computer-generated bill and does not require a');
-        $pdf->text($rightFooterX - 6.0, $footerTop + 29.0, 'signature.');
+        $noteY = $footerTop + 19.0;
+        foreach ($pdf->wrapText('This is a computer-generated bill and does not require a signature.', 155.0, 7.8) as $noteLine) {
+            $pdf->text($rightFooterX - 6.0, $noteY, $noteLine);
+            $noteY += 10.0;
+        }
 
         $thankYou = 'Thank you for your business.!';
         $pdf->setFont('Helvetica', 'B', 8.8);
         $pdf->setTextColor(30, 41, 59);
-        $pdf->text(($xL + $xR - $pdf->estimateTextWidth($thankYou, 8.8)) / 2.0, min($pageH - 34.0, $footerTop + 40.0), $thankYou);
+        $pdf->text(($xL + $xR - $pdf->estimateTextWidth($thankYou, 8.8)) / 2.0, min($pageH - 34.0, $noteY + 10.0), $thankYou);
 
         $filename = 'billable-item-' . preg_replace('/[^A-Za-z0-9_-]+/', '-', $entryNo) . '.pdf';
 

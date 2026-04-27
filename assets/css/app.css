@@ -1073,6 +1073,46 @@ table tbody td{
     gap: 1rem;
 }
 
+.bms-billable-page{
+    gap: .4rem;
+}
+
+.bms-billable-page .bms-list-hero .card-body{
+    padding: .85rem .95rem !important;
+}
+
+.bms-billable-page .bms-list-filter-card .card-body{
+    padding: .7rem .85rem;
+}
+
+.bms-billable-page .bms-list-panel .card-body{
+    padding: .7rem .85rem .85rem;
+}
+
+.bms-billable-page .bms-list-hero-row{
+    gap: .7rem;
+}
+
+.bms-billable-page .bms-list-actions{
+    gap: .5rem;
+}
+
+.bms-billable-page .bms-list-actions .btn{
+    min-height: 40px;
+    padding: .6rem .95rem;
+}
+
+.bms-billable-page .bms-list-panel .dataTables_wrapper > .row:first-child{
+    padding: .65rem .7rem;
+    margin: 0 0 .45rem;
+    border-radius: 14px;
+}
+
+.bms-billable-page .bms-list-panel .dataTables_wrapper > .row:last-child{
+    padding: .65rem .1rem 0;
+    margin-top: .3rem;
+}
+
 .bms-list-hero{
     position: relative;
     overflow: hidden;
@@ -1440,10 +1480,17 @@ table tbody td{
 
 #dtBillableItems{
     table-layout: fixed;
+    width: 100% !important;
 }
 #dtBillableItems th,
 #dtBillableItems td{
     vertical-align: middle;
+}
+.bms-billable-table-wrap{
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 #dtBillableItems td.bms-billable-entry,
 #dtBillableItems td.bms-billable-date,
@@ -1464,10 +1511,23 @@ table tbody td{
     overflow: visible;
 }
 #dtBillableItems td.bms-billable-actions{
-    overflow: visible;
+    overflow: hidden;
+}
+#dtBillableItems td.bms-billable-actions > .d-flex{
+    max-width: 100%;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
 }
 #dtBillableItems td.bms-billable-actions .bms-actions{
-    gap: 10px;
+    max-width: 100%;
+    gap: 6px;
+    flex-wrap: wrap;
+    white-space: normal;
+}
+#dtBillableItems td.bms-billable-actions .bms-action-btn{
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
 }
 #dtBillableItems td.bms-billable-actions .btn-billed-icon{
     width: 30px;
@@ -1487,7 +1547,7 @@ table tbody td{
 }
 .invoice-list-shell{
     display: grid;
-    gap: 1rem;
+    gap: .2rem;
 }
 
 #payAddPanel{
@@ -1788,7 +1848,7 @@ table tbody td{
     grid-template-areas:
         "main actions"
         "snapshot snapshot";
-    gap: 1.35rem 1rem;
+    gap: .7rem .6rem;
     align-items: start;
 }
 
@@ -1803,7 +1863,7 @@ table tbody td{
     max-width: 54ch;
     display: flex;
     flex-direction: column;
-    gap: .95rem;
+    gap: .55rem;
 }
 
 .invoice-list-kicker,
@@ -1851,14 +1911,14 @@ table tbody td{
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: .75rem;
+    gap: .3rem;
     margin-top: 0;
     align-self: start;
 }
 
 .invoice-list-actions .btn{
-    min-height: 44px;
-    padding: .72rem 1.12rem;
+    min-height: 36px;
+    padding: .5rem .85rem;
     border-radius: 14px;
     font-weight: 600;
     font-size: .95rem;
@@ -1881,7 +1941,7 @@ table tbody td{
     grid-area: snapshot;
     width: 100%;
     border-radius: 24px;
-    padding: 1rem;
+    padding: .65rem;
     border: 1px solid rgba(255,255,255,.12);
     background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
     backdrop-filter: blur(12px);
@@ -1892,15 +1952,15 @@ table tbody td{
 .invoice-list-overview{
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: .8rem;
-    margin-top: .85rem;
+    gap: .45rem;
+    margin-top: .4rem;
 }
 
 .invoice-list-stat{
     position: relative;
     overflow: hidden;
-    min-height: 120px;
-    padding: .95rem .95rem .9rem;
+    min-height: 100px;
+    padding: .75rem .75rem .7rem;
     border-radius: 18px;
     border: 1px solid rgba(255,255,255,.12);
     background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(248,250,252,.88));
@@ -1942,24 +2002,31 @@ table tbody td{
 .invoice-list-filter-card{
     position: relative;
     z-index: 2;
-    margin-top: 1rem;
+    margin-top: .2rem;
     border: 1px solid rgba(226,232,240,.94);
     background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(249,251,255,.96));
     box-shadow: 0 26px 44px rgba(15,23,42,.12);
 }
 
 .invoice-list-filter-card .card-body{
-    padding: 1rem 1.1rem;
+    padding: .6rem .7rem;
 }
 
 .invoice-list-table-card .card-body{
-    padding: 1rem 1rem 1rem;
+    padding: .6rem .7rem .7rem;
+}
+
+.invoice-list-table-wrap{
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 .invoice-list-table-card .dataTables_wrapper > .row:first-child{
     align-items: center;
-    padding: .9rem .9rem;
-    margin: 0 0 .8rem;
+    padding: .5rem .55rem;
+    margin: 0 0 .25rem;
     border: 1px solid rgba(226,232,240,.88);
     border-radius: 18px;
     background: linear-gradient(180deg, rgba(248,250,252,.95), rgba(255,255,255,.98));
@@ -1967,8 +2034,8 @@ table tbody td{
 
 .invoice-list-table-card .dataTables_wrapper > .row:last-child{
     align-items: center;
-    padding: .85rem .15rem 0;
-    margin-top: .45rem;
+    padding: .45rem .1rem 0;
+    margin-top: .1rem;
     border-top: 1px solid rgba(226,232,240,.72);
 }
 
@@ -2107,9 +2174,9 @@ table tbody td{
     max-width: 100%;
 }
 #dtProformas td.bms-proforma-actions{
-    overflow: visible;
-    padding-left: .75rem;
-    padding-right: .75rem;
+    overflow: hidden;
+    padding-left: .4rem;
+    padding-right: .4rem;
 }
 
 #dtProformas .bms-proforma-code{
@@ -2214,13 +2281,15 @@ table tbody td{
 
 #dtProformas td.bms-proforma-actions .bms-actions{
     width: 100%;
-    gap: 7px;
+    gap: 3px;
     justify-content: flex-start;
+    flex-wrap: wrap;
+    white-space: normal;
 }
 
 #dtProformas td.bms-proforma-actions .bms-action-btn{
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
     padding: 0;
     border-radius: 8px;
     border: 1px solid transparent;
@@ -2260,7 +2329,7 @@ table tbody td{
 }
 #dtProformas th:nth-child(9),
 #dtProformas td.bms-proforma-actions{
-    white-space: nowrap;
+    white-space: normal;
 }
 
 @media (max-width: 991.98px){

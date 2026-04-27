@@ -3,7 +3,7 @@
 <?= $this->section('content') ?>
 <div class="invoice-list-shell">
     <section class="card invoice-list-stage border-0">
-        <div class="card-body p-4 p-xl-4">
+        <div class="card-body p-3 p-xl-3">
             <div class="invoice-list-stage-layout">
                 <div class="invoice-list-stage-main">
                     <div class="invoice-list-stage-copy">
@@ -43,7 +43,7 @@
         </div>
     </section>
 
-    <div class="card invoice-list-filter-card border-0 mb-3">
+    <div class="card invoice-list-filter-card border-0 mb-1">
         <div class="card-body">
             <div class="row align-items-end g-3 w-100">
                 <div class="col-12 col-md-4">
@@ -63,21 +63,23 @@
 
     <div class="card invoice-list-table-card border-0">
         <div class="card-body">
-            <table id="dtProformas" class="table table-striped table-bordered w-100">
-                <thead>
-                <tr>
-                    <th style="width: 70px;">S.No</th>
-                    <th>Invoice No</th>
-                    <th>Invoice Type</th>
-                    <th>Date of Issue</th>
-                    <th>Due Date</th>
-                    <th>Customer Name</th>
-                    <th>Company Name</th>
-                    <th>Net Amount</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-            </table>
+            <div class="table-responsive invoice-list-table-wrap">
+                <table id="dtProformas" class="table table-striped table-bordered w-100">
+                    <thead>
+                    <tr>
+                        <th style="width: 70px;">S.No</th>
+                        <th>Invoice No</th>
+                        <th>Invoice Type</th>
+                        <th>Date of Issue</th>
+                        <th>Due Date</th>
+                        <th>Customer Name</th>
+                        <th>Company Name</th>
+                        <th>Net Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     </div>
 </div>

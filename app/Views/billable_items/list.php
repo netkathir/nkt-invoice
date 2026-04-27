@@ -1,7 +1,7 @@
 <?= $this->extend('layouts/app') ?>
 
 <?= $this->section('content') ?>
-<div class="bms-list-page">
+<div class="bms-list-page bms-billable-page">
     <section class="card bms-list-hero border-0">
         <div class="card-body p-4 p-xl-4">
             <div class="bms-list-hero-row">
@@ -52,20 +52,22 @@
 
     <div class="card bms-list-panel border-0">
         <div class="card-body">
-            <table id="dtBillableItems" class="table table-striped table-bordered w-100 bms-billable-table">
-                <thead>
-                <tr>
-                    <th>Entry No</th>
-                    <th>Date</th>
-                    <th>Client</th>
-                    <th>Description</th>
-                    <th>Billing Month</th>
-                    <th>Status</th>
-                    <th>Amount</th>
-                    <th>Actions</th>
-                </tr>
-                </thead>
-            </table>
+            <div class="table-responsive bms-billable-table-wrap">
+                <table id="dtBillableItems" class="table table-striped table-bordered w-100 bms-billable-table">
+                    <thead>
+                    <tr>
+                        <th>Entry No</th>
+                        <th>Date</th>
+                        <th>Client</th>
+                        <th>Description</th>
+                        <th>Billing Month</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                </table>
+            </div>
         </div>
     </div>
 </div>

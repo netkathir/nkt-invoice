@@ -140,8 +140,27 @@ class SimplePdf
             return;
         }
 
+        // Flatten transparent PNGs onto white so PDF logos do not render with dark backgrounds.
         ob_start();
-        imagejpeg($img, null, 92);
+        $canvas = null;
+        if (function_exists('imagecreatetruecolor')) {
+            $width = imagesx($img);
+            $height = imagesy($img);
+            $canvas = imagecreatetruecolor(max(1, $width), max(1, $height));
+            if ($canvas) {
+                $white = imagecolorallocate($canvas, 255, 255, 255);
+                imagefill($canvas, 0, 0, $white);
+                imagealphablending($canvas, true);
+                imagesavealpha($canvas, false);
+                imagecopy($canvas, $img, 0, 0, 0, 0, $width, $height);
+                imagejpeg($canvas, null, 92);
+                imagedestroy($canvas);
+            } else {
+                imagejpeg($img, null, 92);
+            }
+        } else {
+            imagejpeg($img, null, 92);
+        }
         $jpeg = (string) (ob_get_clean() ?: '');
         imagedestroy($img);
 

@@ -597,17 +597,32 @@ class BillableItemsController extends BaseController
         $pdf->setLineWidth(0.7);
         $pdf->rect($xL, 10.0, $contentW, 820.0, true, false);
 
+        $headerTop = 12.0;
+        $headerH = 48.0;
+        $headerX = $xL + 16.0;
+        $headerW = $contentW - 32.0;
+        $logoBoxX = $headerX + 14.0;
+        $logoBoxY = $headerTop + 7.0;
+        $logoBoxW = 108.0;
+        $logoBoxH = 34.0;
+
+        $pdf->setDrawColor(218, 226, 231);
+        $pdf->setFillColor(255, 255, 255);
+        $pdf->rect($headerX, $headerTop, $headerW, $headerH, true, true);
+
         if ($companyLogoAbs !== '') {
-            $pdf->image($companyLogoAbs, $xL + 20.0, 22.0, 78.0, 32.0);
+            $pdf->setDrawColor(230, 230, 230);
+            $pdf->rect($logoBoxX, $logoBoxY, $logoBoxW, $logoBoxH, true, true);
+            $pdf->image($companyLogoAbs, $logoBoxX + 8.0, $logoBoxY + 5.0, 92.0, 24.0);
         }
 
         $invoiceTitle = 'BILLABLE ITEM';
         $pdf->setFont('Helvetica', 'B', 20.0);
         $pdf->setTextColor(0, 0, 0);
-        $pdf->text(($xL + $xR - $pdf->estimateTextWidth($invoiceTitle, 20.0)) / 2.0, 33.0, $invoiceTitle);
+        $pdf->text(($xL + $xR - $pdf->estimateTextWidth($invoiceTitle, 20.0)) / 2.0, 31.0, $invoiceTitle);
 
         $pdf->setDrawColor(146, 188, 194);
-        $pdf->line($xL + 34.0, 64.0, $xR - 34.0, 64.0);
+        $pdf->line($headerX + 18.0, $headerTop + $headerH + 2.0, $xR - 18.0, $headerTop + $headerH + 2.0);
 
         $infoTop = 66.0;
         $infoH = 116.0;

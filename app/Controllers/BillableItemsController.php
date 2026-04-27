@@ -530,6 +530,7 @@ class BillableItemsController extends BaseController
         $descriptionPoints = $this->extractDescriptionPoints($row['description'] ?? null);
         $billingMonth = $this->formatPdfMonth($row['billing_month'] ?? null);
         $currency = trim((string) ($row['currency'] ?? '')) ?: 'INR';
+        $status = trim((string) ($row['status'] ?? '')) ?: '-';
         $companyInfo = function_exists('bms_company_info') ? bms_company_info() : [];
         $companyName = trim((string) ($companyInfo['company_name'] ?? '')) ?: 'Company Information';
         $companyAddress1 = trim((string) ($companyInfo['address_line1'] ?? ''));
@@ -537,7 +538,6 @@ class BillableItemsController extends BaseController
         $companyCity = trim((string) ($companyInfo['city'] ?? ''));
         $companyState = trim((string) ($companyInfo['state'] ?? ''));
         $companyPincode = trim((string) ($companyInfo['pincode'] ?? ''));
-        $companyGstin = trim((string) ($companyInfo['gstin_number'] ?? ''));
         $companyWebsite = trim((string) ($companyInfo['website'] ?? ''));
         $companyWebsiteUrl = function_exists('bms_company_website_url')
             ? bms_company_website_url($companyWebsite)
@@ -601,7 +601,7 @@ class BillableItemsController extends BaseController
             $pdf->image($companyLogoAbs, $xL + 20.0, 22.0, 78.0, 32.0);
         }
 
-        $invoiceTitle = 'GST INVOICE';
+        $invoiceTitle = 'BILLABLE ITEM';
         $pdf->setFont('Helvetica', 'B', 20.0);
         $pdf->setTextColor(0, 0, 0);
         $pdf->text(($xL + $xR - $pdf->estimateTextWidth($invoiceTitle, 20.0)) / 2.0, 33.0, $invoiceTitle);
@@ -627,7 +627,6 @@ class BillableItemsController extends BaseController
             $companyAddress1,
             $companyAddress2,
             trim(implode(', ', $placeParts)) . ($companyPincode !== '' ? ' - ' . $companyPincode : ''),
-            $companyGstin !== '' ? 'GSTIN: ' . $companyGstin : '',
             $companyWebsite !== '' ? $companyWebsite : '',
             $companyEmail !== '' ? $companyEmail : '',
             $companyPhone !== '' ? $companyPhone : '',
@@ -644,18 +643,12 @@ class BillableItemsController extends BaseController
             }
         }
 
-        $billToAddressLines = array_values(array_filter([
-            $billToAddress,
-            trim(implode(', ', array_values(array_filter([$billToCity, $billToState, $billToCountry])))) . ($billToPostal !== '' ? ' - ' . $billToPostal : ''),
-        ], static fn ($line) => trim((string) $line) !== ''));
-        $billToAddressDisplay = $billToAddressLines !== [] ? implode("\n", $billToAddressLines) : '-';
-
         $metaRows = [
-            ['Invoice No:', $entryNo],
-            ['Inv Date:', $entryDate],
-            ['Bill To:', $billToName],
-            ['GST No:', $billToGst !== '' ? $billToGst : '-'],
-            ['Address:', $billToAddressDisplay],
+            ['Entry No:', $entryNo],
+            ['Entry Date:', $entryDate],
+            ['Client:', $billToName],
+            ['Billing Month:', $billingMonth !== '' ? $billingMonth : '-'],
+            ['Status:', $status],
         ];
 
         $labelX = $rightInfoX + 12.0;
@@ -686,10 +679,10 @@ class BillableItemsController extends BaseController
         $tableTop = $infoTop + $infoH + 12.0;
         $tableW = $contentW - 44.0;
         $tableX = $xL + 22.0;
-        $wDesc = 318.0;
-        $wUnit = 52.0;
-        $wPrice = 64.0;
-        $wQty = 56.0;
+        $wDesc = 292.0;
+        $wUnit = 50.0;
+        $wPrice = 66.0;
+        $wQty = 54.0;
         $wAmt = $tableW - ($wDesc + $wUnit + $wPrice + $wQty);
         $tableHeadH = 22.0;
 
@@ -701,8 +694,8 @@ class BillableItemsController extends BaseController
         $pdf->text($tableX + 8.0, $tableTop + 14.0, 'Description');
         $pdf->text($tableX + $wDesc + 11.0, $tableTop + 14.0, 'Unit');
         $pdf->text($tableX + $wDesc + $wUnit + 9.0, $tableTop + 14.0, 'Price');
-        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + 9.0, $tableTop + 14.0, 'Quantity');
-        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty + 9.0, $tableTop + 14.0, 'Amount');
+        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + 8.0, $tableTop + 14.0, 'Quantity');
+        $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty + 8.0, $tableTop + 14.0, 'Amount');
 
         $points = $descriptionPoints;
         if ($points === []) {
@@ -757,10 +750,8 @@ class BillableItemsController extends BaseController
         $summaryX = $xR - $summaryW - 10.0;
         $summaryTop = $tableRowTop + $rowH + 10.0;
         $summaryRows = [
-            ['Invoice Total - ' . $currency, $formatMoney($baseAmount)],
-            ['CGST - ' . number_format($cgstRate, 2) . '%', $formatMoney($cgstAmount)],
-            ['SGST - ' . number_format($sgstRate, 2) . '%', $formatMoney($sgstAmount)],
-            ['Total Amount Receivable', $formatMoney($totalAmount)],
+            ['Invoice Total', $formatMoney($baseAmount)],
+            ['Total Amount', $formatMoney($baseAmount)],
         ];
         $sumRowH = 23.0;
         $pdf->setDrawColor(150, 185, 191);
@@ -773,7 +764,8 @@ class BillableItemsController extends BaseController
             $pdf->setFont('Helvetica', 'B', 8.9);
             $pdf->setTextColor(15, 23, 42);
             $pdf->text($summaryX + 10.0, $rowTop + 14.0, $label);
-            $pdf->text($summaryX + 128.0, $rowTop + 14.0, $value);
+            $valueX = $summaryX + $summaryW - 10.0 - $pdf->estimateTextWidth($value, 8.9);
+            $pdf->text($valueX, $rowTop + 14.0, $value);
         }
 
         $footerTop = $summaryTop + ($sumRowH * count($summaryRows)) + 16.0;
@@ -788,12 +780,9 @@ class BillableItemsController extends BaseController
             $pdf->text($xL + 34.0, $leftFooterY, 'Paypal account: ' . $companyPaypal);
             $leftFooterY += 10.5;
         }
-        $supportLine = 'For invoice support, contact ' . ($companyEmail !== '' ? $companyEmail : $companyName) . ($companyPhone !== '' ? (' / ' . $companyPhone) : '');
+        $supportLine = 'For support, contact ' . ($companyEmail !== '' ? $companyEmail : $companyName) . ($companyPhone !== '' ? (' / ' . $companyPhone) : '');
         $pdf->text($xL + 34.0, $leftFooterY, $supportLine);
         $leftFooterY += 10.5;
-        if ($billingMonth !== '') {
-            $pdf->text($xL + 34.0, $leftFooterY, 'Billing Month: ' . $billingMonth);
-        }
 
         $pdf->setFont('Helvetica', 'B', 8.8);
         $pdf->setTextColor(30, 41, 59);

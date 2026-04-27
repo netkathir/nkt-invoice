@@ -8,7 +8,6 @@
         <div class="bms-list-hero-row">
             <div class="bms-list-copy">
                 <h5 class="bms-list-title mb-0">Payment</h5>
-                <p class="bms-list-subtitle mb-0">Track invoice payments, review balances, and record collections from one cleaner payment register.</p>
             </div>
             <div class="bms-list-actions">
                 <a class="btn btn-primary" id="payBtnAdd" href="<?= base_url('payments?add=1') ?>">Add Payment</a>
@@ -18,27 +17,26 @@
 </section>
 
 <div id="payListPanel" class="<?= $isAdd ? 'd-none' : '' ?>">
-    <div class="card bms-list-panel border-0">
-        <div class="bms-list-panel-head">
+    <div class="card bms-list-filter-card border-0 mb-3">
+        <div class="card-body">
             <div class="row align-items-end g-3 w-100">
                 <div class="col-12 col-md-4">
-                    <div class="bms-list-panel-title">Listing View</div>
-                    <div class="bms-list-panel-text">Review received payments and statuses.</div>
-                </div>
-                <div class="col-12 col-md-3">
                     <label class="form-label small fw-bold">From Date</label>
                     <input type="text" class="form-control form-control-sm" id="payFilterStartDate" placeholder="YYYY-MM-DD">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                     <label class="form-label small fw-bold">To Date</label>
                     <input type="text" class="form-control form-control-sm" id="payFilterEndDate" placeholder="YYYY-MM-DD">
                 </div>
-                <div class="col-12 col-md-2 text-md-end">
+                <div class="col-12 col-md-4 text-md-end">
                     <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="payBtnReset">Reset Filters</button>
                 </div>
             </div>
         </div>
-        <div class="card-body pt-0">
+    </div>
+
+    <div class="card bms-list-panel border-0">
+        <div class="card-body">
             <table id="dtPayments" class="table table-striped table-bordered nowrap w-100">
                 <thead>
                 <tr>

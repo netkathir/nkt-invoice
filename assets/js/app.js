@@ -1267,14 +1267,6 @@
                     setMetric('#mPendingAmount', d.pending_amount, true);
                     setMetric('#mBilledAmount', d.billed_amount, true);
 
-                    const label = formatMonthLabel(currentMonth);
-                    let insight = 'Tracking billing activity for ' + label + '.';
-                    if (totalItems > 0) {
-                        insight = billedItems + ' of ' + totalItems + ' items are already billed for ' + label + ', with ' + fmtMoney(pendingAmount) + ' still pending and ' + fmtMoney(billedAmount) + ' already billed.';
-                    } else if (pendingItems > 0 || billedItems > 0) {
-                        insight = 'Billing movement is available for ' + label + ', including ' + pendingItems + ' pending items and ' + billedItems + ' billed items.';
-                    }
-                    $('#dashInsight').text(insight);
                 })
                 .fail(function (xhr) {
                     notify((xhr.responseJSON && xhr.responseJSON.message) || 'Failed to load dashboard metrics.', 'danger');
@@ -3098,7 +3090,6 @@
         if (! $tableEl.length) return;
         BMS.initPremiumDatePickers();
         const $statTotal = $('#pfStatTotal');
-        const $statVisible = $('#pfStatVisible');
         const $statExport = $('#pfStatExport');
         const $statGst = $('#pfStatGst');
         const $statAmount = $('#pfStatAmount');
@@ -3161,7 +3152,6 @@
 
         function updateProformaSummary() {
             const allRows = table.rows().data().toArray();
-            const visibleCount = table.rows({ search: 'applied' }).count();
             let exportCount = 0;
             let gstCount = 0;
             let totalAmount = 0;
@@ -3174,7 +3164,6 @@
             });
 
             $statTotal.text(String(allRows.length));
-            $statVisible.text(String(visibleCount) + ' in current view');
             $statExport.text(String(exportCount));
             $statGst.text(String(gstCount));
             $statAmount.text(formatMoneyValue(totalAmount));

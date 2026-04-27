@@ -8,9 +8,6 @@
                 <div class="invoice-list-stage-main">
                     <div class="invoice-list-stage-copy">
                         <h5 class="invoice-list-stage-title mb-2">Invoices</h5>
-                        <p class="invoice-list-stage-text mb-0">
-                            Review invoice activity, due schedules, and client billing records from one clean professional list view.
-                        </p>
                     </div>
                 </div>
 
@@ -20,30 +17,25 @@
                 </div>
 
                 <aside class="invoice-list-stage-side">
-                    <div class="invoice-list-side-label">Live Snapshot</div>
                     <section class="invoice-list-overview" aria-label="Invoice summary">
                         <article class="invoice-list-stat invoice-list-stat-primary">
                             <div class="invoice-list-stat-label">Total Invoices</div>
                             <div class="invoice-list-stat-value" id="pfStatTotal">0</div>
-                            <div class="invoice-list-stat-note" id="pfStatVisible">0 in current view</div>
                         </article>
 
                         <article class="invoice-list-stat invoice-list-stat-teal">
                             <div class="invoice-list-stat-label">Export Bills</div>
                             <div class="invoice-list-stat-value" id="pfStatExport">0</div>
-                            <div class="invoice-list-stat-note">Cross-border invoice records</div>
                         </article>
 
                         <article class="invoice-list-stat invoice-list-stat-amber">
                             <div class="invoice-list-stat-label">GST Bills</div>
                             <div class="invoice-list-stat-value" id="pfStatGst">0</div>
-                            <div class="invoice-list-stat-note">Domestic tax invoice records</div>
                         </article>
 
                         <article class="invoice-list-stat invoice-list-stat-ink">
                             <div class="invoice-list-stat-label">Total Ledger Value</div>
                             <div class="invoice-list-stat-value" id="pfStatAmount">0.00</div>
-                            <div class="invoice-list-stat-note">Combined value across all invoices</div>
                         </article>
                     </section>
                 </aside>
@@ -51,28 +43,26 @@
         </div>
     </section>
 
-    <div class="card invoice-list-table-card border-0">
-        <div class="invoice-list-table-head">
-            <div class="row align-items-end g-3 w-100 mb-3">
-                <div class="col-12 col-md-3">
-                    <h6 class="invoice-list-card-title mb-1">Listing View</h6>
-                    <p class="invoice-list-card-text mb-0">Search, scan, print, and manage invoices.</p>
-                </div>
-                <div class="col-12 col-md-3">
+    <div class="card invoice-list-filter-card border-0 mb-3">
+        <div class="card-body">
+            <div class="row align-items-end g-3 w-100">
+                <div class="col-12 col-md-4">
                     <label class="form-label small fw-bold">From Date</label>
                     <input type="text" class="form-control form-control-sm" id="pfFilterStartDate" placeholder="YYYY-MM-DD">
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-12 col-md-4">
                     <label class="form-label small fw-bold">To Date</label>
                     <input type="text" class="form-control form-control-sm" id="pfFilterEndDate" placeholder="YYYY-MM-DD">
                 </div>
-                <div class="col-12 col-md-3 text-md-end">
+                <div class="col-12 col-md-4 text-md-end">
                     <button type="button" class="btn btn-sm btn-outline-secondary px-3" id="pfBtnReset">Reset Filters</button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="card-body pt-0">
+    <div class="card invoice-list-table-card border-0">
+        <div class="card-body">
             <table id="dtProformas" class="table table-striped table-bordered w-100">
                 <thead>
                 <tr>

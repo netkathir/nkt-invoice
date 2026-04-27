@@ -17,16 +17,10 @@
             <div class="row g-4 align-items-stretch">
                 <div class="col-12 col-xl-7">
                     <h2 class="dash-title">Billing Dashboard</h2>
-                    <p class="dash-subtitle mb-0">
-                        Review billing movement, spot outstanding receivables quickly, and jump straight into the month’s priority actions.
-                    </p>
-
                     <div class="dash-pill-row">
                         <span class="dash-pill">Welcome back, <?= esc($adminName) ?></span>
                         <span class="dash-pill dash-pill-soft" id="dashMonthLabel"><?= esc($defaultMonthLabel) ?></span>
                     </div>
-
-                    <div class="dash-insight" id="dashInsight">Preparing the latest billing snapshot for <?= esc($defaultMonthLabel) ?>.</div>
 
                     <div class="d-flex flex-wrap gap-2 mt-4">
                         <a class="btn btn-primary dash-btn-primary" href="<?= base_url('billable-items') ?>">Add Billable Item</a>
@@ -84,10 +78,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="dash-control-note">
-                            Switching the month updates both the summary table and top-line metrics instantly.
-                        </div>
                     </div>
                 </div>
             </div>
@@ -114,7 +104,6 @@
                 <div class="dash-metric-main">
                     <div class="dash-metric-value" id="mTotalItems">0</div>
                 </div>
-                <div class="dash-metric-note">All records available for the selected month.</div>
             </div>
         </div>
 
@@ -136,7 +125,6 @@
                 <div class="dash-metric-main">
                     <div class="dash-metric-value" id="mPendingItems">0</div>
                 </div>
-                <div class="dash-metric-note">Items still waiting to move into invoices.</div>
             </div>
         </div>
         <div class="card metric-card dash-metric-card dash-metric-billed h-100">
@@ -155,7 +143,6 @@
                 <div class="dash-metric-main">
                     <div class="dash-metric-value" id="mBilledItems">0</div>
                 </div>
-                <div class="dash-metric-note">Completed billing activity already pushed out.</div>
             </div>
         </div>
         <div class="card metric-card dash-metric-card dash-metric-warning h-100">
@@ -175,7 +162,6 @@
                 <div class="dash-metric-main">
                     <div class="dash-metric-value" id="mPendingAmount">0.00</div>
                 </div>
-                <div class="dash-metric-note">Open value still sitting in receivables.</div>
             </div>
         </div>
         <div class="card metric-card dash-metric-card dash-metric-success h-100">
@@ -195,18 +181,11 @@
                 <div class="dash-metric-main">
                     <div class="dash-metric-value" id="mBilledAmount">0.00</div>
                 </div>
-                <div class="dash-metric-note">Revenue value already converted into invoices.</div>
             </div>
         </div>
     </div>
 
     <div class="card dash-summary-card bms-list-panel border-0">
-        <div class="bms-list-panel-head dash-summary-head">
-            <div>
-                <div class="bms-list-panel-title dash-summary-title">Client Billing Summary</div>
-                <div class="bms-list-panel-text">Review pending and billed client totals from the same structured list-view model used across the system.</div>
-            </div>
-        </div>
         <div class="card-body pt-0">
             <table id="dtClientBillingSummary" class="table table-striped table-bordered w-100">
                 <thead>

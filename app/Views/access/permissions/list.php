@@ -7,7 +7,6 @@
             <div class="bms-list-hero-row">
                 <div class="bms-list-copy">
                     <h4 class="bms-list-title mb-0">Permissions (Forms)</h4>
-                    <p class="bms-list-subtitle mb-0">Manage form-level access entries and keep permission mapping organized in a shared admin list style.</p>
                 </div>
                 <div class="bms-list-actions">
                     <?php if (can('permissions.create')): ?>
@@ -19,13 +18,7 @@
     </section>
 
     <div class="card bms-list-panel border-0">
-        <div class="bms-list-panel-head">
-            <div>
-                <div class="bms-list-panel-title">Listing View</div>
-                <div class="bms-list-panel-text">Browse form permissions and edit access definitions from a single structured register.</div>
-            </div>
-        </div>
-        <div class="card-body pt-0">
+        <div class="card-body">
             <table id="dtPermissions" class="table table-striped table-bordered nowrap w-100">
                 <thead>
                 <tr>

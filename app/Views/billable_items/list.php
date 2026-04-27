@@ -7,7 +7,6 @@
             <div class="bms-list-hero-row">
                 <div class="bms-list-copy">
                     <h5 class="bms-list-title mb-0">Billable Items</h5>
-                    <p class="bms-list-subtitle mb-0">Track monthly billable work, filter by client and status, and move entries into invoices from one workspace.</p>
                 </div>
                 <div class="bms-list-actions">
                     <button class="btn btn-outline-success" id="btnExportBillable" type="button">Export CSV</button>
@@ -52,13 +51,7 @@
     </div>
 
     <div class="card bms-list-panel border-0">
-        <div class="bms-list-panel-head">
-            <div>
-                <div class="bms-list-panel-title">Listing View</div>
-                <div class="bms-list-panel-text">Search, review, and convert billable entries using the same unified list style.</div>
-            </div>
-        </div>
-        <div class="card-body pt-0">
+        <div class="card-body">
             <table id="dtBillableItems" class="table table-striped table-bordered w-100 bms-billable-table">
                 <thead>
                 <tr>

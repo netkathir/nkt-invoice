@@ -7,7 +7,6 @@
             <div class="bms-list-hero-row">
                 <div class="bms-list-copy">
                     <h5 class="bms-list-title mb-0">Payment Report</h5>
-                    <p class="bms-list-subtitle mb-0">Filter outstanding and paid invoices, then export a cleaner payment summary report.</p>
                 </div>
                 <div class="bms-list-actions">
                     <button type="button" class="btn btn-outline-success" id="prBtnDownload">Export CSV</button>
@@ -44,12 +43,6 @@
     </div>
 
     <div class="card bms-list-panel border-0">
-        <div class="bms-list-panel-head">
-            <div>
-                <div class="bms-list-panel-title">Listing View</div>
-                <div class="bms-list-panel-text">See due amounts, balances, and payment status in one unified reporting table.</div>
-            </div>
-        </div>
         <div class="card-body pt-0">
             <div class="table-responsive">
                 <table id="dtPaymentReport" class="table table-striped table-bordered nowrap w-100">

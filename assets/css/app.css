@@ -1077,6 +1077,16 @@ table tbody td{
     gap: .4rem;
 }
 
+@media (min-width: 992px){
+    body.bms-page-billable_items .app-main{
+        padding-left: 6px;
+    }
+
+    body.bms-page-billable_items main.container-fluid{
+        padding-top: .45rem !important;
+    }
+}
+
 .bms-billable-page .bms-list-hero .card-body{
     padding: .85rem .95rem !important;
 }
@@ -1111,6 +1121,74 @@ table tbody td{
 .bms-billable-page .bms-list-panel .dataTables_wrapper > .row:last-child{
     padding: .65rem .1rem 0;
     margin-top: .3rem;
+}
+
+body.bms-page-users .bms-list-page,
+body.bms-page-roles .bms-list-page,
+body.bms-page-permissions .bms-list-page,
+body.bms-page-role_permissions .bms-list-page,
+body.bms-page-client_master .bms-list-page,
+body.bms-page-payments .bms-list-page,
+body.bms-page-payment_report .bms-list-page{
+    gap: .35rem;
+}
+
+@media (min-width: 992px){
+    body.bms-page-users .app-main,
+    body.bms-page-roles .app-main,
+    body.bms-page-permissions .app-main,
+    body.bms-page-role_permissions .app-main,
+    body.bms-page-client_master .app-main,
+    body.bms-page-payments .app-main,
+    body.bms-page-payment_report .app-main{
+        padding-left: 6px;
+    }
+
+    body.bms-page-users main.container-fluid,
+    body.bms-page-roles main.container-fluid,
+    body.bms-page-permissions main.container-fluid,
+    body.bms-page-role_permissions main.container-fluid,
+    body.bms-page-client_master main.container-fluid,
+    body.bms-page-payments main.container-fluid,
+    body.bms-page-payment_report main.container-fluid{
+        padding-top: .45rem !important;
+    }
+}
+
+body.bms-page-users .bms-list-filter-card,
+body.bms-page-roles .bms-list-filter-card,
+body.bms-page-permissions .bms-list-filter-card,
+body.bms-page-role_permissions .bms-list-filter-card,
+body.bms-page-client_master .bms-list-filter-card,
+body.bms-page-payments .bms-list-filter-card,
+body.bms-page-payment_report .bms-list-filter-card{
+    margin-bottom: .35rem !important;
+}
+
+body.bms-page-users .bms-list-filter-card .card-body,
+body.bms-page-roles .bms-list-filter-card .card-body,
+body.bms-page-permissions .bms-list-filter-card .card-body,
+body.bms-page-role_permissions .bms-list-filter-card .card-body,
+body.bms-page-client_master .bms-list-filter-card .card-body,
+body.bms-page-payments .bms-list-filter-card .card-body,
+body.bms-page-payment_report .bms-list-filter-card .card-body{
+    padding: .75rem .9rem;
+}
+
+body.bms-page-users .bms-list-page > .card,
+body.bms-page-roles .bms-list-page > .card,
+body.bms-page-permissions .bms-list-page > .card,
+body.bms-page-role_permissions .bms-list-page > .card,
+body.bms-page-client_master .bms-list-page > .card,
+body.bms-page-payments .bms-list-page > .card,
+body.bms-page-payment_report .bms-list-page > .card,
+body.bms-page-payments .bms-list-page > div > .card{
+    margin-bottom: 0;
+}
+
+body.bms-page-payments #payListPanel{
+    display: grid;
+    gap: .35rem;
 }
 
 .bms-list-hero{
@@ -1548,6 +1626,25 @@ table tbody td{
 .invoice-list-shell{
     display: grid;
     gap: .2rem;
+}
+
+@media (min-width: 992px){
+    body.bms-page-proforma .app-main{
+        padding-left: 6px;
+    }
+
+    body.bms-page-proforma main.container-fluid{
+        padding-top: .45rem !important;
+    }
+}
+
+body.bms-page-proforma .invoice-list-shell{
+    gap: .15rem;
+}
+
+body.bms-page-proforma .invoice-list-filter-card{
+    margin-top: .15rem;
+    margin-bottom: .15rem !important;
 }
 
 #payAddPanel{

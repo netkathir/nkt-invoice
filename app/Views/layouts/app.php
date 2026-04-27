@@ -15,7 +15,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="<?= base_url('assets/css/app.css?v=' . ((@filemtime(FCPATH . 'assets/css/app.css')) ?: 0)) ?>">
 </head>
-<body>
+<?php
+$bodyClass = 'bms-page-' . preg_replace('/[^a-z0-9_-]+/', '-', strtolower((string) ($active ?? '')));
+?>
+<body class="<?= esc($bodyClass) ?>">
 <div class="app-canvas p-0">
 <div class="app-shell app-frame d-flex">
     <?= $this->include('partials/sidebar') ?>

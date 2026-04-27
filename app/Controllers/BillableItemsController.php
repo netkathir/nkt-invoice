@@ -198,8 +198,9 @@ class BillableItemsController extends BaseController
 
         $rows = $builder->findAll();
 
-        // Always return plain text descriptions for UI rendering.
+        // Keep raw description for edit/print fidelity, while table rendering uses plain text.
         foreach ($rows as &$row) {
+            $row['description_edit'] = (string) ($row['description'] ?? '');
             $row['description'] = bms_description_to_plain($row['description'] ?? '');
         }
         unset($row);
@@ -232,11 +233,12 @@ class BillableItemsController extends BaseController
 
         $rawDescription = (string) $this->request->getPost('description');
         $plainDescription = bms_description_to_plain($rawDescription);
+        $storedDescription = bms_description_to_storage_html($rawDescription);
 
         $payload = [
             'entry_date'    => $entryDate,
             'client_id'     => (int) $this->request->getPost('client_id'),
-            'description'   => $plainDescription,
+            'description'   => $storedDescription,
             'quantity'      => number_format($quantity, 2, '.', ''),
             'unit_price'    => number_format($unitPrice, 2, '.', ''),
             'amount'        => number_format($amount, 2, '.', ''),
@@ -250,7 +252,7 @@ class BillableItemsController extends BaseController
         }
 
         try {
-            if (trim((string) ($payload['description'] ?? '')) === '') {
+            if (trim($plainDescription) === '') {
                 return $this->response->setStatusCode(422)->setJSON([
                     'success' => false,
                     'message' => 'Please fix the validation errors.',
@@ -313,8 +315,9 @@ class BillableItemsController extends BaseController
 
         $payload = [$field => $value];
         if ($field === 'description') {
-            $payload['description'] = bms_description_to_plain((string) $value);
-            if (trim((string) ($payload['description'] ?? '')) === '') {
+            $plainDescription = bms_description_to_plain((string) $value);
+            $payload['description'] = bms_description_to_storage_html((string) $value);
+            if (trim($plainDescription) === '') {
                 return $this->response->setStatusCode(422)->setJSON([
                     'success' => false,
                     'message' => 'Please fix the validation errors.',
@@ -527,7 +530,6 @@ class BillableItemsController extends BaseController
         $billToCountry = trim((string) ($row['client_country'] ?? ''));
         $billToPostal = trim((string) ($row['client_postal_code'] ?? ''));
         $billToPhone = trim((string) ($row['client_phone'] ?? ''));
-        $descriptionPoints = $this->extractDescriptionPoints($row['description'] ?? null);
         $billingMonth = $this->formatPdfMonth($row['billing_month'] ?? null);
         $currency = trim((string) ($row['currency'] ?? '')) ?: 'INR';
         $status = trim((string) ($row['status'] ?? '')) ?: '-';
@@ -709,16 +711,19 @@ class BillableItemsController extends BaseController
         $pdf->text($tableX + $wDesc + $wUnit + $wPrice + 8.0, $tableTop + 14.0, 'Quantity');
         $pdf->text($tableX + $wDesc + $wUnit + $wPrice + $wQty + 8.0, $tableTop + 14.0, 'Amount');
 
-        $points = $descriptionPoints;
-        if ($points === []) {
-            $points = ['-'];
+        $items = bms_description_to_list_items($row['description'] ?? null);
+        if ($items === []) {
+            $items = [['-']];
         }
         $descLines = [];
-        foreach ($points as $point) {
-            $lineText = trim((string) $point);
-            $lineText = preg_replace('/^[\x{2022}\x{2023}\x{25E6}\x{2043}\x{2219}\*\-\+]+\s*/u', '', $lineText) ?? $lineText;
-            foreach ($pdf->wrapText('- ' . $lineText, $wDesc - 18.0, 8.8) as $wrappedLine) {
-                $descLines[] = $wrappedLine;
+        $bullet = html_entity_decode('&#8226;', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+        foreach ($items as $itemLines) {
+            foreach ($itemLines as $lineIndex => $lineText) {
+                $lineText = trim((string) $lineText);
+                $prefix = $lineIndex === 0 ? ($bullet . ' ') : '  ';
+                foreach ($pdf->wrapText($prefix . $lineText, $wDesc - 18.0, 8.8) as $wrappedIndex => $wrappedLine) {
+                    $descLines[] = $wrappedIndex === 0 ? $wrappedLine : ('  ' . $wrappedLine);
+                }
             }
         }
         if ($descLines === []) {

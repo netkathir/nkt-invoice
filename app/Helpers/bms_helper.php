@@ -102,6 +102,100 @@ if (! function_exists('bms_description_to_plain')) {
     }
 }
 
+if (! function_exists('bms_description_to_list_items')) {
+    /**
+     * Convert a description into bullet items, preserving line breaks inside each item.
+     *
+     * @return array<int, array<int, string>>
+     */
+    function bms_description_to_list_items(?string $value): array
+    {
+        $value = trim((string) ($value ?? ''));
+        if ($value === '') {
+            return [];
+        }
+
+        $maybeHtml = $value;
+        if (strpos($maybeHtml, '<') === false && stripos($maybeHtml, '&lt;') !== false) {
+            $decoded = html_entity_decode($maybeHtml, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            if (strpos($decoded, '<') !== false) {
+                $maybeHtml = $decoded;
+            }
+        }
+
+        $items = [];
+        if (strpos($maybeHtml, '<') !== false) {
+            try {
+                $doc = new \DOMDocument('1.0', 'UTF-8');
+                libxml_use_internal_errors(true);
+                $doc->loadHTML('<?xml encoding="UTF-8"><body>' . $maybeHtml . '</body>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+                libxml_clear_errors();
+
+                foreach ($doc->getElementsByTagName('li') as $li) {
+                    $text = bms_description_node_text($li);
+                    $lines = array_values(array_filter(array_map(
+                        static function ($line) {
+                            $line = trim((string) $line);
+                            $line = preg_replace('/^[\\x{2022}\\x{2023}\\x{25E6}\\x{2043}\\x{2219}\\*\\-\\+]+\\s*/u', '', $line) ?? $line;
+                            return trim($line);
+                        },
+                        preg_split('/\\r?\\n/', $text) ?: []
+                    ), static fn ($line) => $line !== ''));
+
+                    if ($lines !== []) {
+                        $items[] = $lines;
+                    }
+                }
+            } catch (\Throwable $e) {
+                $items = [];
+            }
+        }
+
+        if ($items === []) {
+            $plain = bms_description_to_plain($value);
+            $lines = array_values(array_filter(array_map(
+                static function ($line) {
+                    $line = trim((string) $line);
+                    $line = preg_replace('/^[\\x{2022}\\x{2023}\\x{25E6}\\x{2043}\\x{2219}\\*\\-\\+]+\\s*/u', '', $line) ?? $line;
+                    return trim($line);
+                },
+                preg_split('/\\r?\\n/', $plain) ?: []
+            ), static fn ($line) => $line !== ''));
+
+            foreach ($lines as $line) {
+                $items[] = [$line];
+            }
+        }
+
+        return $items;
+    }
+}
+
+if (! function_exists('bms_description_to_storage_html')) {
+    /**
+     * Store billable descriptions as a small safe HTML list so print/edit can keep line breaks.
+     */
+    function bms_description_to_storage_html(?string $value): string
+    {
+        $items = bms_description_to_list_items($value);
+        if ($items === []) {
+            return '';
+        }
+
+        $html = '<ul>';
+        foreach ($items as $lines) {
+            $safeLines = array_map(
+                static fn ($line) => htmlspecialchars((string) $line, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'),
+                $lines
+            );
+            $html .= '<li>' . implode('<br>', $safeLines) . '</li>';
+        }
+        $html .= '</ul>';
+
+        return $html;
+    }
+}
+
 if (! function_exists('bms_description_node_text')) {
     /**
      * Extract text from a DOM node while preserving HTML line breaks as newlines.

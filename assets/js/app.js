@@ -1123,7 +1123,9 @@
                 .replace(/\"/g, '&quot;')
                 .replace(/'/g, '&#39;');
         };
-        return '<ul class="mb-0">' + lines.map(function (l) { return '<li>' + safe(l) + '</li>'; }).join('') + '</ul>';
+        return '<ul class="mb-0">' + lines.map(function (l) {
+            return '<li>' + String(l).split(/\r?\n/).map(safe).join('<br>') + '</li>';
+        }).join('') + '</ul>';
     }
 
     function billableStatusBadge(status) {
@@ -2927,7 +2929,7 @@
             $('#billableForm').removeClass('was-validated');
             $('#bi_id').val(row.id);
             $('#bi_client_id').val(row.client_id || '');
-            setDescriptionHtml(bulletHtmlFromText(row.description || ''));
+            setDescriptionHtml(row.description_edit || bulletHtmlFromText(row.description || ''));
             setDescriptionValidity(true);
             $('#bi_quantity').val(row.quantity || '0');
             $('#bi_unit_price').val(row.unit_price || '0');
@@ -2951,15 +2953,11 @@
             $('#bi_view_amount').text(String(row.amount || '').trim() || '-');
             $('#bi_view_status').text(String(row.status || '').trim() || '-');
 
-            const desc = String(row.description || '').trim();
+            const desc = String(row.description_edit || row.description || '').trim();
             if (!desc) {
                 $('#bi_view_description').html('<div class="text-muted">-</div>');
             } else {
-                const lines = desc.split(/\r?\n/)
-                    .map(function (l) { return String(l || '').trim(); })
-                    .filter(function (l) { return l !== ''; });
-                const html = '<ul class="mb-0">' + lines.map(function (l) { return '<li>' + escapeHtml(l) + '</li>'; }).join('') + '</ul>';
-                $('#bi_view_description').html(html);
+                $('#bi_view_description').html(renderBulletText(desc, 'display'));
             }
 
             $viewModal.show();

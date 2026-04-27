@@ -257,10 +257,16 @@
         margin-bottom: 3px;
     }
     .inv-desc-extra {
-        padding-left: 14px;
-        text-indent: -10px;
+        display: flex;
+        gap: 6px;
         line-height: 1.55;
         font-size: 12px;
+    }
+    .inv-desc-bullet {
+        flex: 0 0 auto;
+    }
+    .inv-desc-text {
+        flex: 1 1 auto;
     }
     .inv-items tbody td {
         line-height: 1.45;
@@ -453,16 +459,20 @@
         <tbody>
             <?php foreach (($items ?? []) as $it): ?>
                 <?php
-                    $desc = bms_description_to_plain((string) ($it['description'] ?? ''));
-                    $lines = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $desc) ?: [])));
-                    if ($lines === []) {
-                        $lines = ['-'];
+                    $descriptionItems = bms_description_to_list_items((string) ($it['description'] ?? ''));
+                    if ($descriptionItems === []) {
+                        $descriptionItems = [['-']];
                     }
                 ?>
                     <tr>
                         <td>
-                            <?php foreach ($lines as $line): ?>
-                                <div class="inv-desc-extra"><?= esc('• ' . $line) ?></div>
+                            <?php foreach ($descriptionItems as $itemLines): ?>
+                                <div class="inv-desc-extra">
+                                    <span class="inv-desc-bullet">&bull;</span>
+                                    <span class="inv-desc-text">
+                                        <?php foreach ($itemLines as $lineIndex => $line): ?><?= $lineIndex > 0 ? '<br>' : '' ?><?= esc($line) ?><?php endforeach; ?>
+                                    </span>
+                                </div>
                             <?php endforeach; ?>
                         </td>
                         <td class="inv-center">Nos</td>

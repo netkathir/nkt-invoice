@@ -802,17 +802,20 @@ class ProformaController extends BaseController
 
         $idx = 1;
         foreach ($items as $it) {
-            $descRaw = bms_description_to_plain((string) ($it['description'] ?? ''));
-            $lines = array_values(array_filter(array_map('trim', preg_split('/\\r?\\n/', $descRaw) ?: [])));
-            if ($lines === []) {
-                $lines = ['-'];
+            $listItems = bms_description_to_list_items((string) ($it['description'] ?? ''));
+            if ($listItems === []) {
+                $listItems = [['-']];
             }
 
             $descLines = [];
-            foreach ($lines as $lineText) {
-                $wrapped = $pdf->wrapText('• ' . $lineText, $wDesc - 12, 9);
-                foreach ($wrapped as $wrappedLine) {
-                    $descLines[] = $wrappedLine;
+            $bullet = html_entity_decode('&#8226;', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+            foreach ($listItems as $itemLines) {
+                foreach ($itemLines as $lineIndex => $lineText) {
+                    $prefix = $lineIndex === 0 ? ($bullet . ' ') : '  ';
+                    $wrapped = $pdf->wrapText($prefix . $lineText, $wDesc - 12, 9);
+                    foreach ($wrapped as $wrappedIndex => $wrappedLine) {
+                        $descLines[] = $wrappedIndex === 0 ? $wrappedLine : ('  ' . $wrappedLine);
+                    }
                 }
             }
             if ($descLines === []) {

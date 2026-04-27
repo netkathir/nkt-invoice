@@ -312,8 +312,7 @@
                         <?php if (! $isCreate): ?>
                             <?php foreach ($items as $it): ?>
                                 <?php
-                                    $desc = (string) ($it['description'] ?? '');
-                                    $lines = array_values(array_filter(array_map('trim', preg_split('/\r?\n/', $desc) ?: [])));
+                                    $descriptionItems = bms_description_to_list_items((string) ($it['description'] ?? ''));
                                     $qty = number_format((float) ($it['quantity'] ?? 0), 2, '.', '');
                                     $price = number_format((float) ($it['unit_price'] ?? 0), 2, '.', '');
                                     $amount = number_format((float) ($it['amount'] ?? 0), 2, '.', '');
@@ -323,9 +322,9 @@
                                         <?php if ($isReadonly): ?>
                                             <div class="form-control form-control-sm bg-body" style="min-height:90px;">
                                                 <ul class="mb-0 ps-3">
-                                                    <?php if ($lines !== []): ?>
-                                                        <?php foreach ($lines as $line): ?>
-                                                            <li><?= esc($line) ?></li>
+                                                    <?php if ($descriptionItems !== []): ?>
+                                                        <?php foreach ($descriptionItems as $itemLines): ?>
+                                                            <li><?php foreach ($itemLines as $lineIndex => $line): ?><?= $lineIndex > 0 ? '<br>' : '' ?><?= esc($line) ?><?php endforeach; ?></li>
                                                         <?php endforeach; ?>
                                                     <?php else: ?>
                                                         <li>-</li>
@@ -336,9 +335,9 @@
                                             <input type="hidden" class="pf-item-id" value="<?= esc((string) ($it['id'] ?? '0')) ?>">
                                             <div class="form-control form-control-sm pf-item-desc-editor" contenteditable="true" data-placeholder="Description (one bullet per line)" style="min-height:90px;">
                                                 <ul>
-                                                    <?php if ($lines !== []): ?>
-                                                        <?php foreach ($lines as $line): ?>
-                                                            <li><?= esc($line) ?></li>
+                                                    <?php if ($descriptionItems !== []): ?>
+                                                        <?php foreach ($descriptionItems as $itemLines): ?>
+                                                            <li><?php foreach ($itemLines as $lineIndex => $line): ?><?= $lineIndex > 0 ? '<br>' : '' ?><?= esc($line) ?><?php endforeach; ?></li>
                                                         <?php endforeach; ?>
                                                     <?php else: ?>
                                                         <li><br></li>
